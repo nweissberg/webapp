@@ -1,0 +1,22 @@
+produtos
+produtos_categiorias
+pessoas
+pessoas_vendedores
+tabelas_precos
+tabelas_precos_itens
+condicoes_pagamentos
+pedidos_faturados
+
+<-- IDEIAS -->
+Regra de kilometragem
+Últimos itens com quant data e preço e preço atual
+Regra de cond de pgto
+Salvar pedido "rascunho"
+Importar prospect
+Sistema de controle de agenda de contatos.
+Facilitador para envio de relatórios. Ex financeiro/ catálogos etc.
+Sugestão de visita por próximade
+Trazer preço tabela e permitir dar desconto
+
+<-- BUGS -->
+OK -> o número não está batendo com o número da imagem
