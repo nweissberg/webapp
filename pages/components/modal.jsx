@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Button } from "primereact/button";
 import { Dialog } from 'primereact/dialog';
+import { scrollToTop } from "../utils/util";
 
 export default class Modal extends React.Component {
 	constructor(props) {
@@ -49,6 +50,8 @@ export default class Modal extends React.Component {
                         width: 'calc(100% - 40px)',
                         ...this.props.style,
                     }}
+                    blockScroll={true}
+                    onShow={()=>{scrollToTop()}}
                     maximized={this.props.maximized?this.props.maximized:(this.state.maximized?this.state.maximized:false)}
                     maximizable={this.props.maximizable?true:false}
                     footer={this.props.footer?this.props.footer:this.renderFooter('visible')}

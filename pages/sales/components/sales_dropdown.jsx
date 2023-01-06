@@ -1,24 +1,32 @@
 import React, { Component } from 'react';
 import { AutoComplete } from 'primereact/autocomplete';
-import { SalesService } from '../service/sales_service';
+// import { SalesService } from '../service/sales_service';
 
 export default class SalesDropdown extends Component {
 
     constructor(props) {
         super(props);
         this.state = {
-            countries: [],
+            countries: [
+                {name:"Oferta",value:1},
+                {name:"Mais uma Campanha",value:2},
+                {name:"Campanha",value:3},
+                {name:"Super Oferta",value:4},
+                {name:"Natal",value:5},
+                {name:"Volta as Aulas",value:4},
+                {name:"Ano Novo",value:4},
+            ],
             selectedCountry2: null,
             filteredCountries: null,
         };
 
         this.searchCountry = this.searchCountry.bind(this);
         this.itemTemplate = this.itemTemplate.bind(this);
-        this.countryservice = new SalesService();
+        // this.countryservice = new SalesService();
     }
 
     componentDidMount() {
-        this.countryservice.getCountries().then(data => this.setState({ countries: data }));
+        // this.countryservice.getCountries().then(data => this.setState({ countries: data }));
     }
 
     searchCountry(event) {

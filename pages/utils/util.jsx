@@ -38,47 +38,62 @@ export function deepEqual(x, y) {
 	return true
 }
 
-const isDeepEqual = (object1, object2) => {
+export const isDeepEqual = (object1, object2) => {
 
 	const objKeys1 = Object.keys(object1);
 	const objKeys2 = Object.keys(object2);
-  
+
 	if (objKeys1.length !== objKeys2.length) return false;
-  
+
 	for (var key of objKeys1) {
-	  const value1 = object1[key];
-	  const value2 = object2[key];
-  
-	  const isObjects = isObject(value1) && isObject(value2);
-  
-	  if ((isObjects && !isDeepEqual(value1, value2)) ||
+		const value1 = object1[key];
+		const value2 = object2[key];
+
+		const isObjects = isObject(value1) && isObject(value2);
+
+		if ((isObjects && !isDeepEqual(value1, value2)) ||
 		(!isObjects && value1 !== value2)
-	  ) {
+		) {
 		return false;
-	  }
+		}
 	}
 	return true;
-  };
-  
-  const isObject = (object) => {
-	return object != null && typeof object === "object";
-  };
+};
 
-var localStorage = null;//window.localStorage
-var sessionStorage = null;//window.sessionStorage
+const isObject = (object) => {
+	return object != null && typeof object === "object";
+};
+
+export function shorten(sentance){
+	if(!sentance)return''
+	const sentance_array = sentance.split(' ')
+	return(sentance_array.length < 8 ? sentance : sentance_array.slice(0,4).join(' ') + " ... " + sentance_array.slice(-4).join(' '))
+}
+
+export function swap_array(arr, a, b) {
+	return arr.map((current, idx) => {
+		if (idx === a) return arr[b]
+		if (idx === b) return arr[a]
+		return current
+	});
+}
+// var localStorage = window.localStorage
+// var sessionStorage = window.sessionStorage
 //-> Browser Session || Local Storage
 // n = var name
 // v = var value
 // t = is var temporary?
-export function var_set(n, v, t){
+export function var_set(name, value, session){
+	var localStorage = window.localStorage
+	var sessionStorage = window.sessionStorage
 	if(!localStorage || !sessionStorage) return( new Promise((res,rej)=>{res(null)}) )
 	return new Promise((res,rej)=>{
-		if (n == undefined) rej(null);
+		if (name == undefined) rej(null);
 		if (typeof(Storage) === "undefined") rej(null);
 		try {
-			if(t == true) { sessionStorage[n] = String(v) }
-			else{ localStorage[n] = String(v) }
-			res(v)
+			if(session == true) { sessionStorage[name] = String(value) }
+			else{ localStorage[name] = String(value) }
+			res(value)
 		}
 		catch(e) { 
 			console.log("Error "+e+".")
@@ -87,6 +102,8 @@ export function var_set(n, v, t){
 	})
 }
 export function var_get(n){
+	var localStorage = window.localStorage
+	var sessionStorage = window.sessionStorage
 	if(!localStorage || !sessionStorage) return( new Promise((res,rej)=>{res(null)}) )
 	return new Promise((res,rej)=>{
 		if (n == undefined) rej(null);
@@ -100,6 +117,8 @@ export function var_get(n){
 	})
 }
 export function var_del(n){
+	var localStorage = window.localStorage
+	var sessionStorage = window.sessionStorage
 	if (n == undefined) return null;
 	if (typeof(Storage) === "undefined") return null;
 	try { localStorage.removeItem(n) }
@@ -294,6 +313,16 @@ export function sqlDateToString(dateSQLString){
 	return (((date.getDate() > 9) ? date.getDate() : ('0' + date.getDate())) + '/' + ((date.getMonth() > 8) ? (date.getMonth() + 1) : ('0' + (date.getMonth() + 1))) + '/' + date.getFullYear());
 }
 
+export function replaceAll(str,at,to){
+	return str.split(at).join(to)
+}
+
+export function toIdTag(str){
+	return(replaceAll(str.normalize('NFD')
+	.replace(/[\u0300-\u036f]/g, '')
+	.replace(/[^0-9a-zA-Z\s]/g, '_').toLowerCase()," ","_"))
+}
+
 export function normalize(str){
 	return(str.normalize('NFD')
 	.replace(/([\u0300-\u036f]|[^0-9a-zA-Z])/g, ' '));
@@ -376,7 +405,7 @@ export class NodeService {
     }
 }
 
-export const moneyMask = (value) => {
+export const moneyMask = (value=0) => {
 	
 	var value_string = (Math.round(value*100)/100).toString()
 	if(!value_string.split('.')[1]){
@@ -394,4 +423,78 @@ export const moneyMask = (value) => {
 	// console.log(result)
   
 	return 'R$ ' + result
+}
+
+export const scrollToTop = () => {
+    window.scrollTo({
+        top: 0,
+        behavior: 'smooth',
+    });
+};
+
+export const scrollToBottom = () => {
+	if(window.innerHeight < 400 )window.scrollTo({
+		top: document.documentElement.scrollHeight,
+		behavior: 'smooth',
+	});
+};
+
+export function format_mask(value, pattern) {
+    let i = 0;
+    const v = value.toString();
+    return pattern.replace(/#/g, _ => v[i++]);
+}
+export function capitalize(text){
+	return(text[0].toUpperCase() + text.substring(1))
+}
+export function time_ago(date){
+	if(!date) return
+	
+	const date_now = Date.now()
+	const date_since = new Date(date)
+	
+	// console.log(date_since)
+	const min_ago = Math.floor((date_now - date_since)/1000/60)
+	const hours_ago = min_ago/60
+	const days_ago = hours_ago/24
+	const months_ago = days_ago/30
+	if(min_ago < 1){
+		return( "Agora")
+	}else if(min_ago < 60){
+		return( "Há " + min_ago +" minuto" + (min_ago>1?"s":"") )
+	}
+	else if(hours_ago < 24){
+		return( "Há " + Math.ceil(hours_ago) + " hora" + (Math.ceil(hours_ago)>1?"s":"") )
+	}
+	else if(days_ago < 30){
+		return( "Há " + Math.floor(days_ago) + " dia" + (Math.floor(days_ago)>1?"s":"") )
+	}
+	else if(months_ago < 12){
+		return( "Há " + Math.floor(months_ago) + " Mês" + (Math.floor(months_ago)>1?"es":"") )
+	}
+	
+}
+
+export function alphabetically(a, b, key) {
+	// Use toUpperCase() to ignore character casing
+	const nameA = a[key].toUpperCase();
+	const nameB = b[key].toUpperCase();
+  
+	let comparison = 0;
+	if (nameA > nameB) {
+	  comparison = 1;
+	} else if (nameA < nameB) {
+	  comparison = -1;
+	}
+	return comparison;
+}
+
+export function openFullscreen(elem) {
+	if (elem.requestFullscreen) {
+		elem.requestFullscreen();
+	} else if (elem.webkitRequestFullscreen) { /* Safari */
+		elem.webkitRequestFullscreen();
+	} else if (elem.msRequestFullscreen) { /* IE11 */
+		elem.msRequestFullscreen();
+	}
 }

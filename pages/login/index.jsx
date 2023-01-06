@@ -24,7 +24,7 @@ export default function Login() {
             setError("")
             setLoading(true)
             await login(emailRef.current.value, passwordRef.current.value).then((user)=>{
-                console.log(user)
+                // console.log(user)
                 router.push('/')
             })
         }catch(error){
@@ -82,11 +82,11 @@ export default function Login() {
                                 <Form onSubmit={handleSubmit}>
                                     <Form.Group id="email">
                                         <Form.Label style={{color:"var(--info)"}} className="m-2">Email</Form.Label>
-                                        <Form.Control className="form-input" type="email" ref={emailRef} required />
+                                        <Form.Control className="form-input" type="email" ref={emailRef} required autoComplete="username"/>
                                     </Form.Group>
                                     <Form.Group id="password">
                                         <Form.Label style={{color:"var(--info)"}} className="m-2">Senha</Form.Label>
-                                        <Form.Control style={{color:"var(--text)", backgroundColor:"var(--surface-d)", borderColor:"var(--info)"}} type="password" ref={passwordRef} required />
+                                        <Form.Control style={{color:"var(--text)", backgroundColor:"var(--surface-d)", borderColor:"var(--info)"}} type="password" ref={passwordRef} required autoComplete="current-password" />
                                     </Form.Group>
                                     <Button
                                         style={{

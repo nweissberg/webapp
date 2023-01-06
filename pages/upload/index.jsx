@@ -157,8 +157,8 @@ export default function Uploader() {
         file.remove = props.onRemove
         // console.log(file)
         return (
-            <div className="flex align-items-center flex-wrap">
-                <div className="flex align-items-center" style={{width: '40%'}}>
+            <div className="flex flex-wrap justify-content-between align-items-center">
+                <div className="flex align-items-center mb-3" style={{width: '40%'}}>
                     {/* <img alt={file.name} role="presentation" src={file.objectURL} width={100} /> */}
                     <i className="pi pi-file p-2"
                         style={{
@@ -171,21 +171,28 @@ export default function Uploader() {
                         <small>{new Date().toLocaleDateString()}</small>
                     </span>
                 </div>
+                <div>
                 <Tag value={props.formatSize} severity="success" className="px-3 py-2 " />
 
-                <ToggleButton 
-                    checked={file.isPublic}
-                    onChange={function(e){
-                        file.isPublic = !file.isPublic
-                        setUpdateRender(!updateRender)
-                    }}
-                    onLabel="Público"
-                    offLabel="Privado"
-                    onIcon="pi pi-users"
-                    offIcon="pi pi-user"
-                    style={{marginLeft:'auto'}}
-                />
-                <Button type="button" icon="pi pi-times" className="p-button-outlined p-button-rounded p-button-danger ml-auto" onClick={() => onTemplateRemove(file, props.onRemove)} />
+                </div>
+                <div>
+                    <ToggleButton 
+                        checked={file.isPublic}
+                        onChange={function(e){
+                            file.isPublic = !file.isPublic
+                            setUpdateRender(!updateRender)
+                        }}
+                        onLabel="Público"
+                        offLabel="Privado"
+                        onIcon="pi pi-users"
+                        offIcon="pi pi-user"
+                        style={{marginLeft:'auto'}}
+                    />
+
+                </div>
+                <div>
+                    <Button type="button" icon="pi pi-times" className="p-button-outlined p-button-rounded p-button-danger ml-auto" onClick={() => onTemplateRemove(file, props.onRemove)} />
+                </div>
             </div>
         )
     }

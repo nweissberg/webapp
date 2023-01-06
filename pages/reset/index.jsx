@@ -16,7 +16,7 @@ import { useAuth } from "../api/auth"
 import { Dropdown } from 'primereact/dropdown';
 import { useRouter } from 'next/router'
 import { add_data, get_data, set_data, del_data} from '../api/firebase';
-import { uid, copyToClipBoard, syntaxHighlight, createId } from '../utils/util';
+import { uid, copyToClipBoard, syntaxHighlight, createId, scrollToTop } from '../utils/util';
 import { Tree } from 'primereact/tree';
 import { ToggleButton } from 'primereact/togglebutton';
 import { Editor } from 'primereact/editor';
@@ -604,7 +604,7 @@ export default function Home() {
                             var _SQL = {...SQL}
                             _SQL.keys = [...keyVars]
                             if(!_SQL.uid || _SQL.uid == '') _SQL.uid = selectedFile
-                            set_data(selectedFile,_SQL).then(()=>{
+                            set_data("query",selectedFile,_SQL).then(()=>{
                               toast.current.show({ severity: 'success', summary: 'Sucesso', detail: "Arquivo atualizado na nuvem!" });
                             })
                           }else{
@@ -859,6 +859,8 @@ export default function Home() {
             <Dialog
               header={`Link para "${fileName}"`}
               visible={linkToAPI}
+              blockScroll={true}
+              onShow={()=>{scrollToTop()}}
               onHide={() => setLinkToAPI(false)}
               style={{
                 width: '100vw',
@@ -968,7 +970,7 @@ export default function Home() {
                         'success'
                       )
                       selectedFiles.map((file_uid)=>{
-                        del_data(file_uid).then(()=>{
+                        del_data("query",file_uid).then(()=>{
                           setReloadFiles(true)
                         })
                       })

@@ -7,84 +7,73 @@ import { api_get } from "../api/connect";
 import ProductSidebar from "./components/product_sidebar";
 import { ProgressBar } from 'primereact/progressbar';
 import localForage from "localforage";
+import { useRouter } from 'next/router'
+import { Button } from "primereact/button";
+import { useSales } from "../contexts/context_sales";
+import { useProducts } from "../../contexts/products_context";
 
 const product_db = localForage.createInstance({
     name:"pilarpapeis_db",
     storeName:'produtos'
+});
+const pedidos_db = localForage.createInstance({
+    name:"pilarpapeis_db",
+    storeName:'pedidos'
 });
 
 export default function SalesPage(){
     var load_products = true
     const [ sale_cart, set_sale_cart] = useState({name:"", items:[]})
     const [ cart_obj, set_cart_obj] = useState(null)
-    const [ products, set_products] = useState(null)
+    // const [ products, set_products] = useState(null)
     const { currentUser } = useAuth()
     const [ selected_item, set_selected_item] = useState(null)
+    const router = useRouter()
+    const [card_face, set_card_face] = useState(true)
+    const {test_context} = useSales()
+    
+    const [loaded_group, set_loaded_group] = useState([0,0,0,0,0])
+    
+    
+
+    const {
+        load_top_products,
+        load_products_group,
+        products,
+        groups,
+        load_local_products,
+        profiles,
+        all_products,
+        load_groups,
+        check_rule
+    } = useProducts()
+
+    // useEffect(()=>{
+    //     console.log(sale_cart)
+    //     window.addEventListener('resize', ()=>{})
+    // },[])
+
+    // useEffect(()=>{
+    //     // console.log(currentUser)
+    //     if(currentUser === null){
+    //         router.push("/login")
+    //     }
+    //     pedidos_db.getItem(currentUser.uid).then((data)=>{
+    //         console.log(data)
+    //         // set_sale_cart(data)
+    //     })
+    // },[currentUser])
 
     useEffect(()=>{
         console.log(sale_cart)
-        window.addEventListener('resize', ()=>{})
+        load_groups()
     },[])
 
-    useEffect(()=>{
-        // console.log(currentUser)
-        // pedidos_db.getItem(currentUser.uid).then((data)=>{
-        //     console.log(data)
-        //     set_sale_cart(data)
-        // })
-    },[currentUser])
+    // useEffect(()=>{
+    //     console.log(groups)
+    // },[groups])
 
-    useEffect(()=>{
-        // console.log(sale_cart)
-    },[sale_cart])
-
-    useEffect(()=>{
-        if(load_products){
-            var _products = []
-            product_db.iterate(function(value) {
-                _products.push(value)
-                // console.log([key, value]);
-            }).then(()=>{
-                if(_products.length > 0) set_products(_products)
-
-                api_get({
-                    credentials: "0pRmGDOkuIbZpFoLnRXB",
-                    keys:[{
-                        key:"Tabela_id",
-                        value:"6",
-                        type:"string"
-                    }],
-                    query:"h0sZNFPNWaR5W8WVDE8r"
-                }).then((data)=>{
-                    // console.log(products)
-                    
-                    var _data = [...data.map((item)=>{
-                        
-                        if(_products.length > 0) _products.forEach(_item => {
-                            if(_item.pid == item.pid){
-                                if(_item.photo != undefined && _item.photo != null){
-                                    if(typeof(_item.photo) == "object"){
-                                        item.photo = _item.photo
-                                    }
-                                    return
-                                }
-                            }
-                        });
-
-                        // if(item.photo != null){
-                        //     item.photo = "data:image/png;base64," + new Buffer.from(item.photo).toString("base64")
-                        // }
-                        product_db.setItem(item.pid.toString(), item);
-                        return(item)
-                    })]
-                    
-                    set_products(_data)
-                })
-            })
-
-            load_products = false
-        }
-    },[])
+    // if(currentUser == null) return(<ProgressBar mode="indeterminate" style={{ height: '6px', marginBottom:"-6px" }}/>)
 
     return(
         <ObjectComponent
@@ -92,137 +81,187 @@ export default function SalesPage(){
             onLoad={(e)=>{
                 document.title = "Vendas"
             }}
-            // header={false}
         >
-            {products == null && <ProgressBar
-                // color="var(--primary-c)"
-                mode="indeterminate"
-                style={{
-                    height: '6px',
-                    marginBottom:"-6px",
-                    position:"relative",
-                    zIndex:10002
-                }}>        
-            </ProgressBar>}
-
-            <div className="flex justify-content-between flex-wrap">
-                
-                <div style={{
-                    position:"absolute",
-                    width:selected_item && window.innerWidth > 500?"70%":"100%",
+                <div className="flex justify-content-between flex-wrap">
                     
-                    // overflow:"hidden"
-                }}>
-                    <SalesCart 
-                        onLoad={(obj)=>{
-                            // console.log(obj)
-                            set_cart_obj(obj)
-                        }}
-                        product_db={product_db}
-                        user={currentUser}
-                        selected={selected_item}
-                        items={products}
-                        sale_cart={sale_cart}
-                        onAddProduct={(item)=>{
-                            var _sale_cart = {...sale_cart}
+                    <div style={{
+                        position:"absolute",
+                        width:selected_item && window.innerWidth > 500?"70%":"100%",
+                        
+                        // overflow:"hidden"
+                    }}>
+                        <SalesCart 
+                            onLoad={(obj)=>{
+                                // console.log(obj)
+                                set_cart_obj(obj)
+                            }}
+                            // show_filters={(event)=>{
+                            //     set_group_filter(true)
+                            // }}
+                            load_products_group={(group_id)=>{
+                                load_top_products(group_id)
+                                return load_products_group(group_id)
+                            }}
+                            groups={groups}
+                            product_db={product_db}
+                            user={currentUser}
+                            selected={selected_item}
+                            items={products}
+                            all_products={all_products}
+                            sale_cart={sale_cart}
+                            check_rule={check_rule}
+                            onAddProduct={(item)=>{
+                                var _sale_cart = {...sale_cart}
 
-                            var isInCart = _sale_cart.items.map((i,index)=>{
-                                if(i.id == item.pid){
-                                    return(index.toString())
+                                var isInCart = _sale_cart.items.map((i,index)=>{
+                                    if(i.id == item.PRODUTO_ID){
+                                        return(index.toString())
+                                    }else{
+                                        return(null)
+                                    }
+                                })
+                                .filter((index)=>{
+                                    if( index !== null ){
+                                        return(index)
+                                    }
+                                })
+
+                                // console.log(isInCart)
+
+                                if(isInCart[0] == null){
+                                    _sale_cart.items.push({
+                                        id:item.PRODUTO_ID,
+                                        // PRODUTO_NOME:item.PRODUTO_NOME,
+                                        data:item,
+                                        quantity:1,
+                                        discount:0.0,
+                                        internal_use:false,
+                                        sale_price:item.PRECO
+                                    })
                                 }else{
-                                    return(null)
+                                    _sale_cart.items[isInCart[0]].quantity += 1
                                 }
-                            })
-                            .filter((index)=>{
-                                if( index !== null ){
-                                    return(index)
-                                }
-                            })
+                                set_sale_cart(_sale_cart)
+                                return(_sale_cart)
+                            }}
 
-                            // console.log(isInCart)
+                            onSubProduct={(item)=>{
+                                var _sale_cart = {...sale_cart}
 
-                            if(isInCart[0] == null){
-                                _sale_cart.items.push({id:item.pid, data:item, quantity:1, discount:0.0, sale_price:item.price})
-                            }else{
-                                _sale_cart.items[isInCart[0]].quantity += 1
-                            }
-                            set_sale_cart(_sale_cart)
-                            return(_sale_cart)
-                        }}
+                                var isInCart = _sale_cart.items.map((i,index)=>{
+                                    if(i.id == item.PRODUTO_ID){
+                                        return(index.toString())
+                                    }else{
+                                        return(null)
+                                    }
+                                })
+                                .filter((index)=>{
+                                    if( index !== null ){
+                                        return(index)
+                                    }
+                                })
 
-                        onSubProduct={(item)=>{
-                            var _sale_cart = {...sale_cart}
+                                // console.log(isInCart)
 
-                            var isInCart = _sale_cart.items.map((i,index)=>{
-                                if(i.id == item.pid){
-                                    return(index.toString())
+                                if(isInCart[0] == null){
+                                    _sale_cart.items.push({
+                                        id:item.PRODUTO_ID,
+                                        data:item,
+                                        quantity:1,
+                                        discount:0.0,
+                                        internal_use:false,
+                                        sale_price:item.PRECO
+                                    })
                                 }else{
-                                    return(null)
+                                    if(_sale_cart.items[isInCart[0]].quantity>1){
+                                        _sale_cart.items[isInCart[0]].quantity -= 1
+                                    }else{
+                                        _sale_cart.items.splice(isInCart[0],1)
+                                    }
                                 }
-                            })
-                            .filter((index)=>{
-                                if( index !== null ){
-                                    return(index)
-                                }
-                            })
-
-                            // console.log(isInCart)
-
-                            if(isInCart[0] == null){
-                                _sale_cart.items.push({id:item.pid, data:item, quantity:1, discount:0.0, sale_price:item.price})
-                            }else{
-                                if(_sale_cart.items[isInCart[0]].quantity>1){
-                                    _sale_cart.items[isInCart[0]].quantity -= 1
-                                }else{
-                                    _sale_cart.items.splice(isInCart[0],1)
-                                }
-                            }
-                            set_sale_cart(_sale_cart)
-                            return(_sale_cart)
-                        }}
-                        updateItem={(_item)=>{
-                            var _products = [...products]
-                            set_products(_products.map((item)=>{
-                                if(item.pid == _item.pid){
-                                    // console.log(_item)
-                                    return(_item)
-                                }else{
-                                    return(item)
-                                }
-                            }))
-                        }}
-                        updateProducts={(_sale_cart)=>{
-                            // console.log(_sale_cart)
-                            set_sale_cart(_sale_cart)
-                        }}
-                        select_item={(item)=>{
-                            // console.log(item)
-                            set_selected_item(item)
-                        }}
-                    />
+                                set_sale_cart(_sale_cart)
+                                return(_sale_cart)
+                            }}
+                            updateItem={(_item)=>{
+                                var _products = [...products]
+                                // set_products(_products.map((item)=>{
+                                //     if(item.PRODUTO_ID == _item.PRODUTO_ID){
+                                //         // console.log(_item)
+                                //         return(_item)
+                                //     }else{
+                                //         return(item)
+                                //     }
+                                // }))
+                            }}
+                            updateProducts={(_sale_cart)=>{
+                                // console.log(_sale_cart)
+                                set_sale_cart(_sale_cart)
+                            }}
+                            select_item={(item)=>{
+                                // console.log(item)
+                                set_selected_item(item)
+                            }}
+                        />
+                    </div>
+                    {selected_item && window.innerWidth > 500 &&
+                        <ProductSidebar
+                            check_rule={check_rule}
+                            user={currentUser}
+                            groups={groups}
+                            item={selected_item}
+                            onHide={(event)=>{set_selected_item(null)}}
+                            item_selected={sale_cart.items.find((cart_item)=>cart_item.id == selected_item.PRODUTO_ID) }
+                            updateProduct={(item)=>{
+                                var _sale_cart = {...sale_cart}
+                                _sale_cart.items = _sale_cart.items.map((i,index)=>{
+                                    if(i.id == item.id){
+                                        i = item
+                                    }
+                                    return(i)
+                                })
+                                // this.updateProducts(_sale_cart)
+                                set_sale_cart(_sale_cart)
+        
+                                // console.log("update",item, item.quantity)
+                            }}
+                        />
+                    }
+                    
                 </div>
-                {selected_item && window.innerWidth > 500 &&
-                    <ProductSidebar
-                    item={selected_item}
-                    onHide={(event)=>{set_selected_item(null)}}
-                />}
-            </div>
 
-            <SalesFooter
-                user={currentUser}
-                sale_cart={sale_cart}
-                updateProducts={()=>{
-                    cart_obj.setState({
-                        search_result:sale_cart.items.map(item=>item.data),
-                        search:""
-                    })
-                }}
-                save_cart={(_sale_cart)=>{
-                    // console.log(_sale_cart)
-                    set_sale_cart(_sale_cart)
-                }}
-            />
-            
+                <SalesFooter
+                    user={currentUser}
+                    sale_cart={sale_cart}
+                    profiles={profiles}
+                    check_rule={check_rule}
+                    send_order={test_context}
+                    updateProducts={()=>{
+                        cart_obj.setState({
+                            show_cart:!cart_obj.state.show_cart,
+                            search_result:sale_cart.items.map(item=>item.data),
+                            search:"",
+                            selected_group:0
+                        })
+                    }}
+                    save_cart={async(_sale_cart)=>{
+                        console.log(_sale_cart)
+                        var _items = _sale_cart.items.map(async(item)=>{
+                            return product_db.getItem(item.id.toString()).then((item_data)=>{
+                                return(item_data)
+                            })
+                        })
+                        await Promise.all(_items).then((data)=>{
+                            console.log(data)
+                            set_sale_cart(data)
+                        })
+                        console.log("Teste")
+                    }}
+                    // showGroups={()=>{
+                    //     cart_obj.setState({search_result:[]})
+                    // }}
+                />
+                
+                
         </ObjectComponent>
     );
 }

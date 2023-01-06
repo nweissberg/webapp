@@ -1,15 +1,24 @@
+import React from "react";
+import localForage from "localforage";
+import { loadItemPhoto } from '../service/sales_service';
 import { Button } from "primereact/button";
 import { Toast } from 'primereact/toast';
-import React from "react";
 import { moneyMask, similarText, normalize } from "../../utils/util";
-import ProductCard from "./product_card";
-import QuantityInput from "./quantity_input";
 import Swal from 'sweetalert2';
+import QuantityInput from "./quantity_input";
 import ProductInfo from "./product_info";
 import ProductSidebar from "./product_sidebar";
-import { loadItemPhoto } from '../service/sales_service';
-import localForage from "localforage";
 import SalesHeader from "./sales_header";
+import ProductCard from "./product_card";
+import { scrollToBottom, scrollToTop } from "../../utils/util";
+import { Tooltip } from 'primereact/tooltip';
+import GroupCard from "./group_card";
+import { Sidebar } from "primereact/sidebar";
+import { deepEqual } from "@firebase/util";
+import FiltersPanel from "./filters_panel";
+import ProductsTable from "../../components/products_table";
+import OrderCard from "../../profile/components/order_card";
+import SalesCartTable from "./sale_cart_table";
 
 const pedidos_db = localForage.createInstance({
     name:"pilarpapeis_db",
@@ -20,66 +29,116 @@ export default class SalesCart extends React.Component {
     constructor(props){
         super(props)
         this.state = {
-            show_cart:false,
-            sale_cart: null,
+            show_cart:false, // Alterna entre carrinho de compra em lista do pedido e busca de materiais
+            sale_cart: null, 
             show_item_info:false,
             item_info:null,
             item_selected:null,
             search:"",
-            search_result:props.items,
+            barcode_item:null,
+            barcode_search:"",
+            search_focus:false,
+            search_result:[],
             scroll_position:0,
-            mobile_info:false
+            mobile_info:false,
+            groups:[],
+            selected_group:0,
+            group_filter:false,
+            active_groups:[...this.props.groups.map((group)=>group.id)],
+            selected_groups:[...this.props.groups],
+            search_field:null,
         }
-    
+        this.scroll_listener = false
+        this.load_on_scroll=30
         this.showSuccess = this.showSuccess.bind(this);
     }
     componentDidMount(){
-        pedidos_db.getItem(this.props.user.uid).then((data)=>{
+        pedidos_db.getItem(this.props.user.uid).then(async(data)=>{
+            console.log(data)
+            
             if(data != null){
-                console.log(data, this.state.sale_cart)
-                this.setState({sale_cart:data},()=>{
-                    this.props.updateProducts(data)
-                    this.setState({search_result:data.items.map((i)=>i.data)})
+                // this.setState({
+                //     show_cart:true,
+                // })
+                var _last_cart = data.drafts.shift()
+                if(!_last_cart) return
+                // console.log(_last_cart, this.state.sale_cart)
+                var promise_buffer =[]
+                await Promise.all(
+                    _last_cart.items.map((item)=>{
+                        return(this.props.product_db
+                            .getItem(item.id.toString())
+                            .then((item_data)=>{
+                                item.data = item_data
+                                promise_buffer.push(item)
+                            })
+                        )
+                    })
+                )
+                if(promise_buffer.length != 0){
+                    this.setState({show_cart:true, search_result:[]})
+                }
+                _last_cart.items = promise_buffer
+                // console.log(_last_cart)
+                
+                this.setState({sale_cart:_last_cart},()=>{
+                    this.updateProducts(_last_cart)
+                    // this.setState({search_result:_last_cart.items.map((i)=>i.data)})
                 })
             }
         })
+        this.setState({selected_groups:this.props.groups})
+        this.updateObject()
+    }
+    componentWillUnmount() {
+        document.getElementById("search_window")?.removeEventListener('scroll', this.listenToScroll)
+        // this.scroll_listener = false
+    }
+    componentDidUpdate(){
+        if(this.props.groups != undefined && deepEqual(this.props.groups,this.state.groups) == false){
+            this.setState({
+                groups:this.props.groups,
+                active_groups:[...this.props.groups.map((group)=>group.id)],
+                selected_groups:[...this.props.groups],
+            })
+        }
+        this.updateObject()
+    }
+    updateObject(){
+        document.getElementById("search_window")?.addEventListener('scroll', this.listenToScroll)
         this.props.onLoad?.(this);
     }
-    // componentDidMount() {
-    //     window.addEventListener('scroll', this.listenToScroll)
-    // }
-    
-    // componentWillUnmount() {
-    //     window.removeEventListener('scroll', this.listenToScroll)
-    // }
-    
-    // listenToScroll = () => {
-    //     const winScroll =
-    //         document.body.scrollTop || document.documentElement.scrollTop
+    listenToScroll = () => {
+        const element_scroll = document.getElementById("search_window")
+        const winScroll = element_scroll.scrollTop
       
-    //     const height =
-    //         document.documentElement.scrollHeight -
-    //         document.documentElement.clientHeight
+        const height =
+            element_scroll.scrollHeight -
+            element_scroll.clientHeight
       
-    //     const scrolled = winScroll / height
+        const scrolled = winScroll / height
       
-    //     this.setState({
-    //         scroll_position: scrolled,
-    //     })
-    //     console.log(scrolled)
-    // }
+        this.setState({
+            scroll_position: scrolled,
+        })
+        // console.log(scrolled, this.state.search_result.length,this.load_on_scroll)
+        if(scrolled > 0.8 && this.state.search_result.length > this.load_on_scroll){
+            this.load_on_scroll += 10
+        }
+    }
 
     showSuccess(item) {
         this.toast.show({
             severity:'success',
             summary: 'Produto removido',
-            detail:item.data.name,
+            detail:item.data.PRODUTO_NOME,
             life: 1500
         });
     }
 
-    updateProducts(sale_cart){
-        this.setState({sale_cart:sale_cart})
+    updateProducts(_sale_cart){
+        this.setState({sale_cart:_sale_cart})
+        this.props.updateProducts(_sale_cart)
     }
     updateCart(item,key){
         if(!item) return
@@ -107,7 +166,7 @@ export default class SalesCart extends React.Component {
         if(removeIndex !== null){
             Swal.fire({
                 title: 'Aviso',
-                text: `Remover o item "${item.data.name}" do carrinho?`,
+                text: `Remover o item "${item.data.PRODUTO_NOME}" do carrinho?`,
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: 'var(--teal-700)',
@@ -116,29 +175,54 @@ export default class SalesCart extends React.Component {
             }).then((result) => {
                 // console.log(this)
                 if (result.isConfirmed) {
-                    this.showSuccess(item)
+                    // this.showSuccess(item)
                     _sale_cart.items.splice(removeIndex,1)
-                    this.setState({sale_cart:_sale_cart})
+                    this.setState({sale_cart:_sale_cart,item_selected:null})
                     this.props.select_item?.(null)
+                    
+                }else{
+                    var _item_selected = {...this.state.item_selected}
+                    _item_selected.quantity = 1
+                    this.setState({item_selected:_item_selected})
                 }
                 this.props.updateProducts(_sale_cart)
             })
         }
     }
-    get_search(){
+    get_search(_search){
+        var search = _search.replace(/^\s+|\s+$|\s+(?=\s)/g, "")
         var _search_result = {}
         if(!this.props.items)return
-
-        var search_array = this.state.search.replace(/^\s+|\s+$|\s+(?=\s)/g, "").split(" ")
+        // console.log(search)
+        var search_array = search.split(" ")
         search_array.map((term, index)=>{
+            this.props.all_products.map((item)=>{
+                if(!item) return
+                if(item.PRODUTO_ID == undefined) return
+                if(item.COD_BARRA.toString().indexOf(term)==0){
+                    // console.log(item)
+                    _search_result[item.PRODUTO_ID] = {data:item, score: search_array.length}
+                }
+            })
             this.props.items.map((item)=>{
-                var name_index = item.name && normalize(item.name).toLowerCase().indexOf(normalize(term).toLowerCase())
-                if (name_index != -1) {
-                    if(_search_result[item.pid]){
-                        _search_result[item.pid].score += 1
-                    }else{
-                        _search_result[item.pid] = {data:item, score: search_array.length - index}
+                if(!item) return
+                if(item.PRODUTO_ID == undefined) return
+                if(item.PRODUTO_ID.toString().indexOf(term)==0){
+                    // console.log(item)
+                    _search_result[item.PRODUTO_ID] = {data:item, score: search_array.length}
+                    if(_search_result[item.PRODUTO_ID]){
+                        _search_result[item.PRODUTO_ID].score += 1
                     }
+                }
+                
+                // 7898174873154 7898174839145
+                var name_index = item.PRODUTO_NOME && normalize(item.PRODUTO_NOME).toLowerCase().indexOf(normalize(term).toLowerCase())
+                if (name_index != -1) {
+                    _search_result[item.PRODUTO_ID] = {data:item, score: search_array.length - index}
+                    if(normalize(item.PRODUTO_NOME).toLowerCase().indexOf(normalize(search).toLowerCase()) != -1){
+                        _search_result[item.PRODUTO_ID].score += 1
+                    }
+                
                 }
             })
         })
@@ -163,27 +247,253 @@ export default class SalesCart extends React.Component {
     render(){
         return(
             <div>
-                {this.state.mobile_info == true &&
-                <div >
-                    <ProductSidebar style={{
-                        position:"absolute",
+                <Tooltip target=".scan_barcode"/>
+                {/* {this.state.mobile_info == true && */}
+                <Sidebar
+                    blockScroll
+                    style={{
+                        width:"100%",
                         maxWidth:"500px",
-                        width:"100vw",
-                        height:"100vh",
-                        zIndex:5,
-                        backgroundColor:"var(--glass-b)",
-                        backdropFilter:"blur(20px)",
+                        background:"#0000"
                     }}
-                    item={this.state.item_info}
-                    onHide={(event)=>{this.setState({mobile_info:false})}}
-                    />
-                </div>
-                }
+                    position="right"
+                    showCloseIcon={false}
+                    visible={this.state.mobile_info}
+                    onHide={(event)=>{
+                        this.setState({
+                            mobile_info:false,
+                            // item_info:null
+                        })
+                    }}
+                >
+                    <div >
+                        <ProductSidebar style={{
+                            // position:"absolute",
+                            paddingTop:"30px",
+                            // maxWidth:"500px",
+                            top:"0px",
+                            width:"100%",
+                            // height:"100vh",
+                            // zIndex:5,
+                            backgroundColor:"var(--glass-b)",
+                            backdropFilter:"blur(20px)",
+                        }}
+                        user={this.props.user}
+                        check_rule={this.props.check_rule}
+                        sidebar={window.innerWidth<500}
+                        groups={this.props.groups}
+                        anim={false}
+                        close={false}
+                        item={this.state.item_info}
+                        item_selected={this.state.item_selected}
+                        onHide={(event)=>{
+                            this.setState({
+                                mobile_info:false,
+                                // item_info:null
+                            })
+                        }}
+                        removeItem={(item)=>{
+                            this.removeItem(item)
+                            this.setState({show_item_info:false})
+                        }}
+                        updateProduct={(item)=>{
+                            var _sale_cart = {...this.state.sale_cart}
+                            if(!_sale_cart.items) return
+                            _sale_cart.items = _sale_cart.items.map((i,index)=>{
+                                if(i.id == item.id){
+                                    i = item
+                                }
+                                return(i)
+                            })
+                            this.updateProducts(_sale_cart)
+    
+                            // console.log("update",item, item.quantity)
+                        }}
+                        onAddProduct={(event)=>{
+                            const new_product = this.props.onAddProduct(event)
+                            console.log(new_product)
+                            // this.updateProducts()
+                            // this.updateProducts(new_product)
+                            this.setState({item_selected:{
+                                id:event.PRODUTO_ID,
+                                data:event,
+                                quantity:1,
+                                discount:0.0,
+                                internal_use:false,
+                                sale_price:event.PRECO
+                            }})
+                        }}
+                        />
+                    </div>
+                </Sidebar>
+                
                 <Toast ref={(el) => this.toast = el} position='bottom-left'/>
                 
-                <SalesHeader />
+                <SalesHeader
+                    user_uid={this.props.user.uid}
+                    sale={this.props.sale}
+                    sale_cart={this.props.sale_cart}
+                    show_cart={this.state.show_cart}
+                    show_filters={(event)=>{this.setState({group_filter:true})}}
+                    items={this.props.items}
+                    all_products={this.props.all_products}
+                    search_result={this.state.search_result}
+                    group={this.state.selected_group}
+                    onLoad={(obj)=>{
+                        this.setState({search_field:obj})
+                    }}
+                    addItemToCart={(_item)=>{
+                        if(!_item) _item = this.state.search_result[0]
+                        
+                        this.updateProducts(this.props.onAddProduct(_item))
+                    }}
+                    set_search={(value)=>{
+                        
+                        // console.log(value)
+                        if(!value){
+                            value = this.props.items
+                            //Mostra os grupos se search_result == []
+                        scrollToBottom()
+                        this.setState({search_result:value, show_cart:false})
+                        }else{
+                            console.log("teste")
+                            this.setState({
+                                show_cart:false,
+                                item_info: null,
+                                search:"",
+                                search_result:[],
+                                selected_group:0
+                            })
+                        }
+                        
+                    }}
+                    get_search={(value)=>{
+                        scrollToBottom()
+                        this.get_search(value)
+                    }}
+                    toggle_cart={(event)=>{
+                        this.props.select_item?.(null)
+                        this.setState({
+                            show_cart:!this.state.show_cart,
+                            item_info: null,
+                            search:"",
+                            search_result:[],
+                            selected_group:0
+                        })
+                    }}
+                    search_focus={(event)=>{
+                        if(event.target.value == ""){
+                            // this.setState({search_result:[]})
+                            this.load_on_scroll = 20
+                        }
+                        this.setState({search_focus:true})
+                        scrollToBottom()
+                    }}
+                    search_blur={(event)=>{
+                        // console.log(event)
+                        if(event.target.value == ""){
+                            // this.setState({search_result:[]})
+                            this.load_on_scroll = 20
+                        }
+                        this.setState({search_focus:false})
 
-                {!this.state.show_cart && <div className="flex justify-content-start flex-wrap row-gap-2 column-gap-2"
+                    }}
+                    updateProducts={(_sale_cart)=>{
+                        if(_sale_cart){
+                            this.updateProducts(_sale_cart)
+                        }else{
+                            this.setState({
+                                show_cart:false,
+                                search_result:this.state.sale_cart.items.map(item=>item.data),
+                                search:"",
+                                selected_group:0
+                            })
+                        }
+                    }}
+                    onAddProduct={(event)=>{
+                        const new_product = this.props.onAddProduct(event)
+                        console.log(new_product)
+                        // this.updateProducts()
+                        // this.updateProducts(new_product)
+                        this.setState({item_selected:{
+                            id:event.PRODUTO_ID,
+                            data:event,
+                            quantity:1,
+                            discount:0.0,
+                            internal_use:false,
+                            sale_price:event.PRECO
+                        }})
+                    }}
+                    show_item={(item)=>{
+                        // this.props.select_item?.(item)
+                        
+                        this.setState({
+                            item_info:item,
+                            mobile_info:true
+                        })
+                    }}
+                />
+
+                
+                {!this.state.show_cart &&  <div className="flex justify-content-center align-items-cente" style={{
+                    position:"absolute",
+                    width:"100wv",
+                    height:"100vh",
+                    backgroundColor:this.state.search_focus || this.state.search_result?.length > 0?"var(--glass-b)":"",
+                    backdropFilter:this.state.search_focus  || this.state.search_result?.length > 0?"blur(10px)":"",
+                    transition:"all 0.5s",
+                    zIndex:-2
+                }}>
+                    <div className="enter_bottom_anim flex justify-content-center align-items-center"
+                    style={{
+                        // position:"absolute",
+                        // top:"100%",
+                        width:"100%",
+                        height:"100%"
+                    }}>
+                        
+                        {this.state.search_result?.length == 0 && 
+                            <div id="" style={{
+                                position:"absolute",
+                                // top:"50vh",
+                                left:"10px",
+                                // transform:"translateY(-220px)",
+                                zIndex:3,
+                                width:"100vw",
+                                height:"100%",
+                                // maxWidth:""
+                                // maxHeight:"90vw",
+                                // overflow:"hidden",
+                                overflow:"scroll"
+                            }}>
+                                <div className={window.innerWidth > 1300?"horizontal-scroll-wrapper":"vertical-scroll-wrapper"}>
+                                    {this.state.selected_groups.map((group,group_index)=>{
+                                        if(this.state.selected_group.id == group.id) return(<></>)
+                                        return(
+                                            <div key={group_index} style={{marginBottom:"20px"}}>
+                                                <GroupCard 
+                                                    load_products_group={this.props.load_products_group}
+                                                    group={group}
+                                                    searchGroup={(data)=>{
+                                                        // console.log(data)
+                                                        this.setState({
+                                                            selected_group:group,
+                                                            search_result:data,
+                                                            scroll_position:0
+                                                        })
+                                                    }}
+                                                />
+                                            </div>
+                                        )
+                                    })
+                                }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>}
+
+                {!this.state.show_cart && <div id="search_window" className="flex justify-content-start flex-wrap row-gap-2 column-gap-2"
                     style={{
                         overflow:"scroll",
                         maxHeight:window.innerWidth>960?"calc(100vh - 110px)":"100vh",
@@ -198,15 +508,19 @@ export default class SalesCart extends React.Component {
                         paddingBottom:(window.innerWidth < 500? "140px" :"90px")
                     }}
                     >
-                    { this.state.search_result && this.state.search_result.slice(0,40).map((item,index)=>{
+                    { this.state.search_result && this.state.search_result.slice(0,this.load_on_scroll).map((item,index)=>{
                         var quantity = 0
+                        var discount = 0.0
                         if(this.state.sale_cart !== null) this.state.sale_cart.items.map((i)=>{
-                            if(i.data.pid == item.pid){
+                            if(i.data?.PRODUTO_ID == item?.PRODUTO_ID){
                                 quantity = i.quantity
+                                discount = i.discount
+                                // console.log(i)
                             }
                         })
                         return(<ProductCard key={index}
                             item={item}
+                            discount={discount}
                             quantity={quantity}
                             onAddProduct={(event)=>{
                                 this.updateProducts(this.props.onAddProduct(event))
@@ -214,15 +528,25 @@ export default class SalesCart extends React.Component {
                             onSubProduct={(event)=>{
                                 this.updateProducts(this.props.onSubProduct(event))
                             }}
-                            onClick={(_item)=>{
-                                // console.log(_item)
-                                // this.props.select_item?.(_item)
-                            }}
+                            // onClick={(_item)=>{
+                            //     console.log(_item)
+                            //     // this.props.select_item?.(_item)
+                            // }}
                             show_mobile_info={(_item)=>{
-                                console.log(_item)
+                                var _selected_item = null
+                                if(this.state.sale_cart !== null) this.state.sale_cart.items.map((i)=>{
+                                    if(i.data?.PRODUTO_ID == item?.PRODUTO_ID){
+                                        // quantity = i.quantity
+                                        // discount = i.discount
+                                        // console.log(i)
+                                        _selected_item=i
+                                    }
+                                })
+                                // console.log(_item,_selected_item)
 
                                 this.setState({
-                                    item_info:_item
+                                    item_info:_item,
+                                    item_selected:_selected_item
                                 },(()=>{
                                     this.setState({mobile_info:true})
                                 }))
@@ -230,261 +554,78 @@ export default class SalesCart extends React.Component {
                                 // this.props.select_item?.(_item)
                                 // this.setState({item_info:{_item}},()=>{this.setState({mobile_info:true})})
                             }}
-                            onLoad={(obj)=>{
-                                console.log(obj)
-                            }}
-                            // onLeaveViewport={() => console.log('leave ' + item.name)}
-                            onEnterViewport={() => {
-                                // console.log('enter ' + item.photo)
-                                if(!item.photo){
-                                    loadItemPhoto(item,(item_data)=>{
-                                        console.log(item_data)
-                                        var _search_result = [...this.state.search_result]
-                                        this.setState({search_result:_search_result.map((item_old)=>{
-                                            if(item_old.pid == item_data.pid){
-                                                return(item_data)
-                                            }else{
-                                                return(item_old)
-                                            }
-                                        })})
-                                        this.props.updateItem(item_data)
-                                    })
-                                }
-                            }}
-                            loadPhoto={(obj)=>{
-                                // console.log(obj.state.photo)
-                                loadItemPhoto(item,((item_data)=>{
-                                    console.log(item_data)
-                                    var _search_result = [...this.state.search_result]
-                                    this.setState({search_result:_search_result.map((item_old)=>{
-                                        if(item_old.pid == item_data.pid){
-                                            return(item_data)
-                                        }else{
-                                            return(item_old)
-                                        }
-                                    })})
-                                    this.props.updateItem(item_data)
-                                }))
-                            }}
+                            // onLoad={(obj)=>{
+                            //     console.log(obj)
+                            // }}
+                            // onLeaveViewport={() => console.log('leave ' + item.PRODUTO_NOME)}
+                            // onEnterViewport={() => {
+                                
+                            //     // console.log('enter ' + item.photo)
+                            //     if(!item.photo){
+                            //         loadItemPhoto(item,(item_data)=>{
+                            //             // console.log(item_data)
+                            //             var _search_result = [...this.state.search_result]
+                            //             this.setState({search_result:_search_result.map((item_old)=>{
+                            //                 if(item_old.PRODUTO_ID == item_id){
+                            //                     return(item_data)
+                            //                 }else{
+                            //                     return(item_old)
+                            //                 }
+                            //             })})
+                            //             this.props.updateItem(item_data)
+                            //         })
+                            //     }
+                                
+                            // }}
+                            // loadPhoto={(obj)=>{
+                            //     if(obj.state.timeout == null){
+                            //         loadItemPhoto(item,((item_data)=>{
+                            //             // console.log(item_data)
+                            //             var _search_result = [...this.state.search_result]
+                            //             this.setState({search_result:_search_result.map((item_old)=>{
+                            //                 if(item_old.PRODUTO_ID == item_id){
+                            //                     return(item_data)
+                            //                 }else{
+                            //                     return(item_old)
+                            //                 }
+                            //             })})
+                            //             this.props.updateItem(item_data)
+                            //         }))
+                            //     }
+                            
+                            // }}
                         />)  
                     })}
                     
                 </div>}
 
-                <div>
-                {this.state.show_cart && 
-                    <div style={{
-                        width:'100%',
-                        top:"50px",
-                        paddingTop:"55px",
-                        paddingBottom:"85px",
-                        overflowX:"hidden",
-                        height:window.innerWidth>960?"calc(100vh - 110px)":"100vh",
-                    }}>
-                        {this.state.sale_cart?.items.map((item,index)=>{
-                            return(
-                            <div key={index} className="flex flex-row product_line"
-                                style={{
-                                    // outline: "5px solid red",
-                                    outlineOffset: "-2px",
-                                    outline:this.props.selected?.pid === item.data.pid?"2px solid var(--primary-c)":"none"
-                                }}
-                                onClick={(event)=>{
-                                    // console.log("SELECT ITEM: ",item.data.name)
-                                    if(this.state.item_selected == null || this.state.item_selected.id != item.id){
-                                        this.setState({
-                                            item_info:item.data,
-                                            item_selected:item
-                                        })
-                                        this.props.select_item?.(item.data)
-                                    }
-                                }}
-                                // onTouchStart={(event)=>{
-                                //     for (let i = 0; i < event.targetTouches.length; i++) {
-                                //         this.setState({
-                                //             item_info:item.data,
-                                //             item_selected:item
-                                //         })
-                                //         console.log(`targetTouches[${i}].force = ${event.targetTouches[i].force}`);
-                                //     }
-                                // }}
-                            >
-                                <div style={{
-                                    textAlign:"center",
-                                    marginTop:"auto",
-                                    marginBottom:"auto"
-                                }}>
-                                    <QuantityInput
-                                        item={item}
-                                        value={item.quantity}
-                                        onAdd={()=>{
-                                            var _sale_cart = {...this.state.sale_cart}
-                                            _sale_cart.items[index].quantity += 1 
-                                            this.props.updateProducts(_sale_cart)
-                                        }}
-                                        onSub={()=>{
-                                            if(item.quantity > 1){
-                                                var _sale_cart = {...this.state.sale_cart}
-                                                _sale_cart.items[index].quantity -= 1
-                                                this.props.updateProducts(_sale_cart)
-                                            }else{
-                                                // console.log(item)
-                                                this.removeItem(item,index)
-                                            }
-                                        }}
-                                    />
-                                </div>
-
-                                <div style={{
-                                    // whiteSpace:"nowrap",
-                                    // overflow:"scroll",
-                                    width:"100%",
-                                    minWidth:"100px",
-                                    justifyContent:"center",
-                                    marginTop:"auto",
-                                    marginBottom:"auto",
-                                    marginLeft:"10px"
-                                }}>
-                                    {item.data.name}
-                                </div>
-                                {item.discount > 0 && <>
-                                <div className="hide_on_mobile" style={{
-                                    color:"var(--text-c)",
-                                    whiteSpace:"nowrap",
-                                    textAlign:"center",
-                                    marginTop:"auto",
-                                    marginBottom:"auto",
-                                    fontSize:"15px",
-                                    marginRight:"10px"
-                                    }}>
-                                    {moneyMask(item.sale_price * item.quantity)}
-                                </div>
-                                 <div className="hide_on_mobile"
-                                style={{
-                                    textAlign:"center",
-                                    marginTop:"auto",
-                                    marginBottom:"auto",
-                                    fontSize:"15px",
-                                    color:"var(--alert)"
-                                }}>-{Math.round(item.discount)}%</div>
-                                </>}
-                                <div style={{
-                                    fontSize:"20px",
-                                    whiteSpace:"nowrap",
-                                    justifyContent:"center",
-                                    textAlign:"center",
-                                    marginTop:"auto",
-                                    marginBottom:"auto",
-                                    marginInline:"10px",
-                                }}>
-                                    {item.discount > 0 && <div
-                                        className="show_on_mobile"
-                                        style={{
-                                            textAlign:"right",
-                                            fontSize:"15px",
-                                            color:"var(--text-c)"
-                                        }}>
-                                        {moneyMask(item.sale_price* item.quantity)}
-                                    <div className="show_on_mobile"
-                                        style={{
-                                            textAlign:"right",
-                                            marginTop:"auto",
-                                            marginBottom:"auto",
-                                            fontSize:"15px",
-                                            color:"var(--alert)"
-                                        }}>
-                                            -{Math.round(item.discount)}%
-                                    </div>
-                                    </div>}
-                                    {moneyMask((item.sale_price-(item.sale_price*(item.discount/100))) * item.quantity)}
-                                </div>
-                                <div className="hide_on_phone" 
-                                    style={{
-                                        textAlign:"center",
-                                        marginTop:"auto",
-                                        marginBottom:"auto",
-                                        width:"30px"
-                                    }}>
-                                    <Button
-                                        icon="pi pi-pencil"
-                                        className="p-button-text p-button-secondary p-button-rounded"
-                                        onClick={(event)=>{
-                                            // console.log(item)
-                                            this.setState({
-                                                item_info:item
-                                                
-                                            },(()=>{
-                                                this.setState({show_item_info:true})
-                                                // console.log(this.state.item_info)
-                                            }))
-                                        }}
-                                    />
-                                </div>
-
-                                {this.state.show_cart && window.innerWidth < 500  && this.state.item_selected?.id == item.id &&
-                                    <div style={{
-                                        top:"0px",
-                                        left:"0px",
-                                        position:"absolute",
-                                        height:"100%",
-                                        width:"100%",
-                                        backgroundColor:"var(--glass-b)",
-                                        // backdropFilter: "blur(5px)",
-                                    }}>
-                                        <Button className="flex align-items-center justify-content-center flex-wrap gap-4"
-                                            style={{
-                                                width:"100%",
-                                                height:"100%",
-                                                backgroundColor:"#0000",
-                                                border:"2px solid var(--primary-c)"
-                                            }}
-                                            onClick={(event)=>{
-                                                // console.log(event)
-                                                this.setState({item_selected:null})
-                                            }}
-                                        >
-                                            <Button
-                                                style={{
-                                                    backgroundColor:"var(--primary-c)",
-                                                    border:"1px solid white"
-                                                }}
-                                                // disabled={this.state.item_info==null?true:false}
-                                                className="p-button-rounded p-button-secondary"
-                                                label="Editar"
-                                                icon="pi pi-pencil"
-                                                onClick={(event)=>{
-                                                    // console.log(item)
-                                                    event.stopPropagation()
-                                                    this.props.select_item?.(item)
-                                                    this.setState({show_item_info:true})
-                                                }}
-                                            />
-                                            <Button
-                                                style={{
-                                                    backgroundColor:"var(--primary-c)",
-                                                    border:"1px solid white"
-                                                }}
-                                                // disabled={this.state.item_info==null?true:false}
-                                                className="p-button-rounded p-button-secondary"
-                                                label="Detalhes"
-                                                icon="pi pi-eye"
-                                                iconPos="right"
-                                                onClick={(event)=>{
-                                                    event.stopPropagation()
-                                                    this.setState({mobile_info:true})
-                                                }}
-                                            />
-                                        </Button>
-                                        
-                                    </div>
-                                    }
-                            </div>)
-                        })}
-                        <div className="show_on_mobile" style={{paddingBottom:"65px"}}></div>
-                    </div>
-                    }
-                </div>
-                {this.state.mobile_info == false && this.state.show_item_info && <ProductInfo
+                
+                
+                {this.state.show_cart &&
+                    <SalesCartTable
+                        sale_cart={this.state.sale_cart}
+                        onAddProduct={(event)=>{
+                            this.updateProducts(this.props.onAddProduct(event))
+                        }}
+                        onSubProduct={(event)=>{
+                            this.updateProducts(this.props.onSubProduct(event))
+                        }}
+                        onUpdateProduct={(event)=>{
+                            this.updateProducts(event)
+                        }}
+                        onShowInfo={(event)=>{
+                            // console.log(event)
+                            this.setState({
+                                item_selected:event,
+                                item_info:event.data,
+                                mobile_info:true
+                            })
+                        }}
+                    />
+                }
+                
+                {/* {this.state.mobile_info == false && this.state.show_item_info &&
+                <ProductInfo
                     show={this.state.show_item_info}
                     item={this.state.item_selected}
                     removeItem={(item)=>{
@@ -504,12 +645,49 @@ export default class SalesCart extends React.Component {
                             }
                             return(i)
                         })
-                        this.props.updateProducts(_sale_cart)
+                        this.updateProducts(_sale_cart)
 
                         console.log("update",item, item.quantity)
                     }}
-                />}
+                />} */}
                 
+                <FiltersPanel 
+                    items={this.state.search_result.length > 0 ? this.state.search_result : this.props.items}
+                    visible={this.state.group_filter}
+                    onHide={(event)=>{
+                        this.setState({group_filter:false})
+                    }}
+                    
+                    selected_group={this.state.selected_group}
+                    active_groups={this.state.active_groups}
+                    groups={this.props.groups}
+                    onChangeGroups={(event) => {
+                        console.log(event.value, this.props.groups)
+                        var _selected_groups = this.props.groups.filter((group)=>{
+                            if(event.value.indexOf(group.id) != -1){
+                                return(group)
+                            }
+                        })
+                        
+                        this.setState({
+                            item_info: null,
+                            search:"",
+                            selected_group:0,
+                            show_cart:false,
+                            search_result:[],
+                            selected_groups:_selected_groups,
+                            active_groups:event.value
+                        })
+                        this.props.select_item?.(null)
+                    }}
+                    set_filter_search={(filtered_items)=>{
+                        if(filtered_items.length > 0){
+                            this.setState({search_result:filtered_items})
+                        }else{
+                            this.setState({search_result:[]})
+                        }
+                    }}
+                />
             </div>
         )
     }

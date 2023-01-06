@@ -5,6 +5,12 @@ import { Button } from "primereact/button";
 import { moneyMask } from "../../utils/util";
 import { InputNumber } from 'primereact/inputnumber';
 import { InputTextarea } from 'primereact/inputtextarea';
+import localForage from "localforage";
+
+const photos_db = localForage.createInstance({
+    name:"pilarpapeis_db",
+    storeName:'fotografias'
+});
 
 export default class ProductInfo extends Component{
     constructor(props){
@@ -21,8 +27,34 @@ export default class ProductInfo extends Component{
         this.props?.onHide(this.state.item)
     }
     render(){
+        if(this.props.item.data?.photo_uid && this.state.photo == null){
+            photos_db.getItem(this.props.item.data.photo_uid).then((photo_data)=>{
+                if(photo_data){
+                    const _photo ="data:image/png;base64," + new Buffer.from(photo_data.img_buffer).toString("base64")
+                    // console.log(photo_data)
+                    this.setState({photo:_photo})
+                }
+                // api_get({
+                //     credentials:"0pRmGDOkuIbZpFoLnRXB",
+                //     keys:[{
+                //         key: "Produto_ID",
+                //         type:"STRING",
+                //         value: this.props.item.data.PRODUTO_ID
+                //     }],
+                //     query:"7q4Wx2SmYerjTirTQPK0"
+                // }).then((data)=>{
+                //     console.log(data)
+                // })
+            })
+        }
+        
+        if(this.state.item.data?.PRODUTO_ID != this.props.item.data?.PRODUTO_ID ){
+            this.setState({photo:null,item:this.props.item.data})
+        }
+        if(!this.props.item.data)return(<></>)
         return(
             <Dialog
+                draggable={false}
                 onKeyDown={(event)=>{
                     if(event.keyCode == 13){
                         this.setState({canClose:true})
@@ -31,7 +63,11 @@ export default class ProductInfo extends Component{
                         }
                     }
                 }}
-                header={this.state.item?.data.name}
+                header={
+                    <div>
+                        {this.state.item?.data.PRODUTO_NOME}
+                    </div>
+                }
                 footer={
                     <div className="flex justify-content-between" style={{marginTop:"10px", width:"100%"}}>
                         <Button
@@ -43,9 +79,9 @@ export default class ProductInfo extends Component{
                             }}
                         />
                         <Button
-                            icon="pi pi-send"
+                            icon="pi pi-check"
                             className="p-button-outlined p-button-sm"
-                            label="Enviar para aprovação"
+                            label="Salvar Alteração"
                             onClick={(event)=>{
                                 this.setItem();
                             }}
@@ -66,7 +102,7 @@ export default class ProductInfo extends Component{
                 }}>
                     <div className="show_on_mobile" style={{textAlign:"center"}}>
                         <img alt="Product Card"
-                            src={this.props.item?.data.photo.img?  this.props.item?.data.photo.img: "images/sem_foto.jpg"}
+                            src={this.state.photo? this.state.photo : `images/grupos/${this.props.item.data.ID_CATEGORIA}_null.jpg`}
                             onError={(e) => e.target.src='images/sem_foto.jpg'}
                             style={{
                                 width:'50vw',
@@ -75,7 +111,7 @@ export default class ProductInfo extends Component{
                                 marginBottom:"10px"
                             }}
                         />
-                        {/* <p>{this.props.item?.data.name}</p> */}
+                        {/* <p>{this.props.item?.data.PRODUTO_NOME}</p> */}
                         
                     </div>
                     <div style={{display:"flex"}}>
@@ -86,7 +122,7 @@ export default class ProductInfo extends Component{
                                 marginBottom:"auto",
                             }}>
                             <img alt="Product Photo"
-                                src={this.props.item?.data.photo.img?  this.props.item?.data.photo.img: "images/sem_foto.jpg"}
+                                src={this.state.photo? this.state.photo : `images/grupos/${this.props.item.data.ID_CATEGORIA}_null.jpg`}
                                 onError={(e) => e.target.src='images/sem_foto.jpg'}
                                 style={{
                                     width:'50vw',
@@ -96,9 +132,38 @@ export default class ProductInfo extends Component{
                                 }}
                             />
                         </div>
-                        {/* <p>{this.props.item?.data.name}</p> */}
-                        <div className="p-fluid grid formgrid">
-                            <div className="field sm:col-12 md:col-6 lg:col-3">
+                        {/* <p>{this.props.item?.data.PRODUTO_NOME}</p> */}
+                        <div className="flex p-fluid grid formgrid">
+
+                            <div className="flex-grow-1 field sm:col-6 md:col-3 lg:col-3">
+                                <label>Preço</label>
+                                    <InputNumber
+                                        prefix="R$ "
+                                        value={Math.round((this.state.item?.data.PRECO-(this.state.item?.data.PRECO*(this.state.item?.discount/100)))*100)/100}
+                                        min={0}
+                                        max={this.state.item?.data.PRECO}
+                                        onChange={(event)=>{
+                                            var setPrice = event.value
+                                            var _item = this.state.item
+                                            if(this.state.interval) clearInterval(this.state.interval)
+                                            this.setState({
+                                                interval: setInterval(()=>{
+                                                    if(setPrice > _item.data.PRECO) setPrice = _item.data.PRECO
+                                                    _item.discount = 100 - ((setPrice*100)/this.state.item?.data.PRECO)
+                                                    clearInterval(this.state.interval)
+                                                    this.setState({item: _item, interval:null},()=>{
+                                                        if(this.state.canClose == true){
+                                                            this.setItem(this.state.item)
+                                                        }
+                                                    })
+                                                },500)
+                                            })
+                                        }}
+                                    />
+                                
+                            </div>
+
+                            <div className="flex-grow-1 field sm:col-6 md:col-3 lg:col-3">
                                 <label>Quantidade</label>
                                 <InputNumber
                                     // mode="decimal"
@@ -119,10 +184,12 @@ export default class ProductInfo extends Component{
                                 />
                             </div>
 
-                            <div className="field sm:col-12 md:col-6 lg:col-3">
+                            <div className="flex-grow-1 field sm:col-6 md:col-3 lg:col-3">
                                 <label>Desconto</label> {this.state.item?.discount>0 && <i style={{color:"var(--error)", cursor:"pointer"}} className="pi pi-times mr-2" onClick={(event)=>{ var _item = this.state.item; _item.discount = 0; this.setState({item:_item})}}/>}
                                 <InputNumber
-                                    
+                                    style={{
+                                        width:"content-max"
+                                    }}
                                     value={this.state.item?.discount}
                                     suffix="%"
                                     min={0}
@@ -140,39 +207,15 @@ export default class ProductInfo extends Component{
                                 />
                             </div>
                             
-                            <div className="field sm:col-12 md:col-6 lg:col-3">
-                                <label>Preço</label>
-                                <InputNumber
-                                    prefix="R$ "
-                                    value={Math.round((this.state.item?.sale_price-(this.state.item?.sale_price*(this.state.item?.discount/100)))*100)/100}
-                                    min={0}
-                                    max={this.state.item?.sale_price}
-                                    onChange={(event)=>{
-                                        var setPrice = event.value
-                                        var _item = this.state.item
-                                        if(this.state.interval) clearInterval(this.state.interval)
-                                        this.setState({
-                                            interval: setInterval(()=>{
-                                                if(setPrice > _item.data.price) setPrice = _item.data.price
-                                                _item.discount = 100 - ((setPrice*100)/this.state.item?.data.price)
-                                                clearInterval(this.state.interval)
-                                                this.setState({item: _item, interval:null},()=>{
-                                                    if(this.state.canClose == true){
-                                                        this.setItem(this.state.item)
-                                                    }
-                                                })
-                                            },500)
-                                        })
-                                    }}
-                                />
-                            </div>
-                            
-                            <div className="field sm:col-12 md:col-6 lg:col-3">
+                            <div className="flex-grow-1 field sm:col-12 md:col-3 lg:col-3" style={{
+                                whiteSpace:"nowrap",
+                                overflowX:"scroll"
+                            }}>
                                 <label>Total</label>
-                                <InputText value={moneyMask((this.state.item?.sale_price-(this.state.item?.sale_price*(this.state.item?.discount/100))) * this.state.item?.quantity)} disabled/>
+                                <h3>{moneyMask((this.state.item?.data.PRECO-(this.state.item?.data.PRECO*(this.state.item?.discount/100))) * this.state.item?.quantity)}</h3>
                             </div>
-                            
-                            <div className="col-12">
+
+                            <div className="field col-12">
                                 <label>Comentário</label>
                                 <InputTextarea/>
                             </div>

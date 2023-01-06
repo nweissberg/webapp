@@ -1,3 +1,4 @@
+import { deepEqual } from '@firebase/util';
 import axios from 'axios';
 
 const api = axios.create({
@@ -53,20 +54,29 @@ const api_call = ((body)=>{
     })
   })
 })
-
+var api_buffer = []
 const api_get = ((body, headers)=>{
-  // console.log(headers)
+  // console.log(api_buffer)
+  
+  var isLoading = api_buffer.find((requested)=>deepEqual(body,requested))
+  
+  
   return new Promise(function(res, rej) {
-    api.post("/api/query", body, headers)
+    if(isLoading) { return(null) }
+    
+    api_buffer.push(body)
+    api_cloud.post("/api/query", body, headers)
     .then((data) => {
       if(data){
-        console.log('LOCAL')
+        console.log('CLOUD')
+        api_buffer = api_buffer.filter((request)=>deepEqual(request,body) == false)
         res(data)
       }else{
-        api_cloud.post("/api/query", body, headers)
+        api.post("/api/query", body, headers)
         .then((data) => {
           if(data){
-            console.log('CLOUD')
+            console.log('LOCAL')
+            api_buffer = api_buffer.filter((request)=>deepEqual(request,body) == false)
             res(data)
           }else{
             res(null)
@@ -80,6 +90,8 @@ const api_get = ((body, headers)=>{
       rej(null)
       console.log(error)
     })
+  },function (error){
+    return(null)
   })
 })
 

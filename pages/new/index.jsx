@@ -14,7 +14,7 @@ export default function NewPage(){
         <ObjectComponent
             user={currentUser}
             onLoad={(e)=>{
-                document.title = "Arquivos"
+                document.title = "Novo"
             }}
         >
 
