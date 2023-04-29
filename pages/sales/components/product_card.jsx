@@ -1,16 +1,8 @@
 import React from "react";
 import { Button } from 'primereact/button';
-import { isDeepEqual, moneyMask, scrollToBottom } from "../../utils/util";
+import { moneyMask, scrollToBottom } from "../../utils/util";
 import { Badge } from 'primereact/badge';
-import { api_get } from "../../api/connect";
-import handleViewport from 'react-in-viewport';
-import { ProgressSpinner } from 'primereact/progressspinner';
-import localForage from "localforage";
-
-const photos_db = localForage.createInstance({
-    name:"pilarpapeis_db",
-    storeName:'fotografias'
-});
+import ProductIcon from "../../profile/components/product_photo";
 
 class ProductCard extends React.Component {
     constructor(props){
@@ -18,84 +10,27 @@ class ProductCard extends React.Component {
         this.state={
             addToSale:false,
             interval:null,
-            photo:null,
             item:this.props.item,
             view_state:'hidden',
-            show_math:true
+            show_math:true,
+            show_date:false
         }
-        // this.timeout = null
-        // this.wrapper = React.createRef();
-    }
-    componentDidUpdate(){
-        // const { inViewport } = this.props;
-        // if(this.timeout != null && inViewport == false){
-        //     // console.log(this.timeout)
-        //     clearTimeout(this.timeout)
-        //     this.timeout = null
-        // }
     }
 
-    componentWillUnmount() {
-        // if (this.timeout) {
-        //     clearTimeout(this.timeout)
-        // }
-    }
-    // componentDidMount(){
-        
-        // }
-    componentDidCatch(){
-        console.log("DID catch")
-        this.setState({item:null,photo:null})   
-    }
+    // componentDidCatch(){
+    //     console.log("DID catch")
+    //     // this.setState({item:null,photo:null})   
+    // }
+
     render(){
 
-        // const { inViewport } = this.props;
-        // if(inViewport && this.state.item?.PRODUTO_ID != this.props.item?.PRODUTO_ID ){
-        //     this.setState({item:this.props.item},()=>{
-        //         if(this.timeout == null){
-        //             this.timeout = setTimeout(function() {
-        //                 this.props.loadPhoto(this)
-        //                 this.timeout = null
-        //             }.bind(this), 1000)
-        //         }
-        //     })
-        //     // this.setState({item:this.props.item})
-        // }
-
-        // const { inViewport } = this.props;
-        if(this.props.item?.photo_uid && this.state.photo == null){
-            photos_db.getItem(this.props.item.photo_uid).then((photo_data)=>{
-                if(photo_data){
-                    const _photo ="data:image/png;base64," + new Buffer.from(photo_data.img_buffer).toString("base64")
-                    // console.log(photo_data)
-                    this.setState({photo:_photo})
-                }
-            })
-        }
-        
-        if(this.state.item?.PRODUTO_ID != this.props.item?.PRODUTO_ID ){
-            this.setState({photo:null,item:this.props.item})
-            // this.setState({item:this.props.item},()=>{
-            //     if(this.props.item.photo_uid != undefined){
-            //         photos_db.getItem(this.props.item.photo_uid).then((photo_data)=>{
-            //             const _photo ="data:image/png;base64," + new Buffer.from(photo_data.img_buffer).toString("base64")
-            //             // console.log(photo_data)
-            //             this.setState({photo:_photo})
-            //         })
-            //     }
-            // })
-        
-            // this.setState({item:this.props.item})
-        }
-        
-        // var item = this.props.item
         return(
             
-            <div>
+            <div className="flex-grow-1 p-1 col max-w-15rem min-w-12 sm:col-6 md:col-3 lg:col-3 xl:col-2 pointer-events-all ">
                 <div style={{
-                    width:"40vw",
-                    maxWidth:"170px",
-                    minWidth:"130px",
+                    // width:"10rem",
+                    // maxWidth:"min-content",
+                    // minWidth:"130px",
                     height:"270px",
                     background:"var(--card)",
                     borderRadius:"5px",
@@ -103,10 +38,9 @@ class ProductCard extends React.Component {
                     pointerEvents:this.state.addToSale?"none":"all",
                     textAlign:"center",
                     cursor:"pointer",
-                    marginBottom:"5px",
-                    paddingBottom:"10px",
+                    marginBottom:"10px",
+                    // paddingBottom:"10px",
                 }}
-                
                 // Show Card Actions
                 onClick={(event)=>{
                     // console.log(this.props.item)
@@ -136,7 +70,7 @@ class ProductCard extends React.Component {
                     if(this.state.view_state == 'hover'){
                         // console.log(event)
                         // event.stopPropagation()
-                        scrollToBottom()
+                        // scrollToBottom()
                         // this.props.show_mobile_info?.(this.state.item)
                         // this.props.onClick?.(this.state.item)
                         if(this.state.interval) clearInterval(this.state.interval)
@@ -149,7 +83,7 @@ class ProductCard extends React.Component {
                             addToSale:true,
                             view_state:"hover"
                         })
-                        scrollToBottom()
+                        // scrollToBottom()
                         // this.setState({addToSale:!this.state.addToSale})
                         // this.props.onClick?.(this.state.item)
                         if(this.state.interval) clearInterval(this.state.interval)
@@ -180,7 +114,7 @@ class ProductCard extends React.Component {
                         width:"100%",
                         height:"100%",
                         // marginBottom:"-140%",
-                        zIndex:10000
+                        zIndex:1000
                     }}>
                     </div>
                             <Button 
@@ -203,7 +137,7 @@ class ProductCard extends React.Component {
                                     if(this.state.view_state == 'hidden' || (this.state.view_state == 'hover' && window.innerWidth > 500)){
                                         // console.log(event)
                                         event.stopPropagation()
-                                        scrollToBottom()
+                                        // scrollToBottom()
                                         this.props.show_mobile_info?.(this.props.item)
                                         // this.props.onClick?.(this.state.item)
                                         this.setState({view_state:'actions'})
@@ -221,7 +155,7 @@ class ProductCard extends React.Component {
                                     icon={this.props.quantity == 1?"pi pi-times":"pi pi-minus"}
                                     onClick={(event)=>{
                                         event.stopPropagation()
-                                        event.preventDefault()
+                                        // event.preventDefault()
                                         this.props.onSubProduct?.(this.props.item)
                                     }}
                                     style={{minWidth:"50px"}}
@@ -233,7 +167,7 @@ class ProductCard extends React.Component {
                                     label={this.props.quantity>0?"":"Vender"}
                                     onClick={(event)=>{
                                         event.stopPropagation()
-                                        event.preventDefault()
+                                        // event.preventDefault()
                                         // console.log(this.state.item)
                                         this.props.onAddProduct?.(this.props.item)
                                         // this.setState({addToSale:false})
@@ -280,31 +214,14 @@ class ProductCard extends React.Component {
                                 value={this.props.quantity}
                                 // severity="warning"
                             />}
-                        <img alt="Product Card"
-                            src={this.state.photo? this.state.photo : `images/grupos/${this.props.item?.ID_CATEGORIA}_null.jpg`}
-                            onError={(e) => e.target.src='images/sem_foto.jpg'}
-                            style={{
-                                position:"relative",
-                                zIndex:0,
-                                width:'100%'
-                            }}
-                        />
+                        <div className="">
+                            <ProductIcon bg={true} item={this.props.item.PRODUTO_ID} size="10"/>
+                        </div>
+                        
                         
                     </div>
-                    <div style={{
-                        display: "table-cell",
-                        verticalAlign: "middle",
-                        // padding: "10% 0",
-                        height:"100px"
-                    }}>
-                        <h6 style={{
-                            position:"relative",
-                            zIndex:2,
-                            color:"black",
-                            fontSize:"13px",
-                            margin:"10px",
-                            textAlign:"left"
-                        }}>
+                    <div className="flex align-items-center">
+                        <h6 className="white-space-normal text-black p-1 text-sm z-2">
                             {this.props.item?.PRODUTO_NOME}
                         </h6>
                     </div>
@@ -319,47 +236,94 @@ class ProductCard extends React.Component {
                         <h5>{moneyMask(this.state.item.price)}</h5>
                     </div> */}
                 </div>
-                
-                <div style={{
-                    alignItems:"center",
-                    // position:"absolute",
-                    color:"white",
-                    // width:"100%",
-                    // bottom:"-10px",
-                    // backgroundColor:"#333",
-                    textAlign:"center"
-                }}>
-                    
-                    <h5 className={this.props.discount > 0.0? "price-tag-discount":this.props.quantity <= 1?"price-tag":"price-tag-multiple"}
-                        style={{
-                            // backgroundColor:this.props.quantity <= 1?"var(--primary-b)":"var(--primary-c)",
-                            // backdropFilter: "blur(5px)",
-                            // width:"70%",
-                            // marginLeft:"5px",
-                            zIndex:2,
-                            position:"relative",
-                            paddingInline:"10px",
-                            borderRadius:"10px",
-                            paddingBottom:"3px"
-                        }}
-                        onClick={(event)=>{
-                            if(this.props.quantity > 1 || this.props.discount > 0.0) this.setState({show_math:!this.state.show_math})
-                        }}
-                    >
-                        {this.state.show_math && (this.props.quantity > 1 || this.props.discount > 0.0) &&
-                            <div style={{paddingTop:"3px"}}>
-                                {this.props.discount > 0.0 && <div className="flex justify-content-between">
-                                    <h6 style={{color:"var(--text-c)"}}>{moneyMask(this.props.item?.PRECO)}</h6>
-                                    <h6 style={{color:"var(--warn)"}}> - {Math.round(this.props.discount)}%</h6>                                
-                                </div>}
-                                {this.props.quantity > 1 && <div className="flex justify-content-between">
-                                    <h6 style={{color:"var(--text)"}}>{moneyMask(this.props.item?.PRECO-(this.props.item?.PRECO*(this.props.discount/100)))}</h6>
-                                    <h6 style={{color:"var(--success)"}}> x {this.props.quantity} {this.props.item.ABREVIATURA.toLowerCase()}</h6>                                
-                                </div>}
-                            </div>
-                        }
-                        {this.props.quantity == 0 ? moneyMask(this.props.item?.PRECO) : moneyMask((this.props.item?.PRECO-(this.props.item?.PRECO*(this.props.discount/100))) * this.props.quantity)}
-                    </h5>
+                <div>
+                    {this.props.item?.PRECO_VENDA && <div style={{
+                        alignItems:"center",
+                        // position:"absolute",
+                        color:"white",
+                        width:"100%",
+                        // bottom:"-10px",
+                        // backgroundColor:"#333",
+                        textAlign:"center"
+                        
+                    }}>
+                        
+                        <h6 className={(()=>{
+                            if(this.props.item?.PRECO_VENDA > this.props.item?.PRECO){
+                                return "price-tag-sale-positive"
+                            }else if(this.props.item?.PRECO_VENDA == this.props.item?.PRECO){
+                                return "price-tag-sale"
+                            }else{
+                                return "price-tag-sale-negative"
+                            }
+
+                        })()}
+                            style={{
+                                // backgroundColor:this.props.quantity <= 1?"var(--primary-b)":"var(--primary-c)",
+                                // backdropFilter: "blur(5px)",
+                                // width:"70%",
+                                // marginLeft:"5px",
+                                zIndex:2,
+                                position:"relative",
+                                paddingInline:"10px",
+                                borderRadius:"10px",
+                                paddingBottom:"3px"
+                            }}
+                            onClick={(event)=>{
+                                this.setState({show_date:!this.state.show_date})
+                            }}
+                        >
+                            {this.state.show_date &&
+                                <div>
+                                    {this.props.item?.date.toLocaleDateString()}
+                                </div>
+                            }
+                            {moneyMask(this.props.item?.PRECO_VENDA)}
+                        </h6>
+                    </div>}
+
+                    <div className="flex " style={{
+                        alignItems:"center",
+                        // position:"absolute",
+                        color:"white",
+                        // width:"max-content",
+                        // bottom:"-10px",
+                        // backgroundColor:"#333",
+                        paddingBottom:"5px",
+                        textAlign:"center"
+                    }}>
+                        
+                        <h6 className={'w-full '+(this.props.discount > 0.0? "price-tag-discount":this.props.quantity <= 1?"price-tag":"price-tag-multiple")}
+                            style={{
+                                // backgroundColor:this.props.quantity <= 1?"var(--primary-b)":"var(--primary-c)",
+                                // backdropFilter: "blur(5px)",
+                                // width:"100%",
+                                // marginLeft:"5px",
+                                zIndex:2,
+                                position:"relative",
+                                paddingInline:"10px",
+                                borderRadius:"10px",
+                                paddingBottom:"3px"
+                            }}
+                            onClick={(event)=>{
+                                if(this.props.quantity > 1 || this.props.discount > 0.0) this.setState({show_math:!this.state.show_math})
+                            }}
+                        >
+                            {this.state.show_math && (this.props.quantity > 1 || this.props.discount > 0.0) &&
+                                <div style={{paddingTop:"3px"}}>
+                                    {this.props.discount > 0.0 && <div className="flex flex-wrap justify-content-between">
+                                        <h6 style={{color:"var(--text-c)"}}>{moneyMask(this.props.item?.PRECO)}</h6>
+                                        <h6 style={{color:"var(--warn)"}}> - {Math.round(this.props.discount)}%</h6>                                
+                                    </div>}
+                                    {this.props.quantity > 1 && <div className="flex flex-wrap justify-content-between">
+                                        <h6 style={{color:"var(--text)"}}>{moneyMask(this.props.item?.PRECO-(this.props.item?.PRECO*(this.props.discount/100)))}</h6>
+                                        <h6 style={{color:"var(--success)"}}> x {this.props.quantity} {this.props.item.ABREVIATURA.toLowerCase()}</h6>                                
+                                    </div>}
+                                </div>
+                            }
+                            {this.props.quantity == 0 ? moneyMask(this.props.item?.PRECO) : moneyMask((this.props.item?.PRECO-(this.props.item?.PRECO*(this.props.discount/100))) * this.props.quantity)}
+                        </h6>
+                    </div>
                 </div>
                 {this.props.addToSale && <div style={{
                     zIndex:1,

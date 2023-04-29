@@ -2,7 +2,7 @@ import React, { useRef, useState, useEffect } from "react"
 import ObjectComponent from "../components/object";
 import { useAuth } from "../api/auth"
 
-export default function NewPage(){
+export default function NewPage(props){
     
     const { currentUser } = useAuth()
     
@@ -17,7 +17,7 @@ export default function NewPage(){
                 document.title = "Novo"
             }}
         >
-
+            {props.children}
         </ObjectComponent>
     );
 }

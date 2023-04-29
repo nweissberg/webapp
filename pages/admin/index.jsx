@@ -30,26 +30,10 @@ import UserIcon from "../components/user_icon";
 import { useSales } from "../contexts/context_sales";
 import CronActionsPage from "./components/cron_actions";
 
-
-const produtos_db = localForage.createInstance({
-    name:"pilarpapeis_db",
-    storeName:'produtos'
-});
-
-const photos_db = localForage.createInstance({
-    name:"pilarpapeis_db",
-    storeName:'fotografias'
-});
-
-var seller_db = localForage.createInstance({
+var vendedores_db = localForage.createInstance({
     name:"pilarpapeis_db",
     storeName:'vendedores'
 });
-const clientes_db = localForage.createInstance({
-    name:"pilarpapeis_db",
-    storeName:'clientes'
-});
-
 
 export default function AdminPage(){
     const [ users, set_users ] = useState([])
@@ -276,25 +260,6 @@ export default function AdminPage(){
 
     useEffect(()=>{
         console.log(items[activeIndex].label)
-        // if(all_products[0] != undefined){
-        //     var filters = {}
-        //     Object.keys(all_products?.[0]).map((col,i) => {
-        //         filters[col] = {value:'',matchMode: FilterMatchMode.STARTS_WITH}
-        //     })
-        //     // console.log(filters)
-        //     set_products_filters(filters)
-        // }
-        // const run = ()=>{
-        //     const scrollContainer = document.getElementsByClassName("p-datatable-wrapper")[0]//.querySelector("#products_datatable")
-        //     if(!scrollContainer) return
-            
-        //     scrollContainer.addEventListener("wheel", event => {
-        //         // console.log(event.deltaY, scrollContainer.childNodes[0])
-        //         event.preventDefault();
-        //         scrollContainer.scrollLeft += event.deltaY;
-        //     })
-        // }
-        // return run
     },[activeIndex])
 
     useEffect(()=>{
@@ -324,7 +289,7 @@ export default function AdminPage(){
                         user.orders = user_orders_data
                     }
                 })
-                await seller_db.getItem(user.email).then((seller)=>{
+                await vendedores_db.getItem(user.email).then((seller)=>{
                     if(seller){
                         user.rp_user = seller
                         data[key] = user
@@ -429,7 +394,7 @@ export default function AdminPage(){
                         }}/>
                         <Column field="name" header="Nome" sortable></Column>
                         <Column field="email" header="E-Mail"></Column>
-                        {/* <Column field="rp_user.EMRPES_NOME" header="Empresa"></Column> */}
+                        <Column field="rp_user.EMRPES_NOME" header="Empresa"></Column>
                         <Column field="orders.length" header="Orçamentos" sortable body={(row_data)=>{
                                 if(row_data.orders && row_data.orders.length > 0){
                                     return(<div className="flex justify-content-center">
@@ -483,6 +448,7 @@ export default function AdminPage(){
                         <Column field="role" header="Perfil" sortable
                             editor={(options) => userProfileEditor(options)}
                             body={(row_data)=>{
+                                if(!profiles)return(<></>)
                                 return(profiles[row_data.role][row_data.photo[0]])
                             }}
                         ></Column>
@@ -504,7 +470,24 @@ export default function AdminPage(){
                             {
                                 icon:"pi pi-clock",
                                 header:"Ações Agendadas",
-                                body:<CronActionsPage/>
+                                body:<CronActionsPage 
+                                    onSave={()=>{
+                                        toastTL.current.show({
+                                            severity: 'success',
+                                            summary: 'Sucesso',
+                                            detail: 'Ação foi agendada na nuvem.',
+                                            life: 3000
+                                        });
+                                    }}
+                                    onUpdate={(action)=>{
+                                        toastTL.current.show({
+                                            severity: 'info',
+                                            summary: 'Sucesso',
+                                            detail: 'Ação foi atualizada.',
+                                            life: 3000
+                                        });
+                                    }}
+                                />
                             },
                             {
                                 icon:"pi pi-cog",

@@ -49,8 +49,8 @@ const BarcodeScanner = (props) => {
                 //         setPhoto(_photo)
                 //     }
                 //     // console.log(_item)
-                //     setItem(_item)
                 // })
+                setItem(_item)
                 setBarcode("")
                 stopScanner(true);
                 setIsStart(false);
@@ -160,28 +160,17 @@ const BarcodeScanner = (props) => {
             if(stop == true) quagga.stop();
         };
         
-        return <div style={{
-            position:isStart?"fixed":"relative",
-            top:"0px",
-            left:"0px"
-        }}>
+        return <div className='flex w-full h-full'>
         {isStart == false && 
             <Button 
-                // className="scan_barcode"
-                // className='p-button-outlined'
-                // tooltip="Scanear código de barra"
-                
-                label={window.innerWidth > 650? "Scanear Etiqueta": ""}
+                className="sm:icon-only p-button-glass-dark border-none"
+                label="Scanear"//{window.innerWidth > 650? "Scanear Etiqueta": ""}
                 icon="pi pi-camera"
                 iconPos='right'
                 // tooltipOptions={{ position: 'top', mouseTrack: true, mouseTrackTop: 15 }}
                 tooltipOptions={{ position: 'right' }}
                 onClick={() => setIsStart(prevStart => !prevStart)}
-                style={{
-                    color:"var(--text)",
-                    background:"var(--glass)",
-                    border:"0px"
-                }}
+                
             />
         }
         {/* <img alt="Product Card"

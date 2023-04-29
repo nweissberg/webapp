@@ -2,35 +2,29 @@ import React, { useRef, useState, useEffect } from "react"
 import ObjectComponent from "../components/object";
 import { useAuth } from "../api/auth"
 import { Button } from "primereact/button";
-import { auth, get_data, readRealtimeData, writeRealtimeData } from '../api/firebase';
+import { auth, get_data, readUsers , readRealtimeData, writeRealtimeData, readUser } from '../api/firebase';
 import { signOut } from "firebase/auth";
 import { useRouter } from 'next/router'
 import { ProgressBar } from "primereact/progressbar";
-import { deepEqual, format_mask, scrollToBottom, scrollToTop, swap_array } from "../utils/util";
-import { Calendar } from 'primereact/calendar';
+import { copyToClipBoard, deepEqual, format_mask, scrollToBottom, scrollToTop, swap_array, time_ago } from "../utils/util";
 import { DataTable } from "primereact/datatable";
 import { Column } from 'primereact/column';
 import localForage from "localforage";
-import OrderCard from "./components/order_card";
 import Swal from 'sweetalert2';
 import { Toast } from 'primereact/toast';
 import FlipCard from "../components/flip_card";
 import ProfileInfo from "./components/profile_info";
-import { Timeline } from 'primereact/timeline';
-import { api_get } from "../api/connect";
 import { FilterMatchMode, FilterOperator } from 'primereact/api';
 import { useProducts } from "../../contexts/products_context";
 import OrderCarousel from "./components/orders_carousel";
 import { useSales } from "../contexts/context_sales";
+import UserSearch from "./components/user_search";
+import ClientsDatatable from "./components/clients_datatable";
+import { Inplace, InplaceDisplay, InplaceContent } from 'primereact/inplace';
 
 const produtos_db = localForage.createInstance({
     name:"pilarpapeis_db",
     storeName:'produtos'
-});
-
-const photos_db = localForage.createInstance({
-    name:"pilarpapeis_db",
-    storeName:'fotografias'
 });
 
 const pedidos_db = localForage.createInstance({
@@ -57,20 +51,40 @@ export default function ProfilePage(){
     const [dates, set_dates] = useState([])
     const [drafts, set_drafts] = useState([])
     const [orders, set_orders] = useState([])
-    const [selected_times, set_selected_times] = useState(null)
+    const [selected_user, set_selected_user] = useState(null)
+    const [find_user, set_find_user] = useState(null)
     const [edit_profile, set_edit_profile] = useState(false)
     const [display_filters, set_display_filters] = useState(false)
-    const [clients, set_clients] = useState([])
+    const [clients_filtered, set_clients_filtered] = useState([])
     const [loading_data, set_loading_data] = useState(false)
     const {test_context,actions} = useSales()
-    
+    const [call_dialog, set_call_dialog] = useState(false)
+    const [ all_users, set_all_users ] = useState([])
+    const overlay_panel = useRef(null);
+    const [user_position, set_user_position] = useState(null)
+
     const { asPath } = useRouter();
 
-    const { check_rule } = useProducts()
+    const { check_rule, get_clients, clients, load_products_client } = useProducts()
 
     useEffect(()=>{
-        const hash = asPath.split('#')[1];
-        console.log("View user "+ hash)
+        const path = asPath.split('=')
+        const hash = path[0].split('#');
+        const user = hash[1];
+        if(user != undefined) {
+            get_clients(selected_user)
+            if(selected_user) set_selected_user(null)
+            set_find_user(user)
+            switch (path[1]) {
+                case "orders":
+                    set_tab_index(tab_index => 2.2)
+                    load_user_orders(user)
+                    break;
+            
+                default:
+                    break;
+            }
+        }
     }, [ asPath ]);
 
     const showSuccess = (name) => {
@@ -83,55 +97,83 @@ export default function ProfilePage(){
     }
     
     useEffect(()=>{
-        if(!currentUser) return
-        pedidos_db.getItem(currentUser.uid).then( async (data)=>{
-            // console.log(data)
-            if(data == null) return
-            data.drafts = data.drafts.filter(cart=>cart.name!="")
-            
-            // console.log(data.drafts)
-
-            pedidos_db.setItem(currentUser.uid,data)
-            if(data){
-                // update_draft(data)
-
-                var _drafts = []
-                var get_data_items = []
-                _drafts = data.drafts.map((draft)=>{
-                    draft.items.map(async (item)=>{
-                        // console.log(item.id)
-                        get_data_items.push( await produtos_db.getItem(item.id.toString()).then((item_data)=>{
-                            // console.log(item_data.photo_uid)
-                            if(item_data.photo_uid){
-                                photos_db.getItem(item_data.photo_uid).then((photo_data)=>{
-                                    // console.log(photo_data)
-                                    const _photo ="data:image/png;base64," + new Buffer.from(photo_data.img_buffer).toString("base64")
-                                    item_data.photo = _photo
-                                })
-                            }else{
-                                item_data.photo = `images/grupos/${item_data.ID_CATEGORIA}_null.jpg`
-                            }
-                            item.data = item_data
-                        }))
-                        return item
-                    })
-                    // console.log(draft)
-                    return(draft)
-                })
-                await Promise.all(get_data_items).then(()=>{
-                    // set_drafts(_drafts)
-                    
-                })
-                // console.log(drafts)
-
-                set_drafts(_drafts)
-                
-           
+        if(currentUser == null) return
+        if(selected_user == null) {
+            if(!find_user) {
+                set_selected_user(currentUser);
+                return
             }
-            // router.push("/sales")
-        })
-    },[currentUser])
+            readUser(find_user).then((user_data)=>{
+                // console.log(user_data)
+                set_selected_user(user_data);
+            })
+            return
+        }else{
+            readUsers().then(async(data)=>{
+                if(!data)return
+                // console.log(data)
+                set_all_users(Object.values(data))
+            })
     
+            pedidos_db.getItem(selected_user.uid).then( async (data)=>{
+                // console.log(data)
+                if(data == null) return
+                data.drafts = data.drafts.filter(cart=>cart.name!="")
+                
+                // console.log(data.drafts)
+    
+                pedidos_db.setItem(selected_user.uid,data)
+                if(data){
+                    set_drafts(data.drafts)
+               
+                }
+                // router.push("/sales")
+            })
+
+        }
+        
+    },[currentUser,selected_user,find_user])
+    
+    async function load_user_orders(user_uid){
+        var _orders = []
+        var items_data = []
+        var load_data = []
+
+        await get_data("orders",user_uid).then( (oreder_data)=>{
+            oreder_data.forEach((order)=>{
+                load_data.push(order.data())
+            })
+        })
+        // console.log(load_data)
+        // set_loading_data(false)
+
+        load_data = load_data.map( async (order_data)=>{
+            // console.log(order_data)
+            items_data = order_data.items.map(async(item)=>{
+                await produtos_db.getItem(item.id.toString())
+                .then((item_data)=>{
+                    if(!item_data) return item
+                    item.data = item_data
+                    return item
+                })
+            })
+            
+            await Promise.all(items_data).then(()=>{
+                const client = clients.find(c=>c.id == order_data.client)
+                if(client){
+                    order_data.client = client
+                    order_data.key = order_data.uid
+                }
+                _orders.push(order_data)
+            })
+        })
+        
+        await Promise.all(load_data).then(()=>{
+            // console.log(_orders)
+            set_orders(_orders)
+            set_loading_data(false)
+        })
+    }
     useEffect(()=>{
         // console.log(drafts)
         // set_tab_index(tab_index => 2.1)
@@ -148,111 +190,12 @@ export default function ProfilePage(){
         //     draft.items = _items
         //     return draft
         // }))
-        // writeRealtimeData(`drafts/${currentUser.uid}/`,drafts)
+        // writeRealtimeData(`drafts/${selected_user.uid}/`,drafts)
     },[drafts])
 
-    function getClients(){
-        set_loading_data(true)
-        var _clients = []
-        clientes_db.iterate(function(value) {
-            _clients.push(value)
-            // console.log(value);
-        }).then(()=>{
-            if(_clients.length > 0){
-                set_clients(_clients)
-                set_loading_data(false)
-            }
-            console.log(currentUser)
-            if(check_rule(currentUser,"VER_TODOS_CLIENTES")){
-                api_get({
-                    credentials: "0pRmGDOkuIbZpFoLnRXB",
-                    keys:[],
-                    query:"xdZdlNzfMUMk45U06pGv"
-                }).then((data)=>{
-                    if(data == null) return
     
-                    var _data = [...data.map((item)=>{
-                        clientes_db.setItem(item.id.toString(), item);
-                        return(item)
-                    })]
-                    
-                    set_clients(_data)
-                    set_loading_data(false)
-                })
-            }else{
-                api_get({
-                    credentials: "0pRmGDOkuIbZpFoLnRXB",
-                    keys:[{
-                        value: currentUser.uid.toString(),
-                        type: "INT",
-                        key: "ID_VENDEDOR"
-                    }],
-                    query:"wXnycP1KKeIRT9T7sLYE"
-                }).then((data)=>{
-                    if(data == null) return
+
     
-                    var _data = [...data.map((item)=>{
-                        clientes_db.setItem(item.id.toString(), item);
-                        return(item)
-                    })]
-                    
-                    set_clients(_data)
-                    set_loading_data(false)
-                })
-            }
-            
-
-        })
-    }
-
-    function actionHeader(rowData){
-        return(
-        <Button
-            className="p-button-rounded p-button-secondary p-button-outlined"
-            label={display_filters?"Fechar":"Buscar"}
-            icon={display_filters?"pi pi-times":"pi pi-search"}
-            onClick={(event)=>{
-                set_display_filters(!display_filters)
-                scrollToBottom()
-            }}
-        />)
-    }
-
-    function actionBody(rowData) {
-        const tooltip_options = {
-            position: 'right',
-            mouseTrack: true,
-            mouseTrackLeft: 15
-        }
-        return (
-            <div className="flex flex-wrap justify-content-center flex-grow-1 gap-2">
-                {/* <Button
-                    icon="pi pi-file-edit"
-                    className="p-button-outlined p-button-rounded p-button-info"
-                    tooltip='Vincular Rascunho'
-                    tooltipOptions={tooltip_options}
-                    // onClick={() => this.confirmDeleteProduct(rowData)}
-                /> */}
-                <Button
-                    icon="pi pi-file-edit"
-                    className="p-button-outlined p-button-rounded p-button-success"
-                    tooltip='Novo Chamado'
-                    tooltipOptions={tooltip_options}
-                    onClick={() => {
-                        console.log(rowData)
-                    }}
-                />
-                <Button
-                    icon="pi pi-shopping-cart"
-                    className="p-button-outlined p-button-rounded p-button-warning"
-                    tooltip='Criar Orçamento'
-                    tooltipOptions={tooltip_options}
-                    // onClick={() => this.confirmDeleteProduct(rowData)}
-                />
-                
-            </div>
-        );
-    }
 
     const tooltip_options = {
         position: 'top',
@@ -306,16 +249,16 @@ export default function ProfilePage(){
     }
 
     useEffect(()=>{
-        // console.log(currentUser)
         if(currentUser === null){
             router.push('/login')
             return
         }
-        roles_db.getItem(currentUser.role.toString())
-        .then((user_role)=>{set_user_profile(user_role[currentUser.photo[0]])})
+        if(selected_user == null)return
+        roles_db.getItem(selected_user.role.toString())
+        .then((user_role)=>{set_user_profile(user_role[selected_user.photo[0]])})
 
         
-    },[currentUser])
+    },[selected_user])
 
     // useEffect(()=>{
     //     console.log(drafts)
@@ -359,16 +302,65 @@ export default function ProfilePage(){
         // console.log(date_array)
         return(date_array)
     }
-    if(currentUser == null) return(<ProgressBar mode="indeterminate" style={{ height: '6px', marginBottom:"-6px" }}/>)
+
+    function testOnChange(data){
+        // console.log(data)
+        set_clients_filtered(data)
+    }
+
+    if(currentUser == null || selected_user == null) return(<ProgressBar mode="indeterminate" style={{ height: '6px', marginBottom:"-6px" }}/>)
+    var isActiveUser = currentUser.uid == selected_user.uid
     return(
         <ObjectComponent
             user={currentUser}
             onLoad={(e)=>{
+                set_user_position(e.state.position)
                 document.title = "Perfil"
             }}
+            // onScroll={(position)=>{
+            //     if(!position)return
+            //     set_user_position(position)
+            //     // console.log(position.scroll.y)
+            // }}
         >
+            <div className={"header_search flex w-full z-1 p-2 justify-content-center align-items-center "+ (user_position?.scroll.y >90?"bg-white-alpha-40 bg":"")}
+            style={{
+                position:user_position?.scroll.y >90?"fixed":"absolute",
+                top:user_position?.scroll.y >90?"0px":"90px",
+                // top:"0px"
+            }}>
+                {user_position?.scroll.y >90 && <img src='/images/logo_b.svg' alt={"logo"} style={{ left:"10px", height:"60px", position:"fixed" }}/>}
+                <div className="flex m-2" >
+                    <Inplace closable>
+                        <InplaceDisplay className="inline-flex align-content-center">
+                            <Button className={"p-button-sm p-3 p-button-rounded p-button-outlined " + (user_position?.scroll.y >90?"bg bg-black-alpha-50 ":"bg-white-alpha-30 text-purple-900 bg")}
+                                icon="pi pi-search"
+                                // label="Pesquisar..."
+                            />
+                        </InplaceDisplay>
+                        <InplaceContent className="inline-flex align-items-center">
+                            <div className="w-full max-w-30rem">
+                                <UserSearch
+                                    all_users={all_users}
+                                    currentUser={currentUser}
+                                    onChange={(data)=>{
+                                        if(!data)return
+                                        console.log(data)
+                                        router.push('/profile#'+data.uid+'=orders')
+                                        set_orders([])
+                                        set_drafts([])
+                                        set_selected_user(data)
+                                    }}
+                                />
+                            </div>
+                        </InplaceContent>
+                    </Inplace>
+                </div>
+                {/* <Button /> */}
+            </div>
+
             <ProfileInfo
-                user={currentUser}
+                user={selected_user}
                 show={edit_profile}
                 onHide={(event)=>{
                     set_edit_profile(false)
@@ -378,6 +370,8 @@ export default function ProfilePage(){
                     updateUser(_user)
                 }}
             />
+            
+            
 
             <Toast ref={toast} position="bottom-right" />
             <div style={{
@@ -393,7 +387,7 @@ export default function ProfilePage(){
                     height:"30vh",
                     overflow:"hidden"
                 }}>
-                    <img  src={`images/background/bg_${currentUser.banner}.jpeg`}
+                    <img  src={`images/background/bg_${selected_user.banner}.jpeg`}
                         alt="User Banner"
                         style={{
                             width:"100%",
@@ -436,7 +430,7 @@ export default function ProfilePage(){
                                     height:"160px",
                                     borderRadius:"5px"
                                 }} 
-                                front={<img src={`images/avatar/${currentUser.photo}.jpg`}
+                                front={<img src={`images/avatar/${selected_user.photo}.jpg`}
                                     alt="User Photo"
                                     style={{
                                         width:"100%"
@@ -444,7 +438,39 @@ export default function ProfilePage(){
                                 />}
                                 back={
                                     <div className="flex justify-content-center flex-wrap">
-                                        <Button
+
+                                        {!isActiveUser && <Button
+                                            // label="Editar"
+                                            tooltip="Addicionar"
+                                            tooltipOptions={tooltip_options}
+                                            style={{width:"50px",height:"50px"}}
+                                            className="p-button-lg p-button-rounded m-2 flex-grow-1 p-button-success"
+                                            icon="pi pi-user-plus"
+                                            onClick={(event)=>{
+                                                // test_context("test_action",{Numero:81})
+                                                // test_context("send_order",{Telefone:"81",Mensagem:"'Teste de disparo pelo botão de editar o perfil'"})
+                                                // event.stopPropagation()
+                                                // scrollToTop()
+                                                // set_edit_profile(true)
+                                            }}
+                                        />}
+
+                                        {!isActiveUser && <Button
+                                            // label="Editar"
+                                            tooltip="Mensagem"
+                                            tooltipOptions={tooltip_options}
+                                            style={{width:"50px",height:"50px"}}
+                                            className="p-button-lg p-button-rounded m-2 flex-grow-1 p-button-help"
+                                            icon="pi pi-comments"
+                                            onClick={(event)=>{
+                                                // test_context("test_action",{Numero:81})
+                                                // test_context("send_order",{Telefone:"81",Mensagem:"'Teste de disparo pelo botão de editar o perfil'"})
+                                                // event.stopPropagation()
+                                                // scrollToTop()
+                                                // set_edit_profile(true)
+                                            }}
+                                        />}
+                                        {isActiveUser && <Button
                                             // label="Editar"
                                             tooltip="Editar Perfil"
                                             tooltipOptions={tooltip_options}
@@ -452,14 +478,14 @@ export default function ProfilePage(){
                                             className="p-button-lg p-button-rounded m-2 flex-grow-1"
                                             icon="pi pi-user-edit"
                                             onClick={(event)=>{
-                                                test_context("test_action",{Numero:81})
+                                                // test_context("test_action",{Numero:81})
                                                 // test_context("send_order",{Telefone:"81",Mensagem:"'Teste de disparo pelo botão de editar o perfil'"})
                                                 // event.stopPropagation()
                                                 scrollToTop()
                                                 set_edit_profile(true)
                                             }}
-                                        />
-                                        <Button
+                                        />}
+                                        {isActiveUser && <Button
                                             // label="Logout"
                                             tooltip="Sair do app"
                                             tooltipOptions={tooltip_options}
@@ -474,7 +500,7 @@ export default function ProfilePage(){
                                                     // An error happened.
                                                   });
                                             }}
-                                        />
+                                        />}
                                     </div>
                                 }
                             />
@@ -489,52 +515,56 @@ export default function ProfilePage(){
                         }}>
                             <h6 style={{color:"var(--text-c)"}}>{user_profile}</h6>
                             <h5>
-                                {currentUser.name}
+                                {selected_user.name}
                             </h5>
+                            <h6 style={{color:"var(--text-c)"}}>
+                                Online: {time_ago(selected_user.metadata?.lastSeen)}
+                            </h6>
                         </div>
                     </div>
                         <div className="flex justify-content-center flex-wrap gap-3 m-2 p-3">
 
-                                <div className="flex-grow-1">
-                                    <Button className="p-button-lg"
-                                        icon="pi pi-chart-line"
-                                        iconPos="right"
-                                        label="Dashboard"
-                                        style={Math.floor(tab_index)==0?button_style:button_style_b}
-                                        onClick={(event)=>{
-                                            set_tab_index(tab_index => 0)
-                                            scrollToBottom()
-                                        }}
-                                    />
-                                </div>
+                            {isActiveUser && <div className="flex-grow-1">
+                                <Button className="p-button-lg"
+                                    icon="pi pi-chart-line"
+                                    iconPos="right"
+                                    label="Dashboard"
+                                    style={Math.floor(tab_index)==0?button_style:button_style_b}
+                                    onClick={(event)=>{
+                                        set_tab_index(tab_index => 0)
+                                        scrollToBottom()
+                                    }}
+                                />
+                            </div>}
 
-                                {check_rule(currentUser,"USA_AGENDA") && <div className="flex-grow-1">
-                                    <Button className="p-button-lg"
-                                        icon="pi pi-book"
-                                        iconPos="right"
-                                        label="Agenda"
-                                        style={Math.floor(tab_index)==1?button_style:button_style_b}
-                                        onClick={(event)=>{
-                                            getClients()
-                                            set_tab_index(tab_index => 1.1)
-                                            scrollToBottom()
-                                        }}
-                                    />
-                                </div>}
-                                
-                                <div className="flex-grow-1">
-                                    <Button className="p-button-lg"
-                                        icon="pi pi-shopping-bag"
-                                        iconPos="right"
-                                        label="Pedidos"
-                                        style={Math.floor(tab_index)==2?button_style:button_style_b}
-                                        onClick={(event)=>{
-                                            
-                                            set_tab_index(tab_index => 2)
-                                            scrollToBottom()
-                                        }}
-                                    />
-                                </div>
+                            {check_rule(selected_user,"USA_AGENDA") && <div className="flex-grow-1">
+                                <Button className="p-button-lg"
+                                    icon="pi pi-book"
+                                    iconPos="right"
+                                    label="Agenda"
+                                    style={Math.floor(tab_index)==1?button_style:button_style_b}
+                                    onClick={(event)=>{
+                                        get_clients(selected_user)
+                                        set_tab_index(tab_index => 1.1)
+                                        scrollToBottom()
+                                    }}
+                                />
+                            </div>}
+                            
+                            <div className="flex-grow-1">
+                                <Button className="p-button-lg"
+                                    icon="pi pi-shopping-bag"
+                                    iconPos="right"
+                                    label="Pedidos"
+                                    style={Math.floor(tab_index)==2?button_style:button_style_b}
+                                    onClick={async (event)=>{
+                                        set_loading_data(true)
+                                        set_tab_index(tab_index => 2.2)
+                                        await load_user_orders(selected_user.uid)
+                                        scrollToBottom()
+                                    }}
+                                />
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -544,9 +574,9 @@ export default function ProfilePage(){
                     height:"auto",
                     minHeight:"55vh"
                 }}>
-                
+                    
                     <div className="flex justify-content-center flex-wrap gap-3 p-3">
-                        {tab_index == 0 && <iframe src="https://share.stimulsoft.com/fda26"></iframe>}
+                        {tab_index == 0 && isActiveUser && <iframe src="https://share.stimulsoft.com/fda26"></iframe>}
 
                         {Math.floor(tab_index) == 1 && <>
                             <div className="flex flex-wrap gap-3" style={{width:"100%"}}>
@@ -559,7 +589,7 @@ export default function ProfilePage(){
                                         onClick={(event)=>{
                                             // router.push("/sales")
                                             set_tab_index(tab_index => 1.1)
-                                            // pedidos_db.getItem(currentUser.uid).then((data)=>{
+                                            // pedidos_db.getItem(selected_user.uid).then((data)=>{
                                             //     // console.log(data)
                                                 scrollToBottom()
                                             //     if(data)set_drafts(data.drafts)
@@ -591,46 +621,14 @@ export default function ProfilePage(){
                                     />
                                 </div>
                             </div>
-                            {tab_index == 1.1 && <div className="flex flex-wrap gap-3"
-                                style={{
-                                    width:"100%",
-                                    height:"80vh",
-                                    overflow:"scroll",
-                                }}>
-                                <DataTable
-                                    style={{width:"100%"}}
-                                    // scrollHeight="80vh"
-                                    // size="small"
-                                    // scrollable
-                                    paginator
-                                    responsiveLayout="responsive"
-                                    emptyMessage={clients.length > 0? "Cliente não encontrado":"Carregando..."}
-                                    paginatorTemplate="CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown"
-                                    currentPageReportTemplate="Exibindo {first} a {last} de {totalRecords}" rows={5} rowsPerPageOptions={[10,20,50]}
-                                    filterDisplay={display_filters?"row":""}
-                                    filters={{
-                                        'fantasia': { value: '', matchMode: FilterMatchMode.CONTAINS },
-                                        'email': { value: '', matchMode: FilterMatchMode.STARTS_WITH },
-                                        'telefone': { value: '', matchMode: FilterMatchMode.STARTS_WITH },
-                                        'cpf_cnpj': { value: '', matchMode: FilterMatchMode.STARTS_WITH },
-                                        'vendedor_nome': { value: '', matchMode: FilterMatchMode.CONTAINS },
-                                    }}
-                                    value={clients}>
-                                        <Column header={actionHeader} body={actionBody} exportable={false} style={{ maxWidth: '7.5em' }}></Column>
-                                        <Column key="name" field="fantasia" header="Nome" filter filterPlaceholder="Buscar por nome..." showFilterMenu={false} sortable></Column>
-                                        <Column key="email" field="email" header="E-Mail" filter filterPlaceholder="Buscar por e-mail..." showFilterMenu={false}></Column>
-                                        <Column key="phone" field="telefone" header="Telefone" filter filterPlaceholder="Buscar por telefone..." showFilterMenu={false}></Column>
-                                        <Column key="cpf_cnpj" field="cpf_cnpj" body={(rowData)=>{
-                                            if(rowData.cpf_cnpj.length == 14){
-                                                return(format_mask(rowData.cpf_cnpj,"##.###.###/####-##"))
-                                            }else if(rowData.cpf_cnpj.length == 11){
-                                                return(format_mask(rowData.cpf_cnpj,"###.###.###-##"))
-                                            }else{
-                                                return(rowData.cpf_cnpj)
-                                            }
-                                        }} header="Documento" filter filterPlaceholder="Buscar por documento..." showFilterMenu={false}></Column>
-                                        <Column key="vendedor" field="vendedor_nome" header="Vendedor" filter filterPlaceholder="Buscar por vendedor..." showFilterMenu={false} sortable></Column>
-                                </DataTable>
+                            {tab_index == 1.1 && <div className="flex w-full">
+                                
+                                <ClientsDatatable
+                                    clients={clients}
+                                    all_users={all_users}
+                                    selected_user={selected_user}
+                                    load_products_client={load_products_client}
+                                />
                             </div>}
                             {/* <div>
                                 <div className="flex-grow-1">
@@ -709,7 +707,7 @@ export default function ProfilePage(){
 
                         </>}
                         {Math.floor(tab_index) == 2 && <>
-                            <div className="flex-grow-1">
+                            {isActiveUser && <div className="flex-grow-1">
                                 <Button className="p-button-lg"
                                     icon="pi pi-file-edit"
                                     iconPos="right"
@@ -719,7 +717,7 @@ export default function ProfilePage(){
                                         set_loading_data(true)
                                         // router.push("/sales")
                                         set_tab_index(tab_index => 2.1)
-                                        pedidos_db.getItem(currentUser.uid).then((data)=>{
+                                        pedidos_db.getItem(selected_user.uid).then((data)=>{
                                             // console.log(data)
                                             scrollToBottom()
                                             set_loading_data(false)
@@ -727,7 +725,7 @@ export default function ProfilePage(){
                                         })
                                     }}
                                 />
-                            </div>
+                            </div>}
                             <div className="flex-grow-1">
                                 <Button className="p-button-lg"
                                     icon="pi pi-list"
@@ -737,63 +735,8 @@ export default function ProfilePage(){
                                     onClick={async (event)=>{
                                         set_loading_data(true)
                                         set_tab_index(tab_index => 2.2)
-                                        var cart_data = []
-                                        var _orders = []
-                                        var items_data = []
-                                        var load_data = []
 
-                                        await get_data("orders").then( async (oreder_data)=>{
-                                            await oreder_data.forEach((order)=>{
-                                                load_data.push(order.data())
-                                            })
-                                        })
-                                        // console.log(load_data)
-                                        // set_loading_data(false)
-
-                                        load_data = load_data.map( async (order_data)=>{
-                                            // console.log(order_data)
-                                            items_data = order_data.items.map(async(item)=>{
-                                                // console.log(item)
-                                                await produtos_db.getItem(item.id.toString()).then(async(item_data)=>{
-                                                    // console.log(item_data)
-                                                    if(!item_data) return item
-                                                    if(item_data.photo_uid){
-                                                        await photos_db.getItem(item_data.photo_uid).then(async (photo_data)=>{
-                                                            // console.log(photo_data)
-                                                            const _photo ="data:image/png;base64," + new Buffer.from(photo_data.img_buffer).toString("base64")
-                                                            item_data.photo = _photo
-                                                        })
-
-                                                    }else{
-                                                        item_data.photo = `images/grupos/${item_data.ID_CATEGORIA}_null.jpg`
-                                                    }
-                                                    item.data = item_data
-                                                    // console.log(item)
-                                                    return item
-                                                })
-                                            })
-                                            await Promise.all(items_data).then(async()=>{
-                                                
-                                                const client_id = order_data.client
-                                                // console.log(client_id)
-                                                if(client_id){
-                                                    await clientes_db.getItem(client_id.toString()).then((client)=>{
-                                                        // order_data.history = order_data
-                                                        order_data.client = client
-                                                        order_data.key = order_data.uid
-                                                    })
-                                                }
-                                                console.log(order_data.client)
-                                                _orders.push(order_data)
-                                                
-                                            })
-                                        })
-                                        
-                                        await Promise.all(load_data).then(()=>{
-                                            console.log(_orders)
-                                            set_orders(_orders)
-                                            set_loading_data(false)
-                                        })
+                                        await load_user_orders(selected_user.uid)
                                         
                                     }}
                                 />
@@ -811,19 +754,19 @@ export default function ProfilePage(){
                                 />
                             </div>
 
-                            <div className="flex-grow-1">
+                            {isActiveUser && <div className="flex-grow-1">
                                 <Button className="p-button-lg"
                                     icon="pi pi-cart-plus"
                                     iconPos="right"
                                     label="Novo Orçamento"
                                     style={{...button_style_b, minHeight:"auto", backgroundColor:"var(--glass-b)"}}
                                     onClick={(event)=>{
-                                        pedidos_db.getItem(currentUser.uid).then((data)=>{
+                                        pedidos_db.getItem(selected_user.uid).then((data)=>{
                                             if(data){
                                                 var _pedidos = data
                                                 _pedidos.drafts.unshift({name:"", items:[]})
                                                 // console.log(_pedidos)
-                                                pedidos_db.setItem(currentUser.uid, _pedidos).then(()=>{
+                                                pedidos_db.setItem(selected_user.uid, _pedidos).then(()=>{
                                                     router.push("/sales")
                                                 })
                                             }else{
@@ -832,34 +775,34 @@ export default function ProfilePage(){
                                         })
                                     }}
                                 />
-                            </div>
+                            </div>}
 
                         </>}
                     </div>
                     {drafts[0]?.items[0].data && tab_index == 2.1 && 
                     <OrderCarousel
-                        products={drafts}
+                        orders={drafts}
                         edit={(name)=>{
                             // console.log(name)
-                            pedidos_db.getItem(currentUser.uid).then((data)=>{
+                            pedidos_db.getItem(selected_user.uid).then((data)=>{
                                 // data.drafts = data.drafts.filter(cart=>cart.name==name)
                                 
                                 data.drafts.sort(function(x,y){ return x.name == name ? -1 : y.name == name ? 1 : 0; });
                                 // console.log(data)
-                                pedidos_db.setItem(currentUser.uid,data).then(()=>{
+                                pedidos_db.setItem(selected_user.uid,data).then(()=>{
                                     router.push("/sales")
                                 })
                                 // if(data)set_drafts(data.drafts)
                             })
                         }}
                         clone={(name)=>{
-                            pedidos_db.getItem(currentUser.uid).then((data)=>{
+                            pedidos_db.getItem(selected_user.uid).then((data)=>{
                                 data.drafts.sort(function(x,y){ return x.name == name ? -1 : y.name == name ? 1 : 0; });
                                 var _clone = {...data.drafts[0]}
                                 _clone.name = ''
                                 data.drafts.unshift(_clone)
                                 // console.log(data)
-                                pedidos_db.setItem(currentUser.uid,data).then(()=>{
+                                pedidos_db.setItem(selected_user.uid,data).then(()=>{
                                     router.push("/sales")
                                 })
                                 // if(data)set_drafts(data.drafts)
@@ -880,12 +823,12 @@ export default function ProfilePage(){
                             }).then((result) => {
                                 // console.log(this)
                                 if (result.isConfirmed) {
-                                    pedidos_db.getItem(currentUser.uid).then((data)=>{
+                                    pedidos_db.getItem(selected_user.uid).then((data)=>{
                                         // data.drafts = data.drafts.filter(cart=>cart.name==name)
                                         
                                         data.drafts.sort(function(x,y){ return x.name == name ? -1 : y.name == name ? 1 : 0; });
                                         data.drafts = data.drafts.slice(1)
-                                        pedidos_db.setItem(currentUser.uid,data).then(()=>{
+                                        pedidos_db.setItem(selected_user.uid,data).then(()=>{
                                             showSuccess(name)
                                         })
                                         set_drafts(data.drafts)
@@ -903,12 +846,22 @@ export default function ProfilePage(){
                     })} */}
                     {tab_index == 2.2 && //orders[0]?.cart.items[0].data && 
                     <OrderCarousel
-                        products={orders}
+                        currentUser={isActiveUser}
+                        orders={orders}
                         view={(order)=>{
                             // console.log(order)
                             router.push("/order#"+order.key) 
                         }}
-                        
+                        link={(data)=>{
+                            toast.current.show({
+                                severity: 'info',
+                                summary: 'Ctrl+C',
+                                detail: "Link copiado para área de transferência!",
+                                life: 3000
+                            });
+                            copyToClipBoard("https://app.pilar.com.br/#goto=order~"+data.uid)
+                            console.log(data)
+                        }}
                         callback={(order)=>{
                             console.log("Devolver " + order)    
                         }}
@@ -927,12 +880,12 @@ export default function ProfilePage(){
                             }).then((result) => {
                                 // console.log(this)
                                 // if (result.isConfirmed) {
-                                //     pedidos_db.getItem(currentUser.uid).then((data)=>{
+                                //     pedidos_db.getItem(selected_user.uid).then((data)=>{
                                 //         // data.orders = data.orders.filter(cart=>cart.name==name)
                                         
                                 //         data.orders.sort(function(x,y){ return x.name == name ? -1 : y.name == name ? 1 : 0; });
                                 //         data.orders = data.orders.slice(1)
-                                //         pedidos_db.setItem(currentUser.uid,data).then(()=>{
+                                //         pedidos_db.setItem(selected_user.uid,data).then(()=>{
                                 //             showSuccess(name)
                                 //         })
                                 //         set_orders(data.orders)

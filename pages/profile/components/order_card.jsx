@@ -4,6 +4,7 @@ import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { capitalize, moneyMask, shorten, time_ago } from '../../utils/util';
 import OrderTimeline from '../../order/components/order_timeline';
+import ProductIcon from './product_photo';
 
 export default class OrderCard extends Component {
     constructor(props) {
@@ -13,33 +14,21 @@ export default class OrderCard extends Component {
         };
     }
     
-    componentDidMount(){
-        console.log(this.props.products)
-        document.querySelector("#items").addEventListener("wheel",event=>{
-            if(event.target.scrollLeft > 10 || event.target.scrollLeft == event.target.scrollWidth - window.innerWidth){
-                event.preventDefault()
-            }
-            if(event.deltaY > 0){
-                event.target.scrollBy(300,0)
-            }else{   
-                event.target.scrollBy(-300,0)
-            }
-        },{passive: false})
-    }
-    componentDidUpdate(){
-        console.log(this.props.products)
-    }
+    
+    // componentDidUpdate(){
+    //     console.log(this.props.products)
+    // }
 
     get_last_action(product){
         return(product.history?.slice(-1)[0])
     }
 
     productTemplate(product) {
-        console.log(product)
+        // console.log(product)
         const last_action = this.get_last_action(product)
         return (
             <div key={product.name}
-                className="order-card product-item"
+                className={"order-card product-item w-4 " + this.props?.className}
             >
                 <div className="product-item-content">
                     
@@ -49,7 +38,7 @@ export default class OrderCard extends Component {
                         <h6 className="mt-0 mb-3" style={{color:"var(--info)"}}>{product.items.length} itens</h6>
                         {/* <span className={`product-badge status-${product.inventoryStatus.toLowerCase()}`}>{product.inventoryStatus}</span> */}
                         
-                        { !product.client && <div className="card-buttons mt-3 mb-3">
+                        { !product.client && this.props.currentUser && <div className="card-buttons mt-3 mb-3">
 
                             <Button
                                 icon="pi pi-pencil"
@@ -92,7 +81,7 @@ export default class OrderCard extends Component {
                                 className="p-button-secondary p-button-outlined p-button-rounded mr-2"
                                 onClick={(event)=>{
                                     // console.log("Get Link")
-                                    this.props.link?.(product.name)
+                                    this.props.link?.(product)
                                 }}
                             />
 
@@ -118,7 +107,7 @@ export default class OrderCard extends Component {
                                 }}
                             /> */}
 
-                            <Button
+                            {this.props.currentUser && <Button
                                 icon="pi pi-trash"
                                 tooltip='Excluir'
                                 tooltipOptions={this.tooltip_options}
@@ -127,7 +116,7 @@ export default class OrderCard extends Component {
                                     // console.log("Delete ")
                                     this.props.delete?.(product.name)
                                 }}
-                            />
+                            />}
 
                             
                         </div>}
@@ -176,47 +165,9 @@ export default class OrderCard extends Component {
                             >
 
                                 <Column
-                                    style={{
-                                        // width:'33px', overflow:"scroll"
-                                    }}
                                     field='data.photo' header='Info'
                                     body={(row_data)=>{
-                                        // if(window.innerWidth < 600){
-                                        //     if(row_data.data?.photo) return( 
-                                        //     <FlipCard 
-                                        //         auto={false}
-                                        //         vertical
-                                        //         style={{
-                                        //             width:"120px",
-                                        //             height:"120px"
-                                        //         }}
-                                        //         front={<img
-                                        //             style={{borderRadius:"5px"}}
-                                        //             height={120}
-                                        //             src={row_data.data.photo}
-                                        //         ></img>}
-                                        //         back={
-                                        //             <h6 className='ml-1 mr-1'>
-                                        //                 {shorten(row_data.data?.PRODUTO_NOME)}
-                                        //             </h6>
-                                        //         }
-                                        //     />)
-                                        //     return(
-                                        //         <div>
-                                        //             { row_data.data?.photo == null && <div>
-                                        //                 {shorten(row_data.data?.PRODUTO_NOME)}
-                                        //             </div>}
-                                                   
-                                        //         </div>
-                                        //     )
-                                        // }else 
-                                        if(row_data.data?.photo != undefined){
-                                            return(<img
-                                                style={{borderRadius:"5px"}}
-                                                height={120}
-                                                src={row_data.data.photo}
-                                            ></img>)
-                                        }
+                                        return(<ProductIcon item={row_data.id} />)
                                     }}
                                 ></Column>
                                 <Column

@@ -50,11 +50,12 @@ export default function Home(){
 
     }, [ asPath, currentUser ]);
 
+    
     return(
         <ObjectComponent
             user={currentUser}
             onLoad={(e)=>{
-                document.title = "Loading..."
+                document.title = "Pilar Papéis"
             }}
         >
           

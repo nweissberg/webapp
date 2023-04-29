@@ -4,7 +4,6 @@ import { Button } from "primereact/button";
 import { readUserData, writeUserData } from "../../api/firebase";
 import { InputText } from "primereact/inputtext";
 import { SelectButton } from 'primereact/selectbutton';
-import { MultiSelect } from "primereact/multiselect";
 
 export default class ProfileInfo extends React.Component{
     constructor(props){
@@ -31,6 +30,7 @@ export default class ProfileInfo extends React.Component{
         this.bannerTemplate = this.bannerTemplate.bind(this);
     }
     setCurrentUser(){
+        // console.log(this.props.user)
         if(this.props.user) this.setState({
             user: this.props.user,
             name: this.props.user.name,
@@ -38,6 +38,8 @@ export default class ProfileInfo extends React.Component{
             photo_index: this.props.user.photo.split('_')[1],
             banner: this.props.user.banner,
             metadata: this.props.user.metadata,
+            discount: this.props.user.discount || 0,
+            email: this.props.user.email
         })
     }
     componentDidMount(){
@@ -99,7 +101,8 @@ export default class ProfileInfo extends React.Component{
                                     this.state.user.role,
                                     this.state.user.banner,
                                     this.state.user.metadata,
-                                    this.state.user.fingerprints
+                                    this.state.user.discount,
+                                    this.state.user.fingerprints,
                                 )
                                 console.log(this.state.user)
                                 this.props.updateUser(this.state.user);

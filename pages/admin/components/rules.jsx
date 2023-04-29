@@ -149,6 +149,24 @@ function keys_from(_code){
     return(keys)
 }
 
+export function setKeysTo(_code,values){
+    const keys = keys_from(_code)
+    keys.map((key)=>{
+        var key_value_type = key.split("¨")
+        var value = values[key_value_type[0]]
+
+        if(key_value_type.length > 1 && key_value_type[1] == "String"){
+            _code = _code.replace("('$"+key+"')", "'"+value+"'")
+            _code = _code.replace('("$'+key+'")', '"'+value+'"')
+            _code = _code.replace('$'+key, value)
+        }else{
+            _code = _code.replace("('$"+key+"')", value)
+            _code = _code.replace('("$'+key+'")', value)
+        }
+    })
+    return(_code)
+}
+
 Blockly.Blocks['key_var'] = {
     init: function() {
         this.appendDummyInput()
@@ -241,9 +259,6 @@ javascriptGenerator['send_webhook'] = function(block) {
     
     // const code = `sendWebhook(${url}, '${method}', ${body}, ${headers})`;
     const code = `(()=>{
-        const request = new XMLHttpRequest();
-        request.open('${method}', ${url}, false);
-        request.setRequestHeader("Content-Type", "application/json");
         var body_req = ${body};
         var body_obj = {};
         if(typeof(body_req) == "object" &&  body_req.length){
@@ -253,8 +268,35 @@ javascriptGenerator['send_webhook'] = function(block) {
         }else{
             body_obj = body_req;
         };
-        request.send(JSON.stringify(body_obj));
-        return request.responseText;
+        
+        if(typeof window === 'undefined') {
+            const request = require("request");
+            const options = {
+                method: '${method}',
+                uri: ${url},
+                body: JSON.stringify(body_obj),
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            };
+            
+            request(options, (error, response, body) => {
+                if (error) {
+                    console.error(error);
+                    return
+                };
+                console.log(JSON.stringify(body));
+                
+            });
+        } else {
+            console.log("Running on a browser");
+            const request = new XMLHttpRequest();
+            request.open('${method}', ${url}, false);
+            request.setRequestHeader("Content-Type", "application/json");
+            
+            request.send(JSON.stringify(body_obj));
+            return request.responseText;
+        }
     })()`
     return [code, javascriptGenerator.ORDER_FUNCTION_CALL];
 };
@@ -498,7 +540,7 @@ export default function Rules(props) {
                     }
                 },
                 {
-                    label: 'Renomear',
+                    label: 'Modificar',
                     icon: 'pi pi-pencil',
                     command: () => {
                         saveBlocksCloud()
@@ -853,6 +895,7 @@ export default function Rules(props) {
 
     const updateCode = (event) => {
         const code = generate_code(workspace);
+        console.log(code)
         set_code(code)
     }
     

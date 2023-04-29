@@ -1,7 +1,7 @@
 import React, { useContext, useState, useEffect } from "react";
 import localForage from "localforage";
 import { api_get } from "../pages/api/connect";
-import { alphabetically } from "../pages/utils/util";
+import { alphabetically, normalize, time_ago } from "../pages/utils/util";
 import { async } from "@firebase/util";
 import { readRealtimeData, writeRealtimeData } from "../pages/api/firebase";
 
@@ -20,6 +20,11 @@ const groups_db = localForage.createInstance({
     storeName:'grupos'
 });
 
+const clientes_db = localForage.createInstance({
+    name:"pilarpapeis_db",
+    storeName:'clientes'
+});
+
 const ProductsContext = React.createContext()
 
 export function useProducts(){
@@ -29,10 +34,14 @@ export function useProducts(){
 export default function ProductsProvider({children}){
     const [all_products, set_all_products] = useState([]);
     const [products, set_products] = useState([]);
+    const [photos, set_photos] = useState([]);
     const [groups, set_groups] = useState([]);
+    const [clients, set_clients] = useState([]);
     const [loading, setLoading] = useState(true);
     const [profiles, set_profiles] = useState([]);
     const [user_drafts, set_user_drafts] = useState([]);
+    const [products_map, set_products_map] = useState({});
+    
 
     const rules ={
         "VER_SEM_ESTOQUE":  {id:1, nome:"Ver Itens sem estoque"},
@@ -47,16 +56,79 @@ export default function ProductsProvider({children}){
     }
     
     function check_rule(user,rule){
-        return(profiles.find( profile => profile.id-1 == user.role)?.rules.indexOf(rules[rule].id) != -1)
+        return(profiles.find( profile => profile.id-1 == user?.role)?.rules.indexOf(rules[rule].id) != -1)
     }
 
+    async function get_clients(_user){
+        // if(!_user) return
+        var _clients = []
+        // set_clients(_clients)
+        if(!_user?.rp_user || !_user) {
+            set_clients([])
+            // return
+        }
+        return clientes_db.iterate(function(value) {
+            _clients.push(value)
+            // console.log(value);
+        }).then(()=>{
+            
+            // console.log(_user)
+            if(check_rule(_user,"VER_TODOS_CLIENTES") && !_user?.rp_user){
+                if(_clients.length > 0){
+                    set_clients(_clients)
+                    // set_loading_data(false)
+                    // return
+                }
+                api_get({
+                    credentials: "0pRmGDOkuIbZpFoLnRXB",
+                    keys:[],
+                    query:"xdZdlNzfMUMk45U06pGv"
+                }).then((data)=>{
+                    if(data == null) return
+    
+                    var _data = [...data.map((item)=>{
+                        clientes_db.setItem(item.id.toString(), item);
+                        return(item)
+                    })]
+                    
+                    set_clients(_data)
+                    // set_loading_data(false)
+                })
+            }else{
+                if(!_user.rp_user)return
+                
+                api_get({
+                    credentials: "0pRmGDOkuIbZpFoLnRXB",
+                    keys:[{
+                        value: _user.rp_user.id.toString(),
+                        type: "INT",
+                        key: "ID_VENDEDOR"
+                    }],
+                    query:"wXnycP1KKeIRT9T7sLYE"
+                }).then((data)=>{
+                    if(data == null) return
+    
+                    var _data = [...data.map((item)=>{
+                        clientes_db.setItem(item.id.toString(), item);
+                        return(item)
+                    })]
+                    
+                    set_clients(_data)
+                    // set_loading_data(false)
+                })
+            }
+            
+
+        })
+    }
     
     function load_local_products(){
         var _products = {}
         product_db.iterate(function(value, key) {
-            _products[key] = value
+            _products[key] = {...value, ESTADOS:{}}
         }).then(()=>{
             var _all_products = Object.values(_products)
+            set_products_map(_products)
             // console.log(_all_products)
             set_all_products(_all_products)
             set_products(_all_products)
@@ -74,48 +146,121 @@ export default function ProductsProvider({children}){
             }],
             query:"4ceon3vIKS4MK9hB2mw7"
         }).then((top_products)=>{
-            // console.log(top_products)
+            console.log(top_products)
             groups_db.getItem(group_id).then((group_data)=>{
                 if(top_products && top_products.length > 0){
                     group_data.top_items = top_products
-                    console.log(group_data)
+                    // console.log(group_data)
                     groups_db.setItem(group_id.toString(),group_data)
                 }
             })
         })
     }
+    
+    async function load_products_client(client_id){
+        return await new Promise(async (res,rej)=>{
+            // console.log(client_id)
+            var promises = []
+            var _products = {}
+            var _products_map = {...products_map}
+            Object.keys(_products_map).forEach(key => {
+                delete _products_map[key]?.["ESTADOS"];
+            });
+            api_get({
+                credentials:"0pRmGDOkuIbZpFoLnRXB",
+                keys:[{
+                    key: "cliente_id",
+                    type:"STRING",
+                    value: client_id
+                }],
+                query:"A3dAr3UGEwh6f3QiojkJ"
+            }).then(async(client_products)=>{
+                // console.log(client_products)
+                
+                client_products?.map((i)=>{
+                    var item = _products_map[i.produto_id]
+                    // console.log(i)
+                    if(!item){
+                        if(!_products[i.produto_id]){
+                            _products[i.produto_id] = {produto_id:i.produto_id}
+                            promises.push(load_product(i.produto_id).then((produto)=>{
+                                if(produto){
+                                    item = {...produto}
+                                    _products_map[i.produto_id] = produto
+                                    item.PRECO_VENDA = i.valor_unitario
+                                    item.date = new Date(i.data_emissao)
+                                    item.ESTADOS = {}
 
-    function load_groups(){
+                                    _products[i.produto_id] = item
+                                    product_db.setItem(i.produto_id.toString(), produto)
+                                    
+                                }
+                            }))
+                        }
+                        return
+                    }
+
+                    item.PRECO_VENDA = i.valor_unitario
+                    item.date = new Date(i.data_emissao)
+                    item.ESTADOS ||= {}
+                    const index = item.date.getMonth() - item.date.getYear()
+                    item.ESTADOS[index] ||= {quantidade:0,valor:i.valor_unitario, date:i.data_emissao}
+                    item.ESTADOS[index].quantidade += i.quantidade
+                    
+                    if(_products[i.produto_id]){
+                        if(item.PRECO_VENDA < _products[i.produto_id].PRECO_VENDA){
+                            _products[i.produto_id] = item
+                        }else if(new Date(_products[i.produto_id].data_emissao) > item.date){
+                            _products[i.produto_id] = item
+                        }
+                    }else{
+                        _products[i.produto_id] = item
+                    }
+                    // return item
+                })
+                await Promise.all(promises)
+                // console.log("asdfasdfasfddf")
+                set_products_map(_products_map)
+                console.log(_products)
+                res(Object.values(_products).sort((a,b)=>a.PRECO_VENDA-b.PRECO_VENDA))
+            })
+        })
+    }
+    async function load_groups(){
         var _groups = {}
         return groups_db.iterate(function(value,key){
-            // load_top_products(key)
+            load_top_products(key)
             _groups[key] = value
         }).then(()=>{
             // console.log(_groups)
             var _group_array = Object.values(_groups)
             if(_group_array.length > 0) {
-                // console.log(_group_array)
-                set_groups(_group_array)
-                return
+                const days_ago = time_ago(_group_array[0].updated, "days")
+
+                console.log("LAST group update:", days_ago)
+                if(days_ago < 7){
+                    set_groups(_group_array)
+                    return
+                }
             }
             api_get({
                 credentials: "0pRmGDOkuIbZpFoLnRXB",
                 keys:[],
-                query:"xl2lTq2AZQFJt1Vl4r0t"
+                query:"xl2lTq2AZQFJt1Vl4r0t" //script sql: "categorias"
             }).then(async (data)=>{
                 if(data){
                     const _data = data.map(async(group)=>{
                         return await groups_db.getItem(group.id.toString()).then((group_data)=>{
                             if(group_data){
                                 console.log(group_data)
+                                group = group_data
                             }else{
                                 group.state = 0
-                                group.updated = Date.now()
                                 group.load = 0,
-                                group.filtros = [],
-                                groups_db.setItem(group.id.toString(),group)
+                                group.filtros = []
                             }
-                            console.log(Date.now() - group.updated)
+                            group.updated = Date.now()
+                            groups_db.setItem(group.id.toString(),group)
                             _groups[group.id] = group
                         })
                         // return(group)
@@ -136,8 +281,90 @@ export default function ProductsProvider({children}){
         data.unshift(data.splice(index, 1)[0]);
         return(data)
     }
-    function load_products_group(group_id, local_load_return){
+
+    const get_photo = async (produto,callback) => {
         
+        if(!produto)return
+        return await new Promise((res,rej)=>{
+         
+            // if((produto.formato_fotografia != '' && produto.formato_fotografia != null) || (produto.photo_uid && produto.formato_fotografia == 'jpg')){
+            //     product_db.setItem(produto.PRODUTO_ID.toString(), produto)
+            //     callback?.(produto)
+            //     res(produto)
+            //     return(produto)
+            // }
+            console.log("get_photo", produto)
+            api_get({
+                credentials: '0pRmGDOkuIbZpFoLnRXB',
+                keys: [{
+                    key: 'pid',
+                    value: produto.PRODUTO_ID,
+                    type: 'string',
+                }],
+                query: 'zgzAjRqN1XHvvV3QXiwE',
+            }).then(([image_data]) => {
+                // var produto = {...item}
+                
+                if(image_data && image_data.photo !== null) {
+                    // console.log(produto,image_data);
+                    var img_buffer = new Buffer.from(image_data.photo)
+                    var isUnique = true
+                    var photo_uid = ""
+                    for (let i = 0; i < photos.length; i++) {
+                        const _item_data = photos[i];
+                        if(_item_data.img_buffer.equals(img_buffer)){
+                            photo_uid = photos[i].uid
+                            isUnique = false
+                            break
+                        }
+                        // console.log(i)
+                    }
+                    if(isUnique){
+                        photo_uid = normalize(img_buffer.toString().slice(512, 768)).replace(/\s/g, '')+"_"+img_buffer.length+"_"+normalize(img_buffer.toString().slice(-128)).replace(/\s/g, '')
+                        const local_data = {
+                            uid:photo_uid,
+                            img_buffer:img_buffer
+                        }
+                        photos_db.setItem(photo_uid,local_data)
+                        // loaded_photos.push(local_data)
+                    }
+                    produto.photo_uid = photo_uid
+                }
+                product_db.setItem(produto.PRODUTO_ID.toString(), produto)
+                callback?.(produto)
+                res(produto)
+                // setGenerated(true);
+            });
+        })
+        
+    };
+    async function load_product(pid){
+        //vgYSqaLv5CGaI6LJjAJr 
+        console.warn("get_product")
+        return await new Promise((res,rej)=>{
+            api_get({
+                credentials: '0pRmGDOkuIbZpFoLnRXB',
+                keys: [{
+                    key: 'ID_PRODUTO',
+                    value: pid,
+                    type: 'string',
+                }],
+                query: 'vgYSqaLv5CGaI6LJjAJr',
+            }).then(async ([product_data]) => {
+                // var produto = {...item}
+                
+                console.log(product_data);
+                await get_photo(product_data)
+                .then((produto)=>{    
+                    res(produto)
+                })
+
+                // setGenerated(true);
+            });
+        })
+    }
+
+    function load_products_group(group_id, local_load_return){
         
         return new Promise((res,rej)=>{
             var _products = {}
@@ -165,7 +392,7 @@ export default function ProductsProvider({children}){
                     const products_array = Object.values(_products).sort((a, b) => {
                         return(alphabetically(a,b,"PRODUTO_NOME"))
                     });
-                    local_load_return?.(_top_items.concat(products_array))
+                    // local_load_return?.(_top_items.concat(products_array))
                     photos_db.iterate(function(value,key) {
                         // Carrega as photos dos protudos do Navedador
                         loaded_photos.push({
@@ -175,12 +402,14 @@ export default function ProductsProvider({children}){
                         // console.log([key, value]);
     
                     }).then(()=>{
+                        var _products = []
                         if(products_array.length > 0){
-                            set_products(_top_items.concat(products_array))
+                            _products = [{type:'split',PRODUTO_NOME:"Os mais vendidos",icon:"pi pi-star text-yellow-400"},..._top_items,{type:'split',PRODUTO_NOME:"Todos os produtos"}, ...products_array]
+                            set_products(_products)
                             
                             // impede o auto reload dos produtos na nuvem (Deixa mais rápido o filtro)
                             console.log("Done loading group "+group_id+" LOCAL")
-                            res(_top_items.concat(products_array))
+                            res(_products)
                         }
                         // console.log(loaded_photos)
                         api_get({
@@ -197,7 +426,7 @@ export default function ProductsProvider({children}){
                                     type:"string"
                                 },
                             ],
-                            query:"xqVL0s5dN84T6fgfUjep"
+                            query:"oRj4gf4QFmbwiE752wfo"
                         }).then(async(data)=>{
                             
                             if(!data)return
@@ -205,6 +434,7 @@ export default function ProductsProvider({children}){
                             // return
                             for (let index = 0; index < data.length; index++) {
                                 var produto = data[index];
+                                if(!produto) continue
                                 if((_products[produto.PRODUTO_ID.toString()] && _products[produto.PRODUTO_ID.toString()].photo_uid) || produto.formato_fotografia == null ) {
                                     if(produto.formato_fotografia == null) {
                                         _products[produto.PRODUTO_ID] = produto
@@ -215,43 +445,8 @@ export default function ProductsProvider({children}){
                                 }
                                 
                                 loaded_promises.push(
-                                    api_get({
-                                        credentials: "0pRmGDOkuIbZpFoLnRXB",
-                                        keys:[{
-                                            key:"pid",
-                                            value:produto.PRODUTO_ID,
-                                            type:"string"
-                                        }],
-                                        query:"zgzAjRqN1XHvvV3QXiwE"
-                                    }).then(([image_data])=>{
-                                        if(image_data && image_data.photo !== null) {
-                                            var img_buffer = new Buffer.from(image_data.photo)
-                                            var isUnique = true
-                                            var photo_uid = ""
-                                            for (let i = 0; i < loaded_photos.length; i++) {
-                                                const _item_data = loaded_photos[i];
-                                                if(_item_data.img_buffer.equals(img_buffer)){
-                                                    // console.log(_item_data)
-                                                    // loaded_photos[i].items_pid.push(produto.pid)
-                                                    photo_uid = loaded_photos[i].uid
-                                                    isUnique = false
-                                                    break
-                                                }
-                                                // console.log(i)
-                                            }
-                                            if(isUnique){
-                                                photo_uid = img_buffer.length +"_"+ Date.now()
-                                                const local_data = {
-                                                    uid:photo_uid,
-                                                    img_buffer:img_buffer
-                                                }
-                                                photos_db.setItem(photo_uid,local_data)
-                                                loaded_photos.push(local_data)
-                                            }
-                                            produto.photo_uid = photo_uid
-                                        }
-                                        product_db.setItem(produto.PRODUTO_ID.toString(), produto)
-                                        _products[produto.PRODUTO_ID] = produto
+                                    get_photo(produto,(item)=>{
+                                        _products[produto.PRODUTO_ID] = item
                                     })
                                 )
                             }
@@ -263,7 +458,8 @@ export default function ProductsProvider({children}){
                             });
 
                             set_products(_top_items.concat(products_array))
-                            // console.log(loaded_photos,_products)
+                            set_photos(loaded_photos)
+                            console.log(loaded_photos.length+" product photos")
                             console.log("Done loading group "+group_id+" CLOUD")
                             res(_top_items.concat(products_array))
                         })
@@ -276,6 +472,7 @@ export default function ProductsProvider({children}){
     useEffect(()=>{
         // const unsubscribe = () => {
             // if(loading){
+                // load_product("10006")
                 load_local_products()
                 
                 load_groups()
@@ -308,13 +505,19 @@ export default function ProductsProvider({children}){
         all_products,
         load_top_products,
         load_local_products,
+        load_products_client,
+        load_product,
         load_products_group,
         load_groups,
         groups,
         profiles,
+        photos,
+        get_photo,
         update_profiles,
         upload_profiles,
         rules,
+        get_clients,
+        clients,
         check_rule
     }
 

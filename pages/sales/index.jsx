@@ -28,16 +28,16 @@ export default function SalesPage(){
     // const [ products, set_products] = useState(null)
     const { currentUser } = useAuth()
     const [ selected_item, set_selected_item] = useState(null)
+    const [ select_item, set_select_item] = useState(null)
     const router = useRouter()
-    const [card_face, set_card_face] = useState(true)
+    const [client, set_client] = useState(null)
     const {test_context} = useSales()
     
     const [loaded_group, set_loaded_group] = useState([0,0,0,0,0])
     
-    
-
     const {
         load_top_products,
+        load_products_client,
         load_products_group,
         products,
         groups,
@@ -95,13 +95,22 @@ export default function SalesPage(){
                                 // console.log(obj)
                                 set_cart_obj(obj)
                             }}
+                            select_item={select_item}
+                            set_select={(_item)=>{
+                                // console.log(_item)
+                                set_select_item(_item)
+                            }}
                             // show_filters={(event)=>{
                             //     set_group_filter(true)
                             // }}
                             load_products_group={(group_id)=>{
-                                load_top_products(group_id)
+                                // load_top_products(group_id)
                                 return load_products_group(group_id)
                             }}
+                            load_products_client={(client_id)=>{
+                                return load_products_client(client_id)
+                            }}
+                            client={client}
                             groups={groups}
                             product_db={product_db}
                             user={currentUser}
@@ -197,10 +206,6 @@ export default function SalesPage(){
                                 // console.log(_sale_cart)
                                 set_sale_cart(_sale_cart)
                             }}
-                            select_item={(item)=>{
-                                // console.log(item)
-                                set_selected_item(item)
-                            }}
                         />
                     </div>
                     {selected_item && window.innerWidth > 500 &&
@@ -234,11 +239,23 @@ export default function SalesPage(){
                     sale_cart={sale_cart}
                     profiles={profiles}
                     check_rule={check_rule}
-                    send_order={test_context}
+                    test_context={test_context}
                     updateProducts={()=>{
                         cart_obj.setState({
                             show_cart:!cart_obj.state.show_cart,
                             search_result:sale_cart.items.map(item=>item.data),
+                            search:"",
+                            selected_group:0
+                        })
+                    }}
+                    featureProducts={(_items)=>{
+                        console.log(_items)
+                        // item_info
+                        // this.props.select_item(_items[0])
+                        set_select_item(_items[0])
+                        cart_obj.setState({
+                            show_cart:false,
+                            search_result:[{type:'split',PRODUTO_NOME:"Revisar produtos", icon:"pi pi-exclamation-triangle text-orange-400" }, ... _items.map(item=>item.data),{type:'split',PRODUTO_NOME:"Restante do carrinho"},...sale_cart.items.map(item=>item.data)],
                             search:"",
                             selected_group:0
                         })
@@ -255,6 +272,9 @@ export default function SalesPage(){
                             set_sale_cart(data)
                         })
                         console.log("Teste")
+                    }}
+                    setClient={(client)=>{
+                        set_client(client)
                     }}
                     // showGroups={()=>{
                     //     cart_obj.setState({search_result:[]})

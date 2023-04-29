@@ -1,6 +1,7 @@
 import React, { useContext, useState, useEffect } from "react";
 import localForage from "localforage";
 import { get_actions, get_rule, set_data } from "../api/firebase";
+import { setKeysTo } from "../admin/components/rules";
 
 var profile_db = localForage.createInstance({
     name:"pilarpapeis_db",
@@ -26,26 +27,16 @@ export default function SalesProvider({children}){
     }
 
     
-    async function test_context(action,val){
-        var response = null
-        // console.log("test_context",actions[action].name, action)
-
-        await get_rule(actions[action].script).then((doc)=>{
-            if(doc){
-                var _code = doc.data().code
-                if(val){
-                    Object.keys(val).map((key)=>{
-                        _code = _code.replaceAll("'$"+key+"'",val[key])
-                    })
+    function test_context(action,values){
+        return new Promise(function(res, rej) {
+            get_rule(actions[action]?.script)?.then((doc)=>{
+                if(doc){
+                    var _code = setKeysTo(doc.data().code,values)
+                    // console.log(_code)
+                    res(eval("(()=>{"+JSON.parse(_code)+"})()"))
                 }
-                // console.log(_code)
-                
-                eval(_code)
-                response = true
-            }
+            })
         })
-
-        return response
     }
     async function load_actions(){
         var _actions = {}

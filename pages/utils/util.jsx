@@ -2,6 +2,8 @@
 //-> ### Funções para facilitar nossa vida ### <-//
 //-> ######################################### <-//
 
+import LZString from "./LZString"
+
 //-> Get type of object
 // o = Object ( var, let, const )
 var toType
@@ -20,56 +22,87 @@ const genID = idGen()
 export function uid(){ return genID.next().value }
 
 export function deepEqual(x, y) {
-	// console.log(x,y)
-	if(x == null || y == null){
-		if(x == null && y == null){
-			return true
+	if (x === y) {
+		return true;
+	}
+	if (typeof x !== typeof y || x == null || y == null) {
+		return false;
+	}
+	if (Array.isArray(x) !== Array.isArray(y) || x.length !== y.length) {
+		return false;
+	}
+	if (typeof x === 'object') {
+		const xKeys = Object.keys(x);
+		const yKeys = Object.keys(y);
+		if (xKeys.length !== yKeys.length) {
+			return false;
 		}
-		return false
+		for (const key of xKeys) {
+			if (!deepEqual(x[key], y[key])) {
+				return false;
+			}
+		}
+		return true;
 	}
-	if(x.length != y.length) return false
-	var test = x.map((item,index)=>{
-		return(isDeepEqual(item,y[index]))
-	})
-	// console.log(test)
-	if(test.indexOf(false) != -1){
-		return false
-	}
-	return true
+	return x === y;
 }
 
 export const isDeepEqual = (object1, object2) => {
+	if (typeof object1 !== 'object' || typeof object2 !== 'object') {
+		return false;
+	}
 
-	const objKeys1 = Object.keys(object1);
-	const objKeys2 = Object.keys(object2);
+	const keys1 = Object.keys(object1);
+	const keys2 = Object.keys(object2);
 
-	if (objKeys1.length !== objKeys2.length) return false;
+	if (keys1.length !== keys2.length) {
+		return false;
+	}
 
-	for (var key of objKeys1) {
+	for (let key of keys1) {
 		const value1 = object1[key];
 		const value2 = object2[key];
 
-		const isObjects = isObject(value1) && isObject(value2);
-
-		if ((isObjects && !isDeepEqual(value1, value2)) ||
-		(!isObjects && value1 !== value2)
-		) {
-		return false;
+		if (typeof value1 === 'function' && typeof value2 === 'function') {
+			// If both values are functions, compare their string representation
+			const result1 = value1();
+			const result2 = value2();
+			if (!isDeepEqual(result1, result2)) {
+				return false;
+			}
+		} else if (!deepEqual(value1, value2)) {
+			// If the values are not functions, recursively compare them using deepEqual
+			return false;
 		}
-	}
-	return true;
+  	}
+
+  	return true;
 };
 
 const isObject = (object) => {
-	return object != null && typeof object === "object";
+  return object != null && typeof object === "object";
 };
 
-export function shorten(sentance){
+
+export function shorten(sentance,max=8,middle=true){
 	if(!sentance)return''
 	const sentance_array = sentance.split(' ')
-	return(sentance_array.length < 8 ? sentance : sentance_array.slice(0,4).join(' ') + " ... " + sentance_array.slice(-4).join(' '))
+	if(middle){
+		return(sentance_array.length < max ? sentance : sentance_array.slice(0,(max/2)).join(' ') + " ... " + sentance_array.slice(-(max/2)).join(' '))
+	}else{
+		return(sentance_array.length > max? sentance_array.slice(0,max).join(' ')+"...": sentance)
+	}
 }
 
+export const documentMask = (value) => {
+	if(value.length == 14){
+		return("CNPJ: "+format_mask(value,"##.###.###/####-##"))
+	}else if(value.length == 11){
+		return("CPF: "+format_mask(value,"###.###.###-##"))
+	}else{
+		return(value)
+	}
+}
 export function swap_array(arr, a, b) {
 	return arr.map((current, idx) => {
 		if (idx === a) return arr[b]
@@ -83,17 +116,18 @@ export function swap_array(arr, a, b) {
 // n = var name
 // v = var value
 // t = is var temporary?
-export function var_set(name, value, session){
+export function var_set(name, value, options = { session:false, compress:false }){
 	var localStorage = window.localStorage
 	var sessionStorage = window.sessionStorage
 	if(!localStorage || !sessionStorage) return( new Promise((res,rej)=>{res(null)}) )
 	return new Promise((res,rej)=>{
 		if (name == undefined) rej(null);
 		if (typeof(Storage) === "undefined") rej(null);
+		let _val = options.compress?LZString.compress(value):value
 		try {
-			if(session == true) { sessionStorage[name] = String(value) }
-			else{ localStorage[name] = String(value) }
-			res(value)
+			if(options.session == true) { sessionStorage[name] = String(_val) }
+			else{ localStorage[name] = String(_val) }
+			res(_val)
 		}
 		catch(e) { 
 			console.log("Error "+e+".")
@@ -101,14 +135,16 @@ export function var_set(name, value, session){
 		 }
 	})
 }
-export function var_get(n){
+export function var_get(n, options = { session:false, decompress:false }){
 	var localStorage = window.localStorage
 	var sessionStorage = window.sessionStorage
 	if(!localStorage || !sessionStorage) return( new Promise((res,rej)=>{res(null)}) )
 	return new Promise((res,rej)=>{
 		if (n == undefined) rej(null);
 		if (typeof(Storage) === "undefined") rej(null);
-		try { res(localStorage[n]?localStorage[n]:sessionStorage[n]) }
+		let value = localStorage[n]?localStorage[n]:sessionStorage[n]
+		let _val = options.decompress?LZString.decompress(value):value
+		try { res(_val) }
 		catch(e) {
 			console.error("Error -> "+e)
 			rej(e)
@@ -328,6 +364,20 @@ export function normalize(str){
 	.replace(/([\u0300-\u036f]|[^0-9a-zA-Z])/g, ' '));
 }
 
+export function similarWord(a,b) {
+	var lA = a.length;
+	var lB = b.length;
+	var equivalency = 0;
+	var minLength = (lA > lB) ? lB : lA;
+	var maxLength = (lA < lB) ? lB : lA;
+	for(var i = 0; i < minLength; i++) {
+		if(a[i] == b[i]) {
+			equivalency++;
+		}
+	}
+	return (equivalency / maxLength);
+}
+
 export function similarText(s1, s2){
 
 	function intersect(arr1, arr2) {
@@ -390,39 +440,22 @@ export function downloadURI(uri, name)
     link.click();
 }
 
-export class NodeService {
-
-    getTreeTableNodes() {
-        return fetch('data/treetablenodes.json')
-			.then(res => res.json())
-            .then(d => d.root);
-    }
-
-    getTreeNodes() {
-        return fetch('data/treenodes.json')
-			.then(res => res.json())
-            .then(d => d.root);
-    }
+export const dateMask = (value=new Date()) => {
+	return value.toLocaleDateString("pt-br", {
+		hour12: false,
+		day: "2-digit",
+		month: "short",
+		year: "numeric",
+	});
 }
 
 export const moneyMask = (value=0) => {
-	
-	var value_string = (Math.round(value*100)/100).toString()
-	if(!value_string.split('.')[1]){
-		value_string += '.00'
-	}else{
-		if(value_string.split('.')[1].length == 1) value_string += '0'
-	}
-	value = value_string.replace('.', '').replace(',', '').replace(/\D/g, '')
-  
-	const options = { minimumFractionDigits: 2 }
-	const result = new Intl.NumberFormat('pt-BR', options).format(
-	  parseFloat(value) / 100
-	)
-  
-	// console.log(result)
-  
-	return 'R$ ' + result
+	return value.toLocaleString('pt-BR', {
+		style: 'currency',
+		currency: 'BRL',
+		minimumFractionDigits: 2,
+		maximumFractionDigits: 2
+	});
 }
 
 export const scrollToTop = () => {
@@ -434,7 +467,7 @@ export const scrollToTop = () => {
 
 export const scrollToBottom = () => {
 	if(window.innerHeight < 400 )window.scrollTo({
-		top: document.documentElement.scrollHeight,
+		top: 10000000000000,
 		behavior: 'smooth',
 	});
 };
@@ -447,7 +480,7 @@ export function format_mask(value, pattern) {
 export function capitalize(text){
 	return(text[0].toUpperCase() + text.substring(1))
 }
-export function time_ago(date){
+export function time_ago(date, value = false){
 	if(!date) return
 	
 	const date_now = Date.now()
@@ -458,6 +491,30 @@ export function time_ago(date){
 	const hours_ago = min_ago/60
 	const days_ago = hours_ago/24
 	const months_ago = days_ago/30
+	if(value != false){
+		var ret = 0
+		switch (value) {
+			case "minutes":
+				ret = min_ago
+				break;
+			
+			case "hours":
+				ret = hours_ago
+				break;
+
+			case "days":
+				ret = days_ago
+				break;
+
+			case "months":
+				ret = months_ago
+				break;
+			default:
+				ret = date_now - date_since
+				break;
+		}
+		return ret
+	}
 	if(min_ago < 1){
 		return( "Agora")
 	}else if(min_ago < 60){
@@ -497,4 +554,99 @@ export function openFullscreen(elem) {
 	} else if (elem.msRequestFullscreen) { /* IE11 */
 		elem.msRequestFullscreen();
 	}
+}
+
+export function isMobile(){
+	const nAgt = navigator.userAgent;
+	// console.log(nAgt)
+
+	const checkMobile = {
+		Android: function() {
+			return nAgt.match(/Android/i);
+		},
+		BlackBerry: function() {
+			return nAgt.match(/BlackBerry/i);
+		},
+		iOS: function() {
+			return nAgt.match(/iPhone|iPod/i);
+		},
+		Opera: function() {
+			return nAgt.match(/Opera Mini/i);
+		},
+		Windows: function() {
+			return nAgt.match(/IEMobile/i);
+		},
+		any: function() {
+			return (checkMobile.Android() || checkMobile.BlackBerry() || checkMobile.iOS() || checkMobile.Opera() || checkMobile.Windows());
+		}
+	};
+	return (checkMobile.any())
+}
+
+export const weekdays = [
+	{label:"Dom",name:"Domingo",value:0},
+	{label:"Seg",name:"Segunda",value:1},
+	{label:"Ter",name:"Terça",value:2},
+	{label:"Qua",name:"Quarta",value:3},
+	{label:"Qui",name:"Quinta",value:4},
+	{label:"Sex",name:"Sexta",value:5},
+	{label:"Sáb",name:"Sábado",value:6}
+]
+export const months = [
+	{label:"Jan", name:"Janeiro",value:0},
+	{label:"Fev", name:"Fevereiro",value:1},
+	{label:"Mar", name:"Março",value:2},
+	{label:"Abr", name:"Abril",value:3},
+	{label:"Mai", name:"Maio",value:4},
+	{label:"Jun", name:"Junho",value:5},
+	{label:"Jul", name:"Julho",value:6},
+	{label:"Ago", name:"Agosto",value:7},
+	{label:"Set", name:"Setembro",value:8},
+	{label:"Out", name:"Outubro",value:9},
+	{label:"Nov", name:"Novembro",value:10},
+	{label:"Dez", name:"Dezembro",value:11},
+]
+
+export function sum_array(numbers){
+	return(numbers.reduce((acc, val) => acc + val, 0))
+}
+export function average_array(numbers){
+	const sum = sum_array(numbers)
+	const average = sum / numbers.length;
+	return average.toFixed(2);
+}
+
+export function deepClone(obj){
+	// Handle non-object values and null
+	console.log(toType(obj), typeof (obj))
+	if (toType(obj) !== 'object' || obj === null) {
+		return obj;
+	}
+  
+	// Handle functions
+	if (typeof obj === 'function') {
+		return JSON.stringify(obj());
+	}
+  
+	// Handle arrays
+	if (toType(obj) === 'array'){
+		const newArray = obj.map(item => deepClone(item));
+		return JSON.stringify(newArray);
+	}
+  
+	// Handle objects
+	const newObj = {};
+	for (let key in obj) {
+		if (obj.hasOwnProperty(key)) {
+			newObj[key] = JSON.stringify(deepClone(obj[key]));
+		}
+	}
+	return JSON.stringify(newObj);
+}
+
+// open a yaml file an parse its data to json object using fetch and promises
+async function loadYaml(path) {
+	const response = await fetch(path);
+	const data = await response.text();
+	return yaml.load(data);
 }

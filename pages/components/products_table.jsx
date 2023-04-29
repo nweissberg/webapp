@@ -6,11 +6,7 @@ import { FilterMatchMode, FilterOperator } from 'primereact/api';
 import { moneyMask } from '../utils/util';
 import { ToggleButton } from "primereact/togglebutton";
 import localForage from "localforage";
-
-const photos_db = localForage.createInstance({
-    name:"pilarpapeis_db",
-    storeName:'fotografias'
-});
+import ProductIcon from '../profile/components/product_photo';
 
 export default class ProductsTable extends Component {
     constructor(props) {
@@ -20,7 +16,6 @@ export default class ProductsTable extends Component {
             products_filters:{},
             products:[],
             frozen_column:null,
-            loaded_photos:{}
         };
     }
     
@@ -80,30 +75,7 @@ export default class ProductsTable extends Component {
                     return(<Column sortable style={{minWidth:"100px"}} key={col} field={col} header="PREÇO" body={(row_data)=>moneyMask(row_data.PRECO_KG_OU_UNITARIO)}/>)
                 }
                 if(col == "photo_uid"){
-                    return(<Column key={col} field={col} frozen body={(row_data)=>{
-                        if(this.state.loaded_photos[row_data.photo_uid] == undefined){
-                            
-                            if(row_data.photo_uid) photos_db.getItem(row_data.photo_uid).then((photo_data)=>{
-                                // console.log(photo_data)
-                                if(photo_data){
-                                    var _loaded_photos = {...this.state.loaded_photos}
-                                    const _photo ="data:image/png;base64," + new Buffer.from(photo_data.img_buffer).toString("base64")
-                                    _loaded_photos[row_data.photo_uid] = _photo
-                                    this.setState({loaded_photos:_loaded_photos})
-                                }
-                            })
-                        }
-                        return(<div>
-                            <img src={this.state.loaded_photos[row_data.photo_uid]? this.state.loaded_photos[row_data.photo_uid] : `images/grupos/${row_data.ID_CATEGORIA}_foto.jpg`}
-                            onError={(e) => e.target.src='images/sem_foto.jpg'}
-                            style={{
-                                width:'60px',
-                                // maxWidth:"250px",
-                                borderRadius:"50%",
-                                // marginBottom:"10px"
-                            }}></img>
-                        </div>)
-                    }}/>)
+                    return(<Column key={col} field={col} frozen body={(row_data)=><ProductIcon item={row_data?.PRODUTO_ID} size="4"/>}/>)
                 }
                 return <Column
                     style={{minWidth:"300px"}}

@@ -322,7 +322,9 @@ export default function Home() {
   
   return (
     <ObjectComponent
-      user={currentUser}
+      alerts={false}
+      noUser={true}
+      // user={currentUser}
       onLoad={(e)=>{
         document.title = "Home"
       }}

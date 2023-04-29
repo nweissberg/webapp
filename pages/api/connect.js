@@ -33,25 +33,36 @@ api_cloud.interceptors.response.use(function(response){
   console.warn(error)
 })
 
-const api_call = ((body)=>{
+const api_call = ((path,body,cloud=true)=>{
+  var isLoading = api_buffer.find((requested)=>deepEqual(body,requested))
+
   return new Promise(function(res, rej) {
-    api_cloud.post("/api/query", body)
-    .then((data) => {
-      if(data){
-        console.log('CLOUD')
-        res(data)
-      }else{
-        api.post("/api/query", body)
-        .then((data) => {
-          if(data){
-            console.log('LOCAL')
-            res(data)
-          }else{
-            rej(null)
-          }
-        })
-      }
-    })
+    if(isLoading) { return(null) }
+
+    api_buffer.push(body)
+    if(cloud){
+      api_cloud.post(path, body)
+      .then((data) => {
+        if(data){
+          console.log('CLOUD')
+          api_buffer = api_buffer.filter((request)=>deepEqual(request,body) == false)
+          res(data)
+        }else{
+          rej(null)
+        }
+      })
+    }else{
+      api.post(path, body)
+      .then((data) => {
+        if(data){
+          console.log('LOCAL')
+          api_buffer = api_buffer.filter((request)=>deepEqual(request,body) == false)
+          res(data)
+        }else{
+          rej(null)
+        }
+      })
+    }
   })
 })
 var api_buffer = []

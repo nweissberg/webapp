@@ -11,7 +11,7 @@ import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { TreeTable } from 'primereact/treetable';
 import { InputText } from 'primereact/inputtext';
-import { copyToClipBoard, downloadURI, NodeService } from "../utils/util";
+import { copyToClipBoard, downloadURI } from "../utils/util";
 import { useAuth } from "../api/auth"
 import {
     getStorage,
@@ -38,9 +38,9 @@ export default function Uploader() {
     const [datatableMessage, setDatatableMessage] = useState('Carregando...');
     const [updateRender, setUpdateRender] = useState(false);
     
-    const [nodes, setNodes] = useState([]);
+    // const [nodes, setNodes] = useState([]);
     const [globalFileFilter, setGlobalFileFilter] = useState(null);
-    const nodeservice = new NodeService();
+    // const nodeservice = new NodeService();
 
     // useEffect(() => {
     //     nodeservice.getTreeTableNodes().then(data => {
@@ -145,9 +145,10 @@ export default function Uploader() {
                 {cancelButton}
                 {/* <h6 style={{ marginTop:"10px",marginLeft: 'auto'}}>{currentFile}</h6> */}
                 <ProgressBar
+                    className="h-2rem w-5"
                     value={totalSize}
                     displayValueTemplate={() => `${Math.floor(totalSize)}%`}
-                    style={{width: '100px', height: '20px', marginLeft: 'auto'}}>
+                    style={{marginLeft: 'auto'}}>
                 </ProgressBar>
             </div>
         );
@@ -446,7 +447,7 @@ export default function Uploader() {
                         rows={uploadedFiles.length > 10?10:0}
                         rowsPerPageOptions={uploadedFiles.length > 10?[10,20,50,100]:null}
                         >
-                            <Column header="Ações" body={actionBodyTemplate} exportable={false} style={{ width: '170px', textAlign:"center" }}></Column>
+                            <Column header="Ações" body={actionBodyTemplate} exportable={false} style={{ minWidth: '170px', textAlign:"center" }}></Column>
                         {uploadedFiles && uploadedFiles[0] && Object.keys(uploadedFiles?.[0]).map((col,i) => {
                             if(col != "ref" && col != "user") return <Column sortable key={col} field={col} header={col} />;
                         })}

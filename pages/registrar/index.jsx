@@ -4,7 +4,6 @@ import ObjectComponent from "../components/object"
 import {Form, Card, Alert} from 'react-bootstrap'
 import "bootstrap/dist/css/bootstrap.min.css"
 import { useAuth } from "../api/auth"
-import { Container } from 'react-bootstrap';
 import { useRouter } from 'next/router'
 import { Button } from "primereact/button";
 
@@ -57,23 +56,13 @@ export default function Signup() {
     if(currentUser !== null) return(<><ProgressBar mode="indeterminate" style={{ height: '6px', marginBottom:"-6px" }}></ProgressBar></>)
 
 	return (
-		<ObjectComponent onLoad={(e)=>{
+		<ObjectComponent
+            noUser={true}
+            alerts={false} onLoad={(e)=>{
 			document.title = "Registro"
 		}}>
-            <div
-                style={{
-                    position:"absolute",
-                    width:"100%",
-                    height:"calc(100vh - 100px)",
-                    // backgroundColor:"var(--surface-b)"
-                }}
-            >
-                <Container
-                    className='d-flex align-items-center justify-content-center'
-                    style={{
-                        minHeight:"100%"
-                    }}
-                >
+            <div className="flex justify-content-center align-items-center h-screen w-full">
+                
                     <div className='w-100' style={{maxWidth:"400px"}}>
                     <Card style={{
                             backgroundColor:"var(--glass)",
@@ -117,7 +106,7 @@ export default function Signup() {
                             }}/>
                         </div>
                     </div>
-                </Container>
+                
             </div>
 		</ObjectComponent>
 	)

@@ -605,7 +605,7 @@ export default function Home() {
                         }}
                         label='Salvar'
                         className='p-button-text'
-                        icon={selectedFile === '' || fileSaved === true?'pi pi-save':'pi pi-sync'}
+                        icon={selectedFile === '' || fileSaved === true?'pi pi-save':'pi pi-cloud-upload'}
                         onClick={()=>{
                           if(selectedFile !== ''){
                             console.log(selectedFile,keyVars)
@@ -976,6 +976,17 @@ export default function Home() {
                 // onSelect={(event)=>{
                 //   console.log(event)
                 // }}
+                nodeTemplate={(obj)=>{
+                  if(obj.data) return(<div className='flex flex-wrap'>
+                  <label className='flex w-full'>
+                    {obj.label}
+                  </label>
+                  <label className='text-bluegray-400 text-xs'>
+                    {obj.data.uid}
+                  </label>
+                  </div>)
+                  return(<>{obj.label}</>)
+                }}
                 onNodeDoubleClick={(event) =>{
                   if(event.node.type == 'file'){
                     const file = event.node.data

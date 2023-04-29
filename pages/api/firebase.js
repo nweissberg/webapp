@@ -27,7 +27,7 @@ var roles_db = localForage.createInstance({
     storeName:'cargos'
 });
 
-var seller_db = localForage.createInstance({
+var vendedores_db = localForage.createInstance({
     name:"pilarpapeis_db",
     storeName:'vendedores'
 });
@@ -59,7 +59,7 @@ function requestPermission() {
         }
     });
 }
-export function get_token(){
+export function get_token(user){
     requestPermission().then((permission)=>{
         console.log(permission);
 
@@ -80,7 +80,7 @@ export function get_token(){
                 // Send the token to your server and update the UI if necessary
                 // ...
                 console.log("Sending the token to server", currentToken)
-                writeRealtimeData("fcmTokens/"+uid, currentToken)
+                writeRealtimeData("fcmTokens/"+user.rp_user.id, currentToken)
                 return(currentToken);
             } else {
                 // Show permission request UI
@@ -116,9 +116,9 @@ export async function add_data(table, data){
     }
 }
 
-export function get_data(table){
+export function get_data(table, user_uid=uid){
     const collectionRef = collection(fb_db, table);
-    return getDocs(query(collectionRef, where("user_uid", "==", uid)));
+    return getDocs(query(collectionRef, where("user_uid", "==", user_uid)));
 }
 
 export function get_all_data(table){
@@ -263,7 +263,7 @@ export function get_fingerprint(user){
     return(getIP("ipapi"));//"ipapi"
 }
 
-export function writeUserData(userId, name, email, photo, role, banner, metadata, fingerprints) {
+export function writeUserData(userId, name, email, photo, role, banner, metadata, discount, fingerprints) {
     set(ref(fb_rtdb, 'users/' + userId), {
         name : name,
         email : email,
@@ -271,6 +271,8 @@ export function writeUserData(userId, name, email, photo, role, banner, metadata
         role : role,
         banner: banner,
         metadata: metadata,
+        discount: discount,
+        uid:userId,
         // fingerprints: fingerprints
     });
 }
@@ -300,17 +302,23 @@ export function writeRealtimeData(path,data) {
     var path = path.replace("#","~")
     return set(ref(fb_rtdb, path), data);
 }
-
+// var await_paths = []
 export function readRealtimeData(path){
     var path = path.replace("#","~")
-    // console.log(path)
-    return new Promise((res)=>{
+    return new Promise((res,rej)=>{
+        // if(!await_paths.includes(path)){
         onValue(ref(fb_rtdb, path), (snapshot) => {
             var read_data = snapshot.val() || null;
+            // await_paths = await_paths.filter( v => v !== path);
             res(read_data)
-            },{
+        },{
             onlyOnce: true
         });
+        // }else{
+        //     // await_paths = await_paths.filter( v => v !== path);
+        //     rej(null)
+        // }
+        // await_paths.push(path)
     })
 }
 
@@ -341,26 +349,10 @@ export async function writeNewOrder(user, sales_cart) {
     return update(ref(fb_rtdb), updates).then(()=>{return(newOrderKey)});
 }
 
-export function readUsers(){
-    api_get({
-        credentials:"0pRmGDOkuIbZpFoLnRXB",
-        keys:[],
-        query:"8Ha8PdrbwIaOEumkOypR"
-    }).then(async(data)=>{
-        if(data){
-            // console.log(data)
-            data.map((seller)=>{
-                if(seller.VENDEDOR_EMAIL){
-                    seller_db.setItem(seller.VENDEDOR_EMAIL,seller)
-                }
-            })
-        }
-    })
-    
+export function readUser(uid){
     return new Promise((res)=>{
-        onValue(ref(fb_rtdb, '/users'), (snapshot) => {
+        onValue(ref(fb_rtdb, '/users/'+uid), (snapshot) => {
             var userdata = snapshot.val() || 'Anonymous';
-            // console.log(userdata)
             res(userdata)
             },{
             onlyOnce: true
@@ -368,10 +360,76 @@ export function readUsers(){
     })
 }
 
+export function vendedores(){
+    api_get({
+        credentials:"0pRmGDOkuIbZpFoLnRXB",
+        keys:[],
+        query:"8Ha8PdrbwIaOEumkOypR"
+    }).then(async(data)=>{
+        if(data){
+            // console.log(data)
+            data.map((vendedor)=>{
+                if(vendedor.VENDEDOR_EMAIL){
+                    vendedores_db.setItem(vendedor.VENDEDOR_EMAIL,vendedor)
+                }
+            })
+        }
+    })
+}
+
+
+
+
+export async function get_vendedor(user){
+    return await api_get({
+        credentials:"0pRmGDOkuIbZpFoLnRXB",
+        keys:[{
+            key:'user_email',
+            value: user.email,
+            type: 'string',
+        }],
+        query:"EqhINomPMMpG9XVrmcHA"
+    }).then(async([data])=>{
+        if(data){
+            return(data)
+            // data.map((vendedor)=>{
+            //     if(vendedor.VENDEDOR_EMAIL){
+            //         vendedores_db.setItem(vendedor.VENDEDOR_EMAIL,vendedor)
+            //     }
+            // })
+        }
+        return(null)
+    })
+}
+
+
+export function readUsers(){
+    
+    
+    return new Promise((res)=>{
+        onValue(ref(fb_rtdb, '/users'), (snapshot) => {
+            var userdata = snapshot.val() || 'Anonymous';
+
+            const filtered = Object.keys(userdata)
+            .filter(key => userdata[key].photo[0] != 's')
+            .reduce((acc, key) => {
+                acc[key] = userdata[key];
+                return acc;
+            }, {});
+
+            res(filtered)
+            },{
+            onlyOnce: true
+        });
+    })
+}
+
 onAuthStateChanged(auth, (user) => {
-    console.log(user)
+    // console.log(user)
     if (user) {
-        
+        get_vendedor(user).then(vendedor=>{
+            console.log(vendedor)
+        })
         // console.log(user)
         // get_fingerprint(user)
         uid = user.uid;

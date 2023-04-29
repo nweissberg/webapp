@@ -12,14 +12,11 @@ import ProductSidebar from "../sales/components/product_sidebar";
 import { Sidebar } from "primereact/sidebar";
 import { ProgressBar } from "primereact/progressbar";
 import { Button } from "primereact/button";
+import ErrorPopup from "../components/error_popup";
 
 const produtos_db = localForage.createInstance({
     name:"pilarpapeis_db",
     storeName:'produtos'
-});
-const photos_db = localForage.createInstance({
-    name:"pilarpapeis_db",
-    storeName:'fotografias'
 });
 const clientes_db = localForage.createInstance({
     name:"pilarpapeis_db",
@@ -35,22 +32,29 @@ export default function OrderPage(){
     const [ selected_item, set_selected_item] = useState(null)
     const [ cart_table, set_cart_table] = useState(null)
     
+    
     const {
         groups,
         load_groups,
-        check_rule
+        check_rule,
+        load_product,
+        clients
     } = useProducts()
 
     useEffect(()=>{
-        console.log(window.location)
+        // console.log(window.location)
         load_groups()
     },[])
 
-    useEffect(()=>{
-        console.log(groups)
-    },[groups])
+    // useEffect(()=>{
+    //     console.log(groups)
+    // },[groups])
 
     useEffect(()=>{
+        if(asPath.includes("#") == false){
+            set_loading(false)
+            return
+        }
         const hash = asPath.split('#')[1];
         // console.log("View order "+ hash)
 
@@ -58,20 +62,21 @@ export default function OrderPage(){
         get_order(hash).then(async (data)=>{
             const cart = data.data()
             console.log(cart)
+            if(!cart){
+                set_loading(false)
+                return
+            }
 
             items_data = cart.items.map(async(item)=>{
                 // console.log(item)
                 await produtos_db.getItem(item.id.toString()).then(async(item_data)=>{
                     // console.log(item_data)
-                    if(!item_data) return item
-                    if(item_data.photo_uid){
-                        await photos_db.getItem(item_data.photo_uid).then(async (photo_data)=>{
-                            // console.log(photo_data)
-                            const _photo ="data:image/png;base64," + new Buffer.from(photo_data.img_buffer).toString("base64")
-                            item_data.photo = _photo
+                    if(!item_data) {
+                        await load_product(item.id).then((item_data)=>{
+                            // console.log(item_data)
+                            item.data = item_data
                         })
-                    }else{
-                        item_data.photo = `images/grupos/${item_data.ID_CATEGORIA}_null.jpg`
+                        return item
                     }
                     item.data = item_data
                     // console.log(item)
@@ -79,20 +84,18 @@ export default function OrderPage(){
                 })
             })
             await Promise.all(items_data).then(async()=>{
-                await readRealtimeData("users/"+cart.user_uid).then((order_user_data)=>{
+                // if(currentUser){
+                await readRealtimeData("users/"+cart.user_uid+"/name").then((order_user_data)=>{
                     // console.log(order_user_data)
-                    cart.author = order_user_data.name
+                    cart.author = order_user_data
                 })
-                const client_id = cart.client
+                // }
+                
+                const client = clients.find(c=>c.id == cart.client)
                 // console.log(client_id)
-                if(client_id){
-                    await clientes_db.getItem(client_id.toString()).then((client)=>{
-                        // cart.history = order_data
-                        cart.client = client
-                        cart.total = cart.items.length > 0 ? cart.items.map((item)=>{return((item.data?.PRECO-(item.data?.PRECO*(item.discount/100)))*item.quantity)}).reduce((sum,i)=> sum + i) : 0
-                        // cart.key = key
-                        
-                    })
+                if(client){
+                    cart.client = client
+                    cart.total = cart.items.length > 0 ? cart.items.map((item)=>{return((item.data?.PRECO-(item.data?.PRECO*(item.discount/100)))*item.quantity)}).reduce((sum,i)=> sum + i) : 0
                 }
                 set_loading(false)
                 set_order(cart)
@@ -100,14 +103,15 @@ export default function OrderPage(){
         })
     }, [ asPath ]);
 
-    // useEffect(()=>{
-    //     console.log(currentUser)
-    // },[currentUser])
+    useEffect(()=>{
+        console.log(currentUser)
+    },[currentUser])
 
     // useEffect(()=>{
     //     console.log(order)
     // },[order])
-
+    
+        
     return(
         <ObjectComponent
             user={currentUser}
@@ -115,13 +119,14 @@ export default function OrderPage(){
                 document.title = "Pedido"
             }}
         >
+        {!order && !loading && <ErrorPopup />}
         {loading && <ProgressBar mode="indeterminate" style={{ height: '6px', marginBottom:"-6px" }}/>}
         <div className="">
                 {order==null && <></>}
                 {order && <div style={{
                     marginBottom:"55px"
                 }}>
-                    {currentUser.uid != order.user_uid && <div className="flex justify-content-between"
+                    {currentUser?.uid != order.user_uid && <div className="flex justify-content-between"
                     style={{
                         padding:"10px",
                         color:"var(--text)",
@@ -140,7 +145,7 @@ export default function OrderPage(){
                         </div>}
                     </div>}
 
-                    {currentUser.uid == order.user_uid && <div className="flex justify-content-center"
+                    {currentUser?.uid == order.user_uid && <div className="flex justify-content-center"
                     style={{
                         padding:"10px",
                         color:"var(--text)",
@@ -156,7 +161,7 @@ export default function OrderPage(){
                         user={currentUser}
                         editable={false}
                         sale_cart={order}
-                        can_approve={currentUser.uid != order.user_uid}
+                        can_approve={currentUser && currentUser?.uid != order.user_uid}
                         sidebar={(item_selected)=>{
                             console.log(item_selected)
                         }}

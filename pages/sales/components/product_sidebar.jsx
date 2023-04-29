@@ -1,17 +1,14 @@
 import React from "react";
 import { Button } from 'primereact/button';
-import { deepEqual, moneyMask } from "../../utils/util";
-import JsBarcode from "jsbarcode";
+import { average_array, deepEqual, moneyMask, sum_array } from "../../utils/util";
 import localForage from "localforage";
 import { api_get } from "../../api/connect";
 import { InputNumber } from "primereact/inputnumber";
-import FlipCard from "../../components/flip_card";
-import { ToggleButton } from "primereact/togglebutton";
-
-const photos_db = localForage.createInstance({
-    name:"pilarpapeis_db",
-    storeName:'fotografias'
-});
+import Barcode from "./make_barcode";
+import ProductIcon from "../../profile/components/product_photo";
+import LineChart from "../../components/chart_line";
+import { SelectButton } from "primereact/selectbutton";
+import { Skeleton } from "primereact/skeleton";
 
 var companies_db = localForage.createInstance({
     name:"pilarpapeis_db",
@@ -29,7 +26,10 @@ export default class ProductSidebar extends React.Component{
         
         this.state = {
             item:null,
-            inventory:[]
+            inventory:[],
+            documentos:[],
+            history:[],
+            chart_mode:"Mês"
         }
 
         this.info_keys = {
@@ -63,10 +63,10 @@ export default class ProductSidebar extends React.Component{
             "NCM":{
                 label:"Código Produto NCM"
             },
-            "SALDO":{
-                label:"Estoque",
-                return:( text => this.getInventory(text) )
-            }
+            // "SALDO":{
+            //     label:"Estoque",
+            //     return:( text => this.getInventory(text) )
+            // }
         }
     }
 
@@ -74,45 +74,96 @@ export default class ProductSidebar extends React.Component{
         if(this.state.inventory == null){
             return("Vazio")
         }
+        
         if(this.state.inventory.length == 0){
-            return(<i className="pi pi-spin pi-spinner" style={{'fontSize': '1em'}}></i>)
+            return(<div>
+                <label className="flex justify-content-end text-right text-gray-300">Estoque</label>
+                <Skeleton className="w-10rem"/>
+            </div>)
         }
-        return(this.state.inventory.map((company)=>{
-            return(company.name+"\n "+(company.saldo == 0?"Vazio":company.saldo)+"\n")
-        }).join("\n"))
+        return(<div className="text-right">
+            <label className="text-gray-300">Estoque</label>
+            {this.state.inventory.map((company,k)=>{
+            return(<div key={k}>
+                <label>
+                    {company.name}
+                </label>
+                
+                    {(company.saldo == 0?<h5 className="text-orange-500">Vazio</h5>:<h5 className="text-green-500">{company.saldo}</h5>)}
+                
+            </div>)
+        })}
+        </div>)
     }
-
+    
     getGroup(group_id){
         if(this.props.groups == undefined) return
         var _group = this.props.groups.find((item)=>item.id.toString()==group_id)
-        return(_group.nome)
+        return(_group?.nome)
     }
-    makeBarcode(){
-        if(this.props.item != null && this.props.item.COD_BARRA != "" && this.props.item.COD_BARRA != "SEM GTIN"){
-            try{
-                JsBarcode("#barcode", this.props.item.COD_BARRA,{ format: "EAN13",width:3,height:100 });
-            }
-            catch(e){
-                console.error(e)
-            }
-        }
-    }
-    componentDidMount(){
-        this.makeBarcode()
-    }
-    
-    render(){
-        if(this.props.item?.photo_uid && this.state.photo == null){
-            photos_db.getItem(this.props.item.photo_uid).then((photo_data)=>{
-                if(photo_data){
-                    const _photo ="data:image/png;base64," + new Buffer.from(photo_data.img_buffer).toString("base64")
-                    // console.log(photo_data)
-                    this.setState({photo:_photo})
-                }
-            })
-        }
+
+    analize(data,mode="Mês"){
+        // console.log(data)
+        if(!data)return(null)
+        let merged_data = {}
+        if(data.length == 0) return "NO_DATA"
         
-        if(this.props.item?.PRODUTO_ID != this.props.item?.PRODUTO_ID ){
+        data?.map?.(i => {
+            i.date = new Date(i.data_emissao)
+            const index = mode=="Dia"?i.date.getTime():i.date.getYear()+"_"+i.date.getMonth()
+            // console.log(index)
+            merged_data[index] ||= {
+                quantidades: [],
+                valores:[],
+
+            }
+            merged_data[index].quantidades.push(i.quantidade)
+            merged_data[index].valores.push(i.valor_unitario)
+            merged_data[index].date = i.date
+            // return(i)
+        })
+        
+        return Object.values(merged_data)
+        .map(point => {
+            return({
+                quantidade:sum_array(point.quantidades),
+                valor:average_array(point.valores),
+                date:new Date(point.date)
+            })
+        })
+    }
+
+    getHistory(_item){
+        if(!this.props.item) return
+        this.setState({history:[]})
+        api_get({
+            credentials:"0pRmGDOkuIbZpFoLnRXB",
+            keys:[{
+                key: "produto_id",
+                type:"STRING",
+                value: this.props.item?.PRODUTO_ID
+            }],
+            query:"qIPuh9aoAKK3QePT7Rsa"
+        }).then(async(data)=>{
+            // console.log("TESTE ",data)
+            if(data?.length <= 2){
+                this.setState({history:"NO_DATA"})
+            }else{
+                this.setState({
+                    documentos:data,
+                    history:this.analize(data)
+                })
+            }
+        })
+    }
+
+    componentDidMount(){
+        this.getHistory()
+    }
+
+    render(){
+        
+        if(this.props.item && this.state.item?.PRODUTO_ID != this.props.item?.PRODUTO_ID ){
             this.setState({inventory:[]})
             api_get({
                 credentials:"0pRmGDOkuIbZpFoLnRXB",
@@ -156,31 +207,32 @@ export default class ProductSidebar extends React.Component{
                     }
                 }
             })
-            this.setState({photo:null,item:this.props.item})
+            this.setState({item:this.props.item})
         }
-        if(!this.props.item)return(<></>)
+        const panel_style = {
+            position:"absolute",
+            background:"var(--glass-c)",
+            backdropFilter: "blur(10px)",
+            color:"var(--text)",
+            width:"30%",
+            right:"0px",
+            overflow:"scroll",
+            height:"100vh",
+            padding:"10px",
+            paddingTop:"30px",
+            ...this.props?.style
+        }
+        if(!this.props.item)return(<div style={panel_style}></div>)
         return(
             <div className={"flex flex-wrap justify-content-center " + (this.props.anim!=false?"enter_right_anim":"")}
-            style={{
-                position:"absolute",
-                background:"var(--glass-c)",
-                backdropFilter: "blur(10px)",
-                color:"var(--text)",
-                width:"30%",
-                right:"0px",
-                overflow:"scroll",
-                height:"100vh",
-                padding:"10px",
-                paddingTop:"30px",
-                ...this.props?.style
-            }}>
-            {this.props.sidebar==true && this.props.close==false && <div style={{width:"100%", position:"sticky", top:"0px"}}>
-                <Button className="p-button-rounded"
+            style={panel_style}>
+            {this.props.sidebar==true && this.props.close==false && <div style={{width:"100%", zIndex:1, position:"sticky", top:"0px"}}>
+                <Button className="p-button-outlined p-button-rounded bg-glass-c border-3 text-white border-blue-400 hover:bg-bluegray-800"
                     style={{
                         top:this.props.close!=false?"0px":"-20px"
                     }}
-                    // label="Fechar"
-                    icon="pi pi-times"
+                    label="Voltar"
+                    icon="pi pi-chevron-left"
                     // iconPos="right"
                     onClick={(event)=>{
                         // this.setState({item:null})
@@ -190,20 +242,18 @@ export default class ProductSidebar extends React.Component{
             <div style={{width:"100%"}}>
                 
                 <div style={{textAlign:"center", paddingBottom:"80px"}}>
-                    <img alt="Product Card"
-                        src={this.state.photo? this.state.photo : `images/grupos/${this.props.item.ID_CATEGORIA}_null.jpg`}
-                        onError={(e) => e.target.src='images/sem_foto.jpg'}
-                        style={{width:"250px", borderRadius:"10px", marginBottom:"10px"}}
-                    >
-                    
-                    </img>
-            
-                    <div style={{marginBottom:"20px"}}>
-                        <h4>{this.props.item.PRODUTO_NOME}</h4>
+                
+                    <div className="flex w-full h-full justify-content-between align-items-center text-right p-3">
+                        <ProductIcon item={this.props.item.PRODUTO_ID}  size="5"/>
+                        <div style={{marginBottom:"20px"}}>
+                            <h5>{this.props.item.PRODUTO_NOME}</h5>
+                        </div>
                     </div>
                     
+                    
+                    
                     {this.props.item?.sold && 
-                    <div className="flex justify-content-center" style={{
+                    <div className="flex justify-content-center mt-4" style={{
                         // position:"sticky",
                         // backgroundColor:"red",
                         top:"-10px",
@@ -223,7 +273,7 @@ export default class ProductSidebar extends React.Component{
                     </div>}
                     {!this.props.item_selected && this.props.editable != false && <div>
                         <Button
-                            className="p-button-lg p-button-rounded p-button-outlined"
+                            className="p-button-lg p-button-rounded p-button-outlined border-2 mt-4"
                             icon="pi pi-plus"
                             label="Vender"
                             onClick={(event)=>{
@@ -231,6 +281,7 @@ export default class ProductSidebar extends React.Component{
                             }}
                         />
                     </div>}
+                    
                     {this.props.item_selected && <div style={{
                             textAlign:"right",
                             height:"100%",
@@ -242,6 +293,10 @@ export default class ProductSidebar extends React.Component{
                             <div className="flex-grow-1 field col-4">
                                 <label>Preço</label>
                                     <InputNumber
+                                        onContextMenu={(e)=>{
+                                            e.stopPropagation()
+                                            e.preventDefault()
+                                        }}
                                         onClick={(e)=>e.stopPropagation()}
                                         prefix="R$ "
                                         value={Math.round((this.props.item?.PRECO-(this.props.item?.PRECO*(this.props.item_selected.discount/100)))*100)/100}
@@ -289,6 +344,10 @@ export default class ProductSidebar extends React.Component{
                                     />}
                                 </div>
                                 <InputNumber
+                                    onContextMenu={(e)=>{
+                                        e.stopPropagation()
+                                        e.preventDefault()
+                                    }}
                                     onClick={(e)=>e.stopPropagation()}
                                     style={{
                                         width:"content-max"
@@ -313,6 +372,10 @@ export default class ProductSidebar extends React.Component{
                             <div className="flex-grow-1 field col-5">
                                 <label>Quantidade</label>
                                 <InputNumber
+                                    onContextMenu={(e)=>{
+                                        e.stopPropagation()
+                                        e.preventDefault()
+                                    }}
                                     onClick={(e)=>e.stopPropagation()}
                                     // mode="decimal"
                                     // minFractionDigits={2}
@@ -339,7 +402,11 @@ export default class ProductSidebar extends React.Component{
                             <div className="flex-grow-1 field col-4">
                                 <label>Uso e Consumo</label>
                                 <Button 
-                                className={"pl-0 pr-0 p-button-rounded "+( this.props.item_selected.internal_use? "" :"p-button-outlined")}
+                                    onContextMenu={(e)=>{
+                                        e.stopPropagation()
+                                        e.preventDefault()
+                                    }}
+                                    className={"pl-0 pr-0 p-button-rounded "+( this.props.item_selected.internal_use? "" :"p-button-outlined")}
                                     value={this.props.item_selected.internal_use}
                                     onClick={(e) => {
                                         e.stopPropagation()
@@ -359,8 +426,9 @@ export default class ProductSidebar extends React.Component{
 
                             
 
-                            <div className="flex-grow-1 field col-6" style={{
+                            <div className="flex-grow-1 flex justify-content-end" style={{
                                 whiteSpace:"nowrap",
+                                textAlign:"right"
                                 // overflowX:"scroll"
                                 // position:"absolute",
                                 // right:"10px"
@@ -370,15 +438,37 @@ export default class ProductSidebar extends React.Component{
                             </div>
 
                         </div>}
-                    <div className="">
+                        <LineChart
+                        className="flex w-full h-20rem mt-4 mb-2"
+                        orders={this.state.history}
+                        dateFormat={this.state.chart_mode == "Mês"?{
+                            month: "short",
+                            year: "2-digit"
+                        }:{
+                            day:"2-digit",
+                            month: "short",
+                            year: "2-digit"
+                        }}
+                    />
+                    {this.state.documentos.length >= 1 && <SelectButton
+                        unselectable={false}
+                        value={this.state.chart_mode}
+                        options={["Mês","Dia"]}
+                        onChange={(e) => {
+                            let _history = this.analize(this.state.documentos,e.value)
+                            this.setState({chart_mode:e.value, history:_history})
+                        }}
+                    />}
+                    <div className="flex justify-content-between ">
+
                         <div className="flex-grow-1 col-6" style={{textAlign:"left"}}>
 
                             {Object.keys(this.info_keys).map((key)=>{
-                                if(this.props.item[key] == "0") return(<></>)
-                                if(key=="SALDO" && this.props.check_rule(this.props.user,"VER_SEM_ESTOQUE") == false ) return(<></>)
+                                if(this.props.item[key] == "0") return(<div key={key}></div>)
+                                if(key=="SALDO" && this.props.check_rule(this.props.user,"VER_SEM_ESTOQUE") == false ) return(<div key={key}></div>)
                                 return(
                                 <div key={key}>
-                                    <label>{this.info_keys[key].label}</label>
+                                    <label className="text-gray-300">{this.info_keys[key].label}</label>
                                     <div style={{whiteSpace:"pre-wrap", display:"flex"}}>
                                         <h5>
                                             {
@@ -395,13 +485,25 @@ export default class ProductSidebar extends React.Component{
                                 )
                             })}
                         </div>
+                        {this.getInventory()}
+                        
                     </div>
                         {this.props.item.COD_BARRA != "" && this.props.item.COD_BARRA != "SEM GTIN" && <div style={{textAlign:"center", paddingTop:"10px"}}>
-                            <svg style={{borderRadius:"5px"}} id="barcode"/>
+                            <Barcode data={this.props.item.COD_BARRA} style={{width:"90%", maxWidth:"333px"}}/>
                         </div>}
                         <div style={{paddingBottom:"30px"}}></div>
                 </div>
+                
             </div>
+            {this.props.item_selected &&
+                <Button className="bg-blur-1 bg-black-alpha-50 z-1 hover:bg-bluegray-900 flex border-2 sticky bottom-0 p-button-success p-button-outlined p-button-rounded p-button-lg"
+                    icon='pi pi-check'
+                    label='Finalizar'
+                    onClick={(event)=>{
+                        this.props.onHide?.()
+                    }}
+                />
+            }
         </div>
         )
     }

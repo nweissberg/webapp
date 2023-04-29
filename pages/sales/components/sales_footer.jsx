@@ -1,22 +1,21 @@
 import React from "react";
 import { Button } from 'primereact/button';
-import { deepEqual, moneyMask, scrollToBottom, scrollToTop } from "../../utils/util";
+import { deepEqual, format_mask, moneyMask, scrollToBottom, scrollToTop } from "../../utils/util";
 import { ConfirmPopup, confirmPopup } from 'primereact/confirmpopup';
 import { Toast } from 'primereact/toast';
 // import AnimatedNumbers from "react-animated-numbers";
 import { InputText } from "primereact/inputtext";
 import localForage from "localforage";
-import BarcodeScanner from "./barcode_scanner";
 import { api_get } from "../../api/connect";
-import { AutoComplete } from 'primereact/autocomplete';
 import { Menu } from 'primereact/menu';
-import { SlideMenu } from 'primereact/slidemenu';
 import { Dialog } from 'primereact/dialog';
-import { DataTable } from "primereact/datatable";
-import { Column } from 'primereact/column';
-import { FilterMatchMode, FilterOperator } from 'primereact/api';
-import { add_data, writeNewOrder } from "../../api/firebase";
+
+import { add_data, readRealtimeData, writeNewOrder } from "../../api/firebase";
 import Swal from 'sweetalert2';
+import { Badge } from "primereact/badge";
+import { OverlayPanel } from 'primereact/overlaypanel';
+import ClientSearchTable from "./client_search_table";
+import ClientSearch from "../../client/components/client_search";
 
 const pedidos_db = localForage.createInstance({
     name:"pilarpapeis_db",
@@ -40,13 +39,29 @@ export default class SalesFooter extends React.Component{
             num:0,
             isSaved:true,
             save_name:"",
-            clients: [],
-            filteredCountries: null,
-            searchClient: null,
-            selectedClient: null,
-            loadingClients:false
+            filtered:[],
+            warnings:[],
+            warn_alerts:{}
         }
-
+        this.footer,
+        this.onWarningSelect = this.onWarningSelect.bind(this);
+        // this.clear = this.clear.bind(this);
+        this.warn_msg = {
+            item_discount:{
+                title:"Item do Pedido",
+                add:"Desconto maior que o permitido para os itens: ",
+                del:"Desconto dentro do permitido."
+            },
+            min_value:{
+                title:"Valor do Pedido",
+                add:"Pedido muito barato, mínimo é R$1.000,00",
+                del:"Valor total válido."
+            },
+            new:{
+                add:"",
+                del:""
+            }
+        }
         this.items = [
             {
                 label: 'Ações do Cliente',
@@ -177,7 +192,7 @@ export default class SalesFooter extends React.Component{
                                     data.drafts = data.drafts.slice(1)
                                     pedidos_db.setItem(this.props.user.uid,data).then(()=>{
                                         // showSuccess(name)
-                                        console.warn(this.props.send_order?.("order_sent",_order))
+                                        // console.warn(this.props.test_context?.("order_sent",_order))    
                                         Swal.fire(
                                             'Pedido '+ _order.name,
                                             'Enviado como orçamento, para aprovação',
@@ -197,28 +212,23 @@ export default class SalesFooter extends React.Component{
         this.accept = this.accept.bind(this);
         // this.reject = this.reject.bind(this);
         this.confirmSave = this.confirmSave.bind(this);
-        this.searchCountry = this.searchCountry.bind(this);
+    }
+    onWarningSelect(e) {
+        this.setState({ selectedWarning: e.value }, () => {
+            this.op.hide();
+            // this.toast.show({severity:'info', summary: 'Warning Selected', detail: this.state.selectedProduct.name, life: 3000});
+        });
     }
 
-    searchCountry(event) {
-        setTimeout(() => {
-            let filteredCountries;
-            if (!event.query.trim().length) {
-                filteredCountries = [...this.state.clients];
-            }
-            else {
-                filteredCountries = this.state.clients.filter((country) => {
-                    return country.fantasia.toLowerCase().startsWith(event.query.toLowerCase());
-                });
-            }
-            
-            this.setState({ filteredCountries });
-        }, 250);
-    }
+    // clear() {
+    //     this.toast.clear();
+    // }
+
+    
 
     itemTemplate(item) {
         return (
-            <div className="country-item">
+            <div className="Clients-item">
                 {/* <img alt={item.name} src={`images/flag/flag_placeholder.png`} onError={(e) => e.target.src = 'https://www.primefaces.org/wp-content/uploads/2020/05/placeholder.png'} className={`flag flag-${item.code.toLowerCase()}`} /> */}
                 <div>{item.fantasia}</div>
             </div>
@@ -318,14 +328,107 @@ export default class SalesFooter extends React.Component{
             _clientes[key] = value
         }).then(()=>{
             var _all_clients = Object.values(_clientes)
-            this.setState({all_clients:_all_clients})
+            
+            this.setState({all_clients:_all_clients,clients:_all_clients})
         })
     }
     // componentWillUnmount(){
     //     console.log("Will unmount")
     // }
+    alert_warning(warning, options){
+        var _warn_alerts = {...this.state.warn_alerts}
+        _warn_alerts[warning] = {
+            title:this.warn_msg[warning].title,
+            info:this.warn_msg[warning][options.type] + options.msg,
+            icon:options.type=='add'?'pi pi-exclamation-circle':'pi pi-check-circle',
+            type:options.type,
+            data:options.data,
+        }
+        this.setState({warn_alerts:_warn_alerts})
+
+        // this.toast.show({
+        //     severity: options.type=='add'?'warn':'info',
+        //     summary: this.warn_msg[warning].title,
+        //     detail: this.warn_msg[warning][options.type] + options.msg,
+        //     life: 3000,
+        //     sticky:options.sticky || false
+        // });
+    }
+
+    add_warning(warning, msg="",data=[]){
+        // console.log(data)
+        if( !this.state.warnings.includes(warning)){
+            var _warnings = [...this.state.warnings];
+            _warnings.push(warning)
+            this.setState({warnings:_warnings},(()=>{
+                this.alert_warning(warning,{msg,type:"add", data:data});
+            }))
+        }else{
+            var msg_add = this.warn_msg[warning]["add"] + msg
+            if(this.state.warn_alerts[warning]?.info != msg_add){
+                var _warn_alerts = {...this.state.warn_alerts}
+                _warn_alerts[warning] = {
+                    title:this.warn_msg[warning].title,
+                    info:msg_add,
+                    icon:'pi pi-exclamation-circle',
+                    type:'add',
+                    data:data
+                }
+                this.setState({warn_alerts:_warn_alerts})
+            }
+        }
+    }
+    del_warning(warning, msg=""){
+        if( this.state.warnings.includes(warning)){
+            var _warnings = [...this.state.warnings].filter((warn)=>warn!=warning);
+            this.setState({warnings:_warnings},(()=>{
+                this.alert_warning(warning,{msg,type:"del"});
+            }))
+            // console.log(_warnings)
+        }
+    }
     componentDidUpdate(){
         // console.log("Did update", this.props.sale_cart.name)
+        var sale_total = this.props.sale_cart.items.length > 0 ? this.props.sale_cart.items.map((item)=>{return((item.data?.PRECO-(item.data?.PRECO*(item.discount/100)))*item.quantity)}).reduce((sum,i)=> sum + i) : 0
+        // console.log(sale_total)
+        // readRealtimeData("users/"+this.props.user.uid).then((user_data)=>{
+        //     console.log(user_data)
+        // })
+        // console.log(this.props.user)
+        this.props.setClient?.(this.state.selectedClient)
+        var warning = ""
+        var items = []
+        const test_items = this.props.sale_cart.items.filter((item)=>{
+            warning = "item_discount"
+            if(this.props.user.discount){
+                if(item.discount > this.props.user.discount){
+                    items.push(item)
+                    return(true)
+                }
+                return(false)
+            }
+        })
+        if(test_items.length > 0){
+            this.add_warning(warning,'',items)
+        }else{
+            this.del_warning(warning)
+        }
+
+        // if(this.state.selectedClient){
+            this.props.test_context?.("check_order",{
+                Valor:sale_total,
+                Desconto:0,
+                Minimo:1000
+            }).then((ret_data)=>{
+                warning = "min_value"
+                // console.log(ret_data)
+                if(ret_data == false){
+                    this.add_warning(warning)
+                }else{
+                    this.del_warning(warning)
+                }
+            })
+        // }
 
         if(this.state.save_name != this.props.sale_cart.name && this.props.sale_cart.name != ""){
             this.setState({save_name:this.props.sale_cart.name, isSaved:true})
@@ -357,9 +460,12 @@ export default class SalesFooter extends React.Component{
                         // this.setState({save_visible:false})
                     }}
                 />
-                <Toast ref={(el) => this.toast = el} position="bottom-left"/>
+                <Toast ref={(el) => this.toast = el}
+                    position="bottom-right"
+                />
                 
-                <div className="flex flex-grow-1 justify-content-between flex-wrap gap-3"
+                <div ref={(el) => this.footer = el} 
+                    className="flex flex-grow-1 justify-content-between flex-wrap gap-3"
                     style={{
                         height:"auto",
                         width:"100%",
@@ -375,12 +481,12 @@ export default class SalesFooter extends React.Component{
                         
 
                     {/* </div> */}
-                    <div className="flex flex-wrap flex-grow-1 justify-content-between col-8 h-full p-0">
-                        <div className="flex p-0 align-items-center">
+                    <div className="flex flex-wrap flex-grow-1 flex-shrink-1 justify-content-between col-8 h-full p-0">
+                        <div className="flex  p-0 align-items-center gap-1 flex-grow-1 flex-shrink-1 w-full max-w-min">
                             <Button
                                 disabled={this.state.loadingClients}
-                                className="p-button-small p-button-outlined"
-                                style={{color:"var(--text)"}}
+                                className="p-button-lg flex overflow-hidden p-button-rounded px-3 py-2 sm:icon-only p-button-glass-light border-2 border-white "
+                                
                                 icon={
                                     this.state.loadingClients?
                                         "pi pi-spin pi-hourglass":
@@ -390,7 +496,7 @@ export default class SalesFooter extends React.Component{
                                                 "pi pi-times" :
                                                 "pi pi-user-plus"
                                     }
-                                label={this.state.loadingClients?"Carregando...":this.state.selectedClient?this.state.selectedClient.fantasia : window.innerWidth<500 || this.state.clients?.length!=0?"":"Adicionar Cliente"}
+                                label={this.state.loadingClients?"Carregando...":this.state.selectedClient?this.state.selectedClient.fantasia : this.state.clients?.length!=0?"":"Adicionar Cliente"}
                                 onClick={(event)=>{
                                     
                                     if(this.state.clients.length != 0){
@@ -437,34 +543,83 @@ export default class SalesFooter extends React.Component{
                                     }
                                 }}
                             />
-                            
-                            
+
+                            <i aria-haspopup
+                                aria-controls="overlay_panel"
+                                onClick={(e) => this.op.toggle(e)}
+                                className={"pi "+(this.state.warnings.length == 0? "pi-check":"pi-question")+" p-2 m-2 p-overlay-badge"}
+                                style={{
+                                    fontSize: '22px',
+                                    cursor:"pointer",
+                                    color:this.state.warnings.length == 0?"var(--success)":"var(--warn)",
+                                    borderRadius:"50%",
+                                    outline:"2px solid "+ (this.state.warnings.length == 0?"var(--success)":"var(--warn)")
+                                }}
+                            >
+                                {this.state.warnings.length > 0 && <Badge severity="warning" value={this.state.warnings.length} />}
+                            </i>
+                             
+                            <OverlayPanel
+                                appendTo={this.footer?.parentElement}
+                                ref={(el) => this.op = el}
+                                showCloseIcon
+                                id="overlay_panel"
+                                style={{
+                                    position:"absolute",
+                                    top:"0px",
+                                    left:"0px",
+                                    padding:"10px",
+                                    paddingRight:"20px",
+                                    minWidth: '200px',
+                                    maxWidth:'90vw',
+                                    minHeight: '200px',
+                                    zIndex:'auto'
+                                }}
+                            >
+                                {Object.entries(this.state.warn_alerts).map(([key,warning])=>{
+                                    const color = warning.type!="add"?"var(--success)":"var(--warn)"
+                                    
+                                    return(<div key={key}>
+                                        <div className="flex align-items-center">
+                                            <i className={warning.icon+" p-2"} style={{color:color}}/>
+                                            <h5 className="pt-2" style={{color:color}}>{warning.title}</h5>
+                                        </div>
+                                        <p className="ml-3" style={{whiteSpace:"pre-wrap"}}>{
+                                            warning.info
+                                        }
+                                        {warning.data && warning.data?.map((i,j)=>{
+                                            return(<p key={'alert_'+j} onClick={(e)=>{
+                                                scrollToTop()
+                                                this.props.featureProducts([i,...warning.data.filter(j=>j.id!=i.id)])
+                                                this.op.toggle(e)
+                                            }} className=" text-gray-100 hover:text-purple-300 cursor-pointer m-0 p-0 ">
+                                                {"\t° "+i.data?.PRODUTO_NOME}
+                                            </p>)
+                                        })}
+                                        </p>
+                                    </div>)
+                                })}
+                            </OverlayPanel>
                             <Dialog
                                 blockScroll={true}
                                 onShow={()=>{scrollToTop()}}
-                                header={
-                                    <div className="flex justify-content-between align-items-center p-2">
-                                        <h3>
-                                            Clientes
-                                        </h3>
-                                        <AutoComplete
-                                            value={this.state.searchClient}
-                                            suggestions={this.state.filteredCountries}
-                                            completeMethod={this.searchCountry}
-                                            field="fantasia"
-                                            dropdown
-                                            forceSelection
-                                            itemTemplate={this.itemTemplate}
-                                            onChange={(e) => {
-                                                // console.log(e.value)
-                                                this.setState({ searchClient: e.value })
-                                            }}
-                                            onSelect={(event)=>{
-                                                // console.log(event.value)
-                                                this.setState({ selectedClient: event.value, loadingClients:false })
-                                                
-                                            }}
-                                        />
+                                header={<div className="flex w-full h-auto fadein animation-iteration-1 animation-duration-400">
+                                    <ClientSearch
+                                        auto_complete={false}
+                                        dropdown={false}
+                                        user={this.props.user}
+                                        onChange={(event)=>{
+                                            // console.log(event)
+                                            if(event == null) this.setState({filtered:[]})
+                                        }}
+                                        onSelect={(e)=>{
+                                            console.log(e)
+                                        }}
+                                        set_filtered_clients={(_filtered)=>{
+                                            console.log(_filtered)
+                                            this.setState({filtered:_filtered})
+                                        }}
+                                    />
                                     </div>
                                 }
                                 footer={
@@ -481,65 +636,21 @@ export default class SalesFooter extends React.Component{
                                 }
                                 visible={this.state.clients?.length!=0 && this.state.selectedClient == null}
                                 onHide={() => this.setState({clients:[]})}
-                                style={{
-                                    height:"auto",
-                                    maxWidth:"100vw"
-                                }}
+                                className='flex w-full'
                             >
-
-                                {/* <AutoComplete
-                                    value={this.state.searchClient}
-                                    suggestions={this.state.filteredCountries}
-                                    completeMethod={this.searchCountry}
-                                    field="fantasia"
-                                    dropdown
-                                    forceSelection
-                                    itemTemplate={this.itemTemplate}
-                                    onChange={(e) => {
-                                        // console.log(e.value)
-                                        this.setState({ searchClient: e.value })
+                                <ClientSearchTable
+                                    clients={this.state.clients}
+                                    user={this.props.user}
+                                    check_rule={this.props.check_rule}
+                                    filtered={this.state.filtered}
+                                    router={this.props.router}
+                                    show_search={true}
+                                    onSelect={(e)=>{
+                                        this.setState({searchClient:e})
                                     }}
-                                    onSelect={(event)=>{
-                                        // console.log(event.value)
-                                        this.setState({ selectedClient: event.value, loadingClients:false })
-                                        
-                                    }}
-                                /> */}
-                                <DataTable
-                                    responsiveLayout="stack"
-                                    breakpoint="600px"
                                     selectionMode="single"
-                                    selection={this.state.searchClient}
-                                    onSelectionChange={e => this.setState({searchClient: e.value,loadingClients:false })}
-                                    dataKey="id"
-                                    stripedRows
-                                    resizableColumns
-                                    columnResizeMode="fit"
-                                    showGridlines
-                                    filters={this.state.client_filters}
-                                    filterDisplay="row"
-                                    size="small"
-                                    value={this.state.clients}
-                                    paginator={this.state.clients?.length > 10?true:false}
-                                    paginatorTemplate={this.state.clients?.length > 10?"CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown":null}
-                                    currentPageReportTemplate={this.state.clients?.length > 10?"Exibindo {first} à {last} de {totalRecords} registros":null}
-                                    rows={this.state.clients?.length > 10?10:0}
-                                    rowsPerPageOptions={this.state.clients?.length > 10?[10,20,50,100]:null}
-                                    
-                                >
-                                {this.state.clients && this.state.clients[0] && Object.keys(this.state.clients?.[0]).map((col,i) => {
-                                    return <Column
-                                    showFilterMenu={false}
-                                    filter
-                                    sortable
-                                    key={col}
-                                    field={col}
-                                    header={col}
-                                    />;
-                                })}
-                                </DataTable>
+                                />
                             </Dialog>
-                            
                         </div>
                         <div className="flex flex-grow-1 flex-column text-right">
                             <div>
@@ -579,28 +690,19 @@ export default class SalesFooter extends React.Component{
                             disabled={this.props.sale_cart.items.length == 0 || this.state.isSaved}
                             iconPos="right"
                             icon={this.state.isSaved?"pi pi-check":"pi pi-save"}
-                            label={this.state.isSaved?"Salvo":(window.innerWidth>500?"Salvar Rascunho":"Salvar")}
-                            className="p-button-sm p-button-secondary h-full"
-                            style={{
-                                background:"var(--glass-c)",
-                                border:"0px",
-                                color:"var(--text)"
-                            }}
+                            label={this.state.isSaved?"Salvo":"Salvar Rascunho"}
+                            className="p-button sm:icon-only p-button-glass-light border-none justify-content-center h-full w-full"
                             onClick={this.props.sale_cart.name==""?this.confirmSave:this.accept}
                         />
-                        <Button
+                        {/* <Button
                             disabled={this.props.sale_cart.items.length == 0}
                             iconPos="right"
                             icon="pi pi-percentage"
-                            label={window.innerWidth>500?"Taxar Impostos":"Taxar"}
-                            className="p-button-sm p-button-secondary h-full"
-                            style={{
-                                background:"var(--glass-c)",
-                                border:"0px",
-                                color:"var(--text)"
-                            }}
-                        />
+                            label="Taxar Impostos"
+                            className="p-button sm:icon-only p-button-glass-light border-none justify-content-center h-full w-full"
+                        /> */}
                     </div>
+                    
                 </div>
             </>
         )

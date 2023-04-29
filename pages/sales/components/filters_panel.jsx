@@ -110,7 +110,7 @@ export default class FiltersPanel extends React.Component{
                 }
             })
         }
-
+        /**** FLAG FIX Filtros não encontram o parametro, deve ser erro no SQL ****/
         if(this.state.comprimento){
             _items = _items.filter((item)=>{
                 if(this.state.comprimento.selected_state == 0){

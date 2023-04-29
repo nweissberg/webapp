@@ -83,7 +83,7 @@ export default class OrderTimeline extends Component {
                         </div>}
 
                     <UserIcon uid={item.user}/>
-                    <h7>{time_ago(item.date)}</h7>
+                    <h6>{time_ago(item.date)}</h6>
                 </Card>
             );
         };

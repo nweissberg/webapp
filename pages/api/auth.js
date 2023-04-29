@@ -83,7 +83,7 @@ export function AuthProvider({children}){
                 readUserData(user.uid).then(async (userdata)=>{
                     if(userdata !== null){
                         await vendedores_db.getItem(user.email).then((user_RP)=>{
-                            console.log(user_RP)
+                            // console.log(user_RP)
                             if(user_RP){
                                 userdata.id = user_RP.id
                             }
@@ -94,10 +94,11 @@ export function AuthProvider({children}){
                         _user.photo = userdata.photo || "male_1"
                         _user.banner = userdata.banner || "1"
                         _user.metadata = userdata.metadata || {}
+                        _user.discount = userdata.discount || 0
                         _user.id = userdata.id || null
                         profile_db.setItem(user.uid,_user)
                     }
-                    console.log(_user)
+                    // console.log(_user)
                     setCurrentUser(_user)
                     setLoading(false)
                 })

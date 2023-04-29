@@ -69,6 +69,7 @@ export default withRouter(class Rule extends React.Component{
                             edit:true,
                             uid:""
                         })
+                        this.props.onClear?.()
                     }
                 }
             )
@@ -96,6 +97,7 @@ export default withRouter(class Rule extends React.Component{
                                         rule_doc:doc_data,
                                         edit:false
                                     })
+                                    this.props.onSuccess?.(this.state.uid)
                                 }       
                             })
                         }}
