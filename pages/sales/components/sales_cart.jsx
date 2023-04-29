@@ -1,24 +1,20 @@
 import React from "react";
 import localForage from "localforage";
-import { loadItemPhoto } from '../service/sales_service';
-import { Button } from "primereact/button";
 import { Toast } from 'primereact/toast';
-import { moneyMask, similarText, normalize } from "../../utils/util";
+import { normalize } from "../../utils/util";
 import Swal from 'sweetalert2';
-import QuantityInput from "./quantity_input";
-import ProductInfo from "./product_info";
 import ProductSidebar from "./product_sidebar";
 import SalesHeader from "./sales_header";
 import ProductCard from "./product_card";
-import { scrollToBottom, scrollToTop } from "../../utils/util";
+// import { scrollToBottom, } from "../../utils/util";
 import { Tooltip } from 'primereact/tooltip';
-import GroupCard from "./group_card";
 import { Sidebar } from "primereact/sidebar";
 import { deepEqual } from "@firebase/util";
 import FiltersPanel from "./filters_panel";
-import ProductsTable from "../../components/products_table";
-import OrderCard from "../../profile/components/order_card";
 import SalesCartTable from "./sale_cart_table";
+import GroupIcons from "../../components/groups_icons";
+import ProductsViewer from "../../components/products_viewer";
+import OrderCarousel from "../../profile/components/orders_carousel";
 
 const pedidos_db = localForage.createInstance({
     name:"pilarpapeis_db",
@@ -91,10 +87,27 @@ export default class SalesCart extends React.Component {
         this.updateObject()
     }
     componentWillUnmount() {
-        document.getElementById("search_window")?.removeEventListener('scroll', this.listenToScroll)
+        // document.getElementById("search_window")?.removeEventListener('scroll', this.listenToScroll)
         // this.scroll_listener = false
     }
+
+    onSelectItem(_item){
+        var _selected_item = this.state.sale_cart?.items.find((i)=>i.data?.PRODUTO_ID == _item?.PRODUTO_ID)
+        
+        // this.props.set_select(_selected_item)
+        
+        this.setState({
+            item_info:_item,
+            item_selected:_selected_item
+        },(()=>{
+            this.setState({mobile_info:true})
+        }))
+    }
+
     componentDidUpdate(){
+        if(this.props.select_item && (this.props.select_item?.id != this.state.item_selected?.id ) ){
+            this.onSelectItem(this.props.select_item.data)
+        }
         if(this.props.groups != undefined && deepEqual(this.props.groups,this.state.groups) == false){
             this.setState({
                 groups:this.props.groups,
@@ -105,27 +118,27 @@ export default class SalesCart extends React.Component {
         this.updateObject()
     }
     updateObject(){
-        document.getElementById("search_window")?.addEventListener('scroll', this.listenToScroll)
+        // document.getElementById("search_window")?.addEventListener('scroll', this.listenToScroll)
         this.props.onLoad?.(this);
     }
-    listenToScroll = () => {
-        const element_scroll = document.getElementById("search_window")
-        const winScroll = element_scroll.scrollTop
+    // listenToScroll = () => {
+    //     const element_scroll = document.getElementById("search_window")
+    //     const winScroll = element_scroll.scrollTop
       
-        const height =
-            element_scroll.scrollHeight -
-            element_scroll.clientHeight
+    //     const height =
+    //         element_scroll.scrollHeight -
+    //         element_scroll.clientHeight
       
-        const scrolled = winScroll / height
+    //     const scrolled = winScroll / height
       
-        this.setState({
-            scroll_position: scrolled,
-        })
-        // console.log(scrolled, this.state.search_result.length,this.load_on_scroll)
-        if(scrolled > 0.8 && this.state.search_result.length > this.load_on_scroll){
-            this.load_on_scroll += 10
-        }
-    }
+    //     this.setState({
+    //         scroll_position: scrolled,
+    //     })
+    //     // console.log(scrolled, this.state.search_result.length,this.load_on_scroll)
+    //     if(scrolled > 0.8 && this.state.search_result.length > this.load_on_scroll){
+    //         this.load_on_scroll += 10
+    //     }
+    // }
 
     showSuccess(item) {
         this.toast.show({
@@ -178,7 +191,7 @@ export default class SalesCart extends React.Component {
                     // this.showSuccess(item)
                     _sale_cart.items.splice(removeIndex,1)
                     this.setState({sale_cart:_sale_cart,item_selected:null})
-                    this.props.select_item?.(null)
+                    // this.props.select_item?.(null)
                     
                 }else{
                     var _item_selected = {...this.state.item_selected}
@@ -260,6 +273,7 @@ export default class SalesCart extends React.Component {
                     showCloseIcon={false}
                     visible={this.state.mobile_info}
                     onHide={(event)=>{
+                        this.props.set_select(null)
                         this.setState({
                             mobile_info:false,
                             // item_info:null
@@ -280,15 +294,17 @@ export default class SalesCart extends React.Component {
                         }}
                         user={this.props.user}
                         check_rule={this.props.check_rule}
-                        sidebar={window.innerWidth<500}
+                        // sidebar={window.innerWidth<500}
                         groups={this.props.groups}
                         anim={false}
                         close={false}
                         item={this.state.item_info}
                         item_selected={this.state.item_selected}
                         onHide={(event)=>{
+                            this.props.set_select(null)
                             this.setState({
                                 mobile_info:false,
+                                item_selected:null
                                 // item_info:null
                             })
                         }}
@@ -353,7 +369,7 @@ export default class SalesCart extends React.Component {
                         if(!value){
                             value = this.props.items
                             //Mostra os grupos se search_result == []
-                        scrollToBottom()
+                        // scrollToBottom()
                         this.setState({search_result:value, show_cart:false})
                         }else{
                             console.log("teste")
@@ -368,11 +384,12 @@ export default class SalesCart extends React.Component {
                         
                     }}
                     get_search={(value)=>{
-                        scrollToBottom()
+                        // scrollToBottom()
                         this.get_search(value)
                     }}
                     toggle_cart={(event)=>{
-                        this.props.select_item?.(null)
+                        
+                        // this.props.select_item?.(null)
                         this.setState({
                             show_cart:!this.state.show_cart,
                             item_info: null,
@@ -387,7 +404,7 @@ export default class SalesCart extends React.Component {
                             this.load_on_scroll = 20
                         }
                         this.setState({search_focus:true})
-                        scrollToBottom()
+                        // scrollToBottom()
                     }}
                     search_blur={(event)=>{
                         // console.log(event)
@@ -404,7 +421,7 @@ export default class SalesCart extends React.Component {
                         }else{
                             this.setState({
                                 show_cart:false,
-                                search_result:this.state.sale_cart.items.map(item=>item.data),
+                                search_result:this.state.sale_cart?.items.map(item=>item.data),
                                 search:"",
                                 selected_group:0
                             })
@@ -435,169 +452,46 @@ export default class SalesCart extends React.Component {
                 />
 
                 
-                {!this.state.show_cart &&  <div className="flex justify-content-center align-items-cente" style={{
-                    position:"absolute",
-                    width:"100wv",
-                    height:"100vh",
-                    backgroundColor:this.state.search_focus || this.state.search_result?.length > 0?"var(--glass-b)":"",
-                    backdropFilter:this.state.search_focus  || this.state.search_result?.length > 0?"blur(10px)":"",
-                    transition:"all 0.5s",
-                    zIndex:-2
-                }}>
-                    <div className="enter_bottom_anim flex justify-content-center align-items-center"
-                    style={{
-                        // position:"absolute",
-                        // top:"100%",
-                        width:"100%",
-                        height:"100%"
-                    }}>
-                        
-                        {this.state.search_result?.length == 0 && 
-                            <div id="" style={{
-                                position:"absolute",
-                                // top:"50vh",
-                                left:"10px",
-                                // transform:"translateY(-220px)",
-                                zIndex:3,
-                                width:"100vw",
-                                height:"100%",
-                                // maxWidth:""
-                                // maxHeight:"90vw",
-                                // overflow:"hidden",
-                                overflow:"scroll"
-                            }}>
-                                <div className={window.innerWidth > 1300?"horizontal-scroll-wrapper":"vertical-scroll-wrapper"}>
-                                    {this.state.selected_groups.map((group,group_index)=>{
-                                        if(this.state.selected_group.id == group.id) return(<></>)
-                                        return(
-                                            <div key={group_index} style={{marginBottom:"20px"}}>
-                                                <GroupCard 
-                                                    load_products_group={this.props.load_products_group}
-                                                    group={group}
-                                                    searchGroup={(data)=>{
-                                                        // console.log(data)
-                                                        this.setState({
-                                                            selected_group:group,
-                                                            search_result:data,
-                                                            scroll_position:0
-                                                        })
-                                                    }}
-                                                />
-                                            </div>
-                                        )
-                                    })
-                                }
-                                </div>
-                            </div>
-                        }
-                    </div>
-                </div>}
-
-                {!this.state.show_cart && <div id="search_window" className="flex justify-content-start flex-wrap row-gap-2 column-gap-2"
-                    style={{
-                        overflow:"scroll",
-                        maxHeight:window.innerWidth>960?"calc(100vh - 110px)":"100vh",
-                        // height:"maxcontent",
-                        // padding:"10px",
-                        // backgroundColor:"var(--glass)", 
-                        width:"100%",
-                        // backdropFilter: "blur(10px)",
-                        left:"50%",
-                        paddingTop:"60px",
-                        paddingLeft:"9vw",
-                        paddingBottom:(window.innerWidth < 500? "140px" :"90px")
-                    }}
-                    >
-                    { this.state.search_result && this.state.search_result.slice(0,this.load_on_scroll).map((item,index)=>{
-                        var quantity = 0
-                        var discount = 0.0
-                        if(this.state.sale_cart !== null) this.state.sale_cart.items.map((i)=>{
-                            if(i.data?.PRODUTO_ID == item?.PRODUTO_ID){
-                                quantity = i.quantity
-                                discount = i.discount
-                                // console.log(i)
-                            }
-                        })
-                        return(<ProductCard key={index}
-                            item={item}
-                            discount={discount}
-                            quantity={quantity}
-                            onAddProduct={(event)=>{
-                                this.updateProducts(this.props.onAddProduct(event))
-                            }}
-                            onSubProduct={(event)=>{
-                                this.updateProducts(this.props.onSubProduct(event))
-                            }}
-                            // onClick={(_item)=>{
-                            //     console.log(_item)
-                            //     // this.props.select_item?.(_item)
-                            // }}
-                            show_mobile_info={(_item)=>{
-                                var _selected_item = null
-                                if(this.state.sale_cart !== null) this.state.sale_cart.items.map((i)=>{
-                                    if(i.data?.PRODUTO_ID == item?.PRODUTO_ID){
-                                        // quantity = i.quantity
-                                        // discount = i.discount
-                                        // console.log(i)
-                                        _selected_item=i
-                                    }
-                                })
-                                // console.log(_item,_selected_item)
-
-                                this.setState({
-                                    item_info:_item,
-                                    item_selected:_selected_item
-                                },(()=>{
-                                    this.setState({mobile_info:true})
-                                }))
-
-                                // this.props.select_item?.(_item)
-                                // this.setState({item_info:{_item}},()=>{this.setState({mobile_info:true})})
-                            }}
-                            // onLoad={(obj)=>{
-                            //     console.log(obj)
-                            // }}
-                            // onLeaveViewport={() => console.log('leave ' + item.PRODUTO_NOME)}
-                            // onEnterViewport={() => {
-                                
-                            //     // console.log('enter ' + item.photo)
-                            //     if(!item.photo){
-                            //         loadItemPhoto(item,(item_data)=>{
-                            //             // console.log(item_data)
-                            //             var _search_result = [...this.state.search_result]
-                            //             this.setState({search_result:_search_result.map((item_old)=>{
-                            //                 if(item_old.PRODUTO_ID == item_id){
-                            //                     return(item_data)
-                            //                 }else{
-                            //                     return(item_old)
-                            //                 }
-                            //             })})
-                            //             this.props.updateItem(item_data)
-                            //         })
-                            //     }
-                                
-                            // }}
-                            // loadPhoto={(obj)=>{
-                            //     if(obj.state.timeout == null){
-                            //         loadItemPhoto(item,((item_data)=>{
-                            //             // console.log(item_data)
-                            //             var _search_result = [...this.state.search_result]
-                            //             this.setState({search_result:_search_result.map((item_old)=>{
-                            //                 if(item_old.PRODUTO_ID == item_id){
-                            //                     return(item_data)
-                            //                 }else{
-                            //                     return(item_old)
-                            //                 }
-                            //             })})
-                            //             this.props.updateItem(item_data)
-                            //         }))
-                            //     }
-                            
-                            // }}
-                        />)  
-                    })}
+                {!this.state.show_cart &&  <div className="flex absolute w-screen h-screen top-0 lg:align-items-center" >
+                
                     
+                    {this.state.search_result?.length == 0 && 
+                        <GroupIcons
+                            client={this.props.client}
+                            groups={this.state.selected_groups}
+                            selected={this.state.selected_group}
+                            load={this.props.load_products_group}
+                            load_client={this.props.load_products_client}
+                            searchGroup={(data,group)=>{
+                                // console.log(data)
+                                this.setState({
+                                    selected_group:group,
+                                    search_result:data,
+                                    scroll_position:0
+                                })
+                            }}
+                        />
+                    }
+                
                 </div>}
+                {this.state.selected_group == 0 && 
+                <OrderCarousel />
+                }
+
+                {!this.state.show_cart &&
+                    <ProductsViewer
+                        products={this.state.search_result}
+                        scroll={this.load_on_scroll}
+                        cart={this.state.sale_cart}
+                        onSelect={(_item)=>{
+                            this.props.set_select(null)
+                            this.onSelectItem(_item)
+                        }}
+                        updateProducts={(e)=>{this.updateProducts(e)}}
+                        onAddProduct={this.props.onAddProduct}
+                        onSubProduct={this.props.onSubProduct}
+                    />
+                }
 
                 
                 
@@ -652,7 +546,7 @@ export default class SalesCart extends React.Component {
                 />} */}
                 
                 <FiltersPanel 
-                    items={this.state.search_result.length > 0 ? this.state.search_result : this.props.items}
+                    items={this.state.search_result?.length > 0 ? this.state.search_result : this.props.items}
                     visible={this.state.group_filter}
                     onHide={(event)=>{
                         this.setState({group_filter:false})
@@ -678,7 +572,7 @@ export default class SalesCart extends React.Component {
                             selected_groups:_selected_groups,
                             active_groups:event.value
                         })
-                        this.props.select_item?.(null)
+                        // this.props.select_item?.(null)
                     }}
                     set_filter_search={(filtered_items)=>{
                         if(filtered_items.length > 0){
