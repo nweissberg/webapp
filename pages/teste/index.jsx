@@ -2,16 +2,37 @@ import React, { useRef, useState, useEffect } from "react"
 import ObjectComponent from "../components/object";
 import { useAuth } from "../api/auth"
 import UndoableEditor from "../../contexts/UndoableEditor";
+import { get_data_api } from "../api/connect";
 
 export default function TestPage(){
     const { currentUser } = useAuth()
+    const [testJSON, setTestJSON] = useState({ name: "John Doe"})
+    const [testResponse, setTestResponse] = useState(null)
+
     useEffect(()=>{
         document.title = "Teste"
+        const testFunc = async ()=>{
+            await get_data_api({
+                query:"Sgnl05dUjKiqMe9hxZ2U",
+                process:(data) =>{
+                    return data.map((i)=>{
+                        return(i.fornecedor_fantasia)
+                    })
+                }
+            }).then((data)=>{
+                setTestResponse(data)
+            })
+        }
+        testFunc()
     },[])
 
-    const [testJSON, setTestJSON] = useState({
-        name: "John Doe",
-    })
+    useEffect(()=>{
+        return ()=> {
+            console.log(testResponse)
+        }
+    },[testResponse])
+
+    
 
     return(
         <ObjectComponent user={currentUser}>

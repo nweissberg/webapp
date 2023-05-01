@@ -2,7 +2,7 @@
 //-> ### Funções para facilitar nossa vida ### <-//
 //-> ######################################### <-//
 
-import LZString from "./LZString"
+import { LZString } from "./LZString.jsx"
 
 //-> Get type of object
 // o = Object ( var, let, const )

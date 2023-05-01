@@ -22,7 +22,7 @@ const clientes_db = localForage.createInstance({
 });
 
 export default function ClientPage(){
-    const [client, set_client] = useState(null)
+    const [ client, set_client ] = useState(null)
     const [ clients_list, set_clients_list ] = useState([])
     const { asPath } = useRouter();
     const router = useRouter()
@@ -125,6 +125,7 @@ export default function ClientPage(){
                 />
                 {show_search &&<div className="absolute ml-6 fadein flex flex-grow-1 animation-iteration-1 animation-duration-400 w-full ">
                     <ClientSearch
+                        clients={clients}
                         className='bg-red-500'
                         auto_complete={false}
                         dropdown={false}
@@ -149,7 +150,7 @@ export default function ClientPage(){
                         onClick={(e)=>{
                             set_client(c)
                             // let route = matrix?"="+matrix:""
-                            router.push('client#'+c.id).then(()=>{
+                            router.push('client#'+c.id,undefined,{shallow:true}).then(()=>{
                                 // set_loading(true)
                             })
                         }}>
