@@ -350,23 +350,24 @@ export default withRouter(class ObjectView extends React.Component {
 				{logotipo()}
 				{users_in_room.length > 0 && 
 				<div style={{position:"absolute", zIndex:1}}>
-					{users_in_room.map((user)=>{
-						if(user == this.state.currentUser.uid) return(<></>)
+					{users_in_room.map((user, uindex)=>{
+						if(user == this.state.currentUser.uid) return
 						var user_position = this.state.room[user].position
-						if(!user_position || Date.now() - user_position.time > 60000) return(<></>)
+						if(!user_position) return
 						var p_x = user_position.x + user_position.scroll.x
 						var p_y = user_position.y + user_position.scroll.y
 						// console.log(user_position)
+						var is_on = (!user_position || Date.now() - user_position.time > 60000) == false
 						if(p_x < window.innerWidth && p_y < window.innerHeight){
-							return(<div key={user} style={{
+							return(<div key={user+"_"+uindex} className='flex align-items-center justify-content-center' style={{
 								zIndex:1,
 								position:"absolute",
 								top:p_y+"px",
 								left:p_x+"px",
-							}}><UserIcon key={user+"_icon"} uid={user} pointer style={{color:"var(--text)"}} /></div>)
-						}else{
-							return(<></>)
+							}}><UserIcon key={user+"_"+uindex+"_icon"} uid={user} pointer style={{color:"var(--text)", zIndex:2}} />
+							<Badge value={is_on?'ON':'OFF'} style={{scale:'0.9', transform:"translateY(25px)"}} className={'z-0 hover:visible cursor-pointer absolute shadow-8 bottom-0 text-white ' + (is_on?'bg-green-700':'bg-gray-600')}/> </div>)
 						}
+						
 					})}
 				</div>}
 				{this.props?.header!= false && <div>

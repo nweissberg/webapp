@@ -254,7 +254,7 @@ export default class CallDialog extends React.Component{
     //     console.log(this.props.all_users)
     // }
     call_window(){
-        const footer_button = "flex w-full h-full pt-1 pb-1 m-0 pl-2 pr-2 p-button-outlined p-button-lg p-button-rounded "
+        const footer_button = "flex w-full h-full bg pt-1 pb-1 m-0 pl-2 pr-2 p-button-outlined p-button-lg p-button-rounded "
         return(<div className="call-dialog w-full h-full">
             <div style={{height:"70px"}} className="flex flex-column m-3 mb-6 justify-content-between">
                 <div className="flex h-full align-items-start">
@@ -268,7 +268,7 @@ export default class CallDialog extends React.Component{
             </div>
             
             {this.state.step_index == 0 &&
-                <div>
+                <div className="flex-grow-1 justify-content-center">
                     <div className="m-4">
                         <label>Selecione</label>
                         <SelectButton

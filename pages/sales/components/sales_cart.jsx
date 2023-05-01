@@ -38,7 +38,7 @@ export default class SalesCart extends React.Component {
             scroll_position:0,
             mobile_info:false,
             groups:[],
-            selected_group:0,
+            selected_group:-1,
             group_filter:false,
             active_groups:[...this.props.groups.map((group)=>group.id)],
             selected_groups:[...this.props.groups],
@@ -50,7 +50,7 @@ export default class SalesCart extends React.Component {
     }
     componentDidMount(){
         pedidos_db.getItem(this.props.user.uid).then(async(data)=>{
-            console.log(data)
+            // console.log(data)
             
             if(data != null){
                 // this.setState({
@@ -327,7 +327,7 @@ export default class SalesCart extends React.Component {
                         }}
                         onAddProduct={(event)=>{
                             const new_product = this.props.onAddProduct(event)
-                            console.log(new_product)
+                            // console.log(new_product)
                             // this.updateProducts()
                             // this.updateProducts(new_product)
                             this.setState({item_selected:{
@@ -372,13 +372,13 @@ export default class SalesCart extends React.Component {
                         // scrollToBottom()
                         this.setState({search_result:value, show_cart:false})
                         }else{
-                            console.log("teste")
+                            // console.log("teste")
                             this.setState({
                                 show_cart:false,
                                 item_info: null,
                                 search:"",
                                 search_result:[],
-                                selected_group:0
+                                selected_group:-1
                             })
                         }
                         
@@ -395,7 +395,7 @@ export default class SalesCart extends React.Component {
                             item_info: null,
                             search:"",
                             search_result:[],
-                            selected_group:0
+                            selected_group:-1
                         })
                     }}
                     search_focus={(event)=>{
@@ -429,9 +429,9 @@ export default class SalesCart extends React.Component {
                     }}
                     onAddProduct={(event)=>{
                         const new_product = this.props.onAddProduct(event)
-                        console.log(new_product)
+                        // console.log(new_product)
                         // this.updateProducts()
-                        // this.updateProducts(new_product)
+                        this.updateProducts(new_product)
                         this.setState({item_selected:{
                             id:event.PRODUTO_ID,
                             data:event,
@@ -474,9 +474,9 @@ export default class SalesCart extends React.Component {
                     }
                 
                 </div>}
-                {this.state.selected_group == 0 && 
+                {/* {this.state.selected_group == 0 && 
                 <OrderCarousel />
-                }
+                } */}
 
                 {!this.state.show_cart &&
                     <ProductsViewer
@@ -541,7 +541,7 @@ export default class SalesCart extends React.Component {
                         })
                         this.updateProducts(_sale_cart)
 
-                        console.log("update",item, item.quantity)
+                        // console.log("update",item, item.quantity)
                     }}
                 />} */}
                 
@@ -556,7 +556,7 @@ export default class SalesCart extends React.Component {
                     active_groups={this.state.active_groups}
                     groups={this.props.groups}
                     onChangeGroups={(event) => {
-                        console.log(event.value, this.props.groups)
+                        // console.log(event.value, this.props.groups)
                         var _selected_groups = this.props.groups.filter((group)=>{
                             if(event.value.indexOf(group.id) != -1){
                                 return(group)

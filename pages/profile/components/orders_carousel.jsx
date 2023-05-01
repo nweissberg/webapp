@@ -32,10 +32,10 @@ export default class OrderCarousel extends Component {
     }
 
     gotoOrder(order){
-        console.log(order)
+        // console.log(order)
         if(!order) return
         const divElement = document.getElementById("order_"+order.id)
-        console.log(divElement)
+        // console.log(divElement)
         if(!divElement) return
         divElement.scrollIntoView({ behavior: "smooth", block: "center", inline: "center" });
         // this.carousel_ref.current.scrollTo({top:0, left:divElement.offsetLeft + (/2) ,behavior:"auto"})
@@ -52,7 +52,7 @@ export default class OrderCarousel extends Component {
         return this.props.orders[this.props.orders.findIndex(o => o.id == id)+plus]
     }
     cloneOrder(order){
-        console.log(order)
+        // console.log(order)
     }
     render() {
         if(!this.props.orders || this.props.orders?.length == 0){ // Draw Skeleton while loading

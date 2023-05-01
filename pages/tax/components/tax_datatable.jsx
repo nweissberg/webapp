@@ -2,7 +2,7 @@ import React from 'react';
 import localForage from "localforage";
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
-import { api_get } from '../../api/connect';
+import { api_get, get_data_api } from '../../api/connect';
 import { moneyMask, var_get, var_set } from '../../utils/util';
 import { Skeleton } from 'primereact/skeleton';
 import { Button } from 'primereact/button';
@@ -93,7 +93,7 @@ export default class TaxDataTable extends React.Component{
             }
         ];
     }
-
+    
     get_data_api(query,state){
         return(api_get({
             credentials:"0pRmGDOkuIbZpFoLnRXB",
@@ -126,7 +126,24 @@ export default class TaxDataTable extends React.Component{
     }
     
     get_all_data(){
+        const attr = {
+            callee:this,
+            process:(data) =>{
+                return data.map((i)=>{
+                    if(i.prazo_entrega) i.prazo_entrega = new Date(i.prazo_entrega)
+                    i.data_emissao = new Date(i.data_emissao)
+                    return(i)
+                })
+            },onReady:(state,data)=>{
+                console.log(state,data)
+                this.setState({[state]:data})
+            }
+        }
+        // get_data_api({...attr, query:"Sgnl05dUjKiqMe9hxZ2U",state:'ordem_compras'})
+        // .then((testData)=>{console.log(testData)})
+
         return Promise.all([
+            this.get_data_api("Sgnl05dUjKiqMe9hxZ2U","ordem_compras"),
             this.get_data_api("Sgnl05dUjKiqMe9hxZ2U","ordem_compras"),
             this.get_data_api("vU88G1zOu60JLRq7LtrI","faturamento"),
             this.get_data_api("Oov68ZUpr29y7QxbXw6R","entrada"),

@@ -96,7 +96,9 @@ export default class ClientOrderCard extends Component {
                             this.props?.selectOrder(product)
                         }}>
                         <ProductIcon size={4} item={item.id} onClick={(e)=>{
-                            console.log(e)
+                            // console.log(e)
+                            this.onRowSelect(item)
+                            this.props?.selectOrder(product)
                         }} />
                         <div className={`flex text-left flex-grow-1 white-space-normal w-12 ${isSelected?"text-blue-100":"text-white"}`}>
                             {/* {isSelected? item.nome :shorten(item.nome)} */}
@@ -138,10 +140,9 @@ export default class ClientOrderCard extends Component {
             <div id={this.props.id}  ref={(el)=>this.order_card_ref = el} key={product.name}
                 className={(is_selected?'border-purple-400 border-2 ':'border-blue-900 border-2 ')+"order-card product-item flex w-full md:max-w-50 flex-grow-1 " + this.props?.className}
             >
-                
                 <InViewWrapper
                     className='p-0 m-0 relative w-full h-full'
-                    timer={this.state.loaded?0:1000}
+                    timer={0}
                     progress={!this.state.loaded}
                     onExecute={(element)=>{
                         this.setState({loaded:true,in_view:true})

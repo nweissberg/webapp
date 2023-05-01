@@ -178,7 +178,7 @@ export default class ClientSearchTable extends React.Component{
                                 icon="pi pi-eye text-purple-300"
                                 className=" p-button-text text-blue-300 p-button-glass-light-1"
                                 onClick={(e)=>{
-                                    this.props.router.push('client#'+ val )
+                                    this.props.router?.push('client#'+ val )
                                 }}
                             />)
                         }

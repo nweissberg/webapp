@@ -1437,3 +1437,8 @@ iframe {
 	font-size: larger;
 	text-transform: uppercase;
 }
+
+.hljs {
+	font-size: large !important;
+	background: none !important;
+  }

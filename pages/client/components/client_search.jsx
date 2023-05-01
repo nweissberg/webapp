@@ -10,13 +10,13 @@ const ClientSearch = (props) => {
     const [ search_query, set_search_query ] = useState('');
     const [ filter, set_filter ] = useState('');
     const [ filtered_clients, set_filtered_clients ] = useState([]);
-    const { clients, get_clients } = useProducts()
+    // const { clients, get_clients } = useProducts()
+    const [ clients, set_clients ] = useState([]);
     const autocomplete_ref = useRef(null)
     
     useEffect(()=>{
-        if(!clients && props.user) get_clients()
-        // return(()=>{})
-    },[props.user])
+        if(props.clients) set_clients(props.clients)
+    },[props.clients])
 
     function waitInput(){
         if(search_timeout) clearTimeout(search_timeout)
@@ -36,7 +36,7 @@ const ClientSearch = (props) => {
                     let ret = false
                     let nome = item.fantasia.toLowerCase()
                     item.score ||= 0
-                    item.score += search_array.filter(o=>nome.includes(o)).reverse().map((text,index)=>similarWord(nome,text) * (index+1)).concat([0]).reduce((a,b)=>a+b)
+                    item.score += search_array.filter(o=>nome.includes(" "+o+" ")).reverse().map((text,index)=>similarWord(nome,text) * (index+1)).concat([0]).reduce((a,b)=>a+b)
                     const a_str = normalize(nome).replace(/\s/g, '')
                     const b_str = normalize(search).replace(/\s/g, '')
                     let similar = similarText(nome,search)

@@ -383,6 +383,7 @@ export default function AdminPage(){
                                     role={true}
                                     icon_only={true}
                                     profiles={profiles}
+                                    router={router}
                                 />
                             )
                         }}/>

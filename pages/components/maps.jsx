@@ -141,7 +141,6 @@ export default class GoogleMap extends Component {
                 gmap-container
                 flex flex-grow-1
                 h-max grid
-                border-round-md
                 bg-white-alpha-10
                 w-full bottom-0 
                 min-h-20rem
@@ -209,7 +208,8 @@ export default class GoogleMap extends Component {
                         <GMap
                             overlays={this.state.overlays}
                             options={satelite_view}
-                            className='flex-grow-1 flex w-full max-h-min h-12 col-12'
+                            className=' border-round-1rem
+                            p-5 overflow-hidden flex-grow-1 flex w-full max-h-min h-12 col-12'
                             onMapReady={this.onMapReady}
                             onOverlayDragEnd={this.handleDragEnd}
                         />

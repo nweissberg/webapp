@@ -47,10 +47,10 @@ export default class GroupCard extends React.Component {
                                 this.setState({loading:false})
                                 this.props.searchGroup(client_products)
                             })
-                            console.log("Load client items",this.props.group.client)
+                            // console.log("Load client items",this.props.group.client)
                             return
                         }else{
-                            console.log("load group "+this.props.group.nome)
+                            // console.log("load group "+this.props.group.nome)
                             this.props.load_products_group(this.props.group.id.toString(),
                             (local_loaded_data)=>{
                                 this.props.searchGroup(local_loaded_data)

@@ -1,4 +1,4 @@
-var LZString = function() {
+const LZ = (i) => {
     function o(o, r) {
         if (!t[o]) {
             t[o] = {};
@@ -181,7 +181,7 @@ var LZString = function() {
             }
         };
     return i
-}();
-"function" == typeof define && define.amd ? define(function() {
-    return LZString
-}) : "undefined" != typeof module && null != module && (module.exports = LZString);
+};
+
+export var LZString = LZ()
+export default LZ

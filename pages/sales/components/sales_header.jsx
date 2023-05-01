@@ -42,14 +42,14 @@ export default class SalesHeader extends React.Component{
                     {<Button
                         className={this.header_button + " min-w-max md:w-auto"}
                         // style={{ minWidth:"80px"}}
-                        // tooltip={this.props.group != 0?this.props.group.nome:"Escolha um abaixo:"}
+                        // tooltip={this.props.group > 0?this.props.group.nome:"Escolha um abaixo:"}
                         // tooltipOptions={{
                         //     position: 'bottom',
                         //     // mouseTrack: true,
                         //     // mouseTrackRight: 30
                         // }}
-                        icon={this.props.group != 0?"pi pi-chevron-left":"pi pi-th-large"}
-                        label={ this.props.group != 0?this.props.group.nome.replace("GRUPO",""):"Segmentos"}
+                        icon={this.props.group > 0?"pi pi-chevron-left":"pi pi-th-large"}
+                        label={ this.props.group > 0?this.props.group?.nome?.replace("GRUPO",""):"Segmentos"}
                         onClick={()=>{
                             
                             this.setState({search:"",group:0})
@@ -80,7 +80,7 @@ export default class SalesHeader extends React.Component{
                     {this.props.group == 0 && this.props.sale_cart.name!="" && 
                         <HeaderTitle title="Pedido" value={this.props.sale_cart.name}/>
                     }
-                    {this.props.items.length != 0 && this.props.group != 0 &&
+                    {this.props.items.length != 0 && this.props.group > 0 &&
                         <div className="flex w-screen justify-content-between gap-3">
                             <span className="flex w-full h-full p-input-icon-left p-float-label">
                                 <i className="pi pi-search text-white pl-2" />

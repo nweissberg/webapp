@@ -37,11 +37,13 @@ export default class SalesFooter extends React.Component{
         super(props)
         this.state = {
             num:0,
+            clients:[],
             isSaved:true,
             save_name:"",
             filtered:[],
             warnings:[],
-            warn_alerts:{}
+            warn_alerts:{},
+            show_search:false
         }
         this.footer,
         this.onWarningSelect = this.onWarningSelect.bind(this);
@@ -503,6 +505,7 @@ export default class SalesFooter extends React.Component{
                                         this.setState({clients:[]})
                                         // this.menu.toggle(event)
                                     }else{
+                                        this.setState({show_search:!this.state.show_search})
                                         if(this.state.selectedClient == null ){
                                             this.setState({loadingClients:true})
                                             console.log("GET CLIENTS from", this.props.user.name)
@@ -605,6 +608,7 @@ export default class SalesFooter extends React.Component{
                                 onShow={()=>{scrollToTop()}}
                                 header={<div className="flex w-full h-auto fadein animation-iteration-1 animation-duration-400">
                                     <ClientSearch
+                                        clients={this.state.clients}
                                         auto_complete={false}
                                         dropdown={false}
                                         user={this.props.user}
@@ -634,8 +638,9 @@ export default class SalesFooter extends React.Component{
                                         />
                                     </div>
                                 }
-                                visible={this.state.clients?.length!=0 && this.state.selectedClient == null}
-                                onHide={() => this.setState({clients:[]})}
+                                visible={this.state.clients?.length!=0 && this.state.selectedClient == null && this.state.show_search}
+
+                                onHide={() => this.setState({clients:[], show_search:false})}
                                 className='flex w-full'
                             >
                                 <ClientSearchTable
@@ -644,7 +649,7 @@ export default class SalesFooter extends React.Component{
                                     check_rule={this.props.check_rule}
                                     filtered={this.state.filtered}
                                     router={this.props.router}
-                                    show_search={true}
+                                    show_search={this.state.clients?.length!=0}
                                     onSelect={(e)=>{
                                         this.setState({searchClient:e})
                                     }}

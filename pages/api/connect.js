@@ -1,3 +1,4 @@
+import { NextResponse } from 'next/server';
 import { deepEqual } from '@firebase/util';
 import axios from 'axios';
 
@@ -65,6 +66,7 @@ const api_call = ((path,body,cloud=true)=>{
     }
   })
 })
+
 var api_buffer = []
 const api_get = ((body, headers)=>{
   // console.log(api_buffer)
@@ -106,5 +108,30 @@ const api_get = ((body, headers)=>{
   })
 })
 
+
+async function get_data_api(attr = {}){
+  console.log(attr)
+  const emptyPromise = new Promise(res=>res(null))
+  if(!attr.query) return emptyPromise
+  return api_get({
+    credentials: "0pRmGDOkuIbZpFoLnRXB",
+    query: attr.query,
+    keys: attr.keys || []
+  }).then(async(_data)=>{
+    if(attr.process) _data = attr.process(_data);
+    
+    if(typeof(attr.onReady) == 'function'){
+      if(attr.state){
+        attr.onReady(attr.state,_data);
+      }else{
+        attr.onReady(_data);
+      }
+    }
+    if(attr.callee) await new Promise(res=>attr.callee.setState({ [attr.state]:_data }, ()=>res(_data) ))
+    return _data
+    // return NextResponse.json({_data})
+  })
+}
+
 export default api;
-export{ api_call, api_get };
+export{ api_call, api_get, get_data_api };

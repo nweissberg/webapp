@@ -32,13 +32,6 @@ export default withRouter(class ClientDashboard extends React.Component{
     constructor(props){
         super(props)
         this.models={
-            financeiro:{
-                icon:"pi pi-dollar",
-                matrix:[
-                    ["clientName","vendedor"],
-                    ["creditInfo","clientLocation"],
-                ]
-            },
             chamado:{
                 icon:"pi pi-comments",
                 matrix:[
@@ -62,7 +55,7 @@ export default withRouter(class ClientDashboard extends React.Component{
                 ]
             }
         }
-        let _matrix = this.props.matrix?this.props.matrix.toLowerCase():"financeiro"
+        let _matrix = this.props.matrix?this.props.matrix.toLowerCase():"chamado"
         // console.log(_matrix)
         this.default={
             client:null,
@@ -79,7 +72,7 @@ export default withRouter(class ClientDashboard extends React.Component{
             loading:false,
             selected_group:null,
             selected_view: _matrix,
-            matrix:this.models[_matrix].matrix,
+            matrix:this.models[_matrix]?.matrix,
             search_result:[]
         }
         this.state={ ...this.default}
@@ -88,7 +81,7 @@ export default withRouter(class ClientDashboard extends React.Component{
         this.matrix_button = this.matrix_button.bind(this)
         this.render_dashboard = this.render_dashboard.bind(this)
         
-        this.widgets = (component='empty')=>{
+        this.widgets = (component='empty',parent='_root')=>{
             switch (component) {
                 case 'empty':
                     return(<></>)
@@ -150,7 +143,7 @@ export default withRouter(class ClientDashboard extends React.Component{
                 case 'clientProducts':
                     return(<div className=" flex gap-1 w-auto justify-content-end ">
                         {this.state.client_products.map((i,key)=>{
-                            if(!i.PRODUTO_ID)return(<></>)
+                            if(!i.PRODUTO_ID)return
                             let isSelected = (this.state.selected_product?.id == i.PRODUTO_ID)
                             return(<div id={"product_"+i.PRODUTO_ID}
                                 
@@ -164,7 +157,7 @@ export default withRouter(class ClientDashboard extends React.Component{
                                     this.setState({selected_product:item})
                                 }}
                                 
-                                key={i.PRODUTO_ID+key}
+                                key={"product_"+i.PRODUTO_ID+"_"+key+parent}
                                 className={"cursor-pointer flex mb-2 p-1 border-round-md align-content-between "+ (isSelected?"h-auto hover:bg-black-alpha-60 bg-black-alpha-20 border-2 border-blue-400 w-18rem p-2 gap-2" : " flex-wrap h-auto w-min hover:bg-white-alpha-20 bg-white-alpha-10")}>
                                 <div className="flex flex-wrap w-full">
                                     <div className={"flex gap-2 mb-2 " + (isSelected?"":"flex-wrap")}>
@@ -181,7 +174,7 @@ export default withRouter(class ClientDashboard extends React.Component{
 
                 case 'clientLocation':
                     if(!this.state.client_address)return(<></>)
-                    return(<div className="flex flex-grow-1 flex-wrap w-full h-full">
+                    return(<div className="flex flex-grow-1 align-items-start flex-wrap w-full h-auto">
                         <div className="w-full h-max">
                             <GoogleMap
                                 location={this.state.client_address.location}
@@ -199,6 +192,23 @@ export default withRouter(class ClientDashboard extends React.Component{
                             align-items-center
                         `}>
                             
+                            <Button 
+                                icon='pi pi-copy text-2xl text-green-400'
+                                iconPos="right"
+                                className={'p-button-text'}
+                            />
+                            
+                            <h6 className={`
+                                white-space-normal
+                                w-10rem h-min
+                                flex-grow-1
+                                text-white
+                                p-2 col-8
+                                text-center
+                            `}>
+                                {this.state.client_address.address}
+                            </h6>
+                            
                             <Button label='Abrir no Maps'
                                 icon='pi pi-map text-2xl'
                                 className={`
@@ -214,31 +224,7 @@ export default withRouter(class ClientDashboard extends React.Component{
                                     bg-red-500
                                 `}
                             />
-                            <h6 className={`
-                                white-space-normal
-                                w-10rem h-min
-                                flex-grow-1
-                                text-white
-                                p-2 col-8
-                            `}>
-                                {this.state.client_address.address}
-                            </h6>
-
-                            <Button label='Copiar'
-                                icon='pi pi-copy text-2xl text-green-400'
-                                iconPos="right"
-                                className={`
-                                    col-2 lg:icon-only
-                                    flex shadow-none
-                                    p-button-rounded
-                                    w-auto h-min
-                                    lg:pl-3 md:p-2
-                                    border-3 border-green-800
-                                    text-white font-bold
-                                    white-space-nowrap
-                                    bg-glass-c
-                                `}
-                            />
+                            
                         </div>
                     </div>)
                     break;
@@ -260,10 +246,7 @@ export default withRouter(class ClientDashboard extends React.Component{
                         onSelect={data => {
                             // console.log(data)
                             // this.chart_bar?.onItemSelect?.(data)
-                            this.setState({ selected_product: data },()=>{
-                                this.update()
-                                
-                            })
+                            this.setState({ selected_product: data })
                         }}
                         selectOrder={(_selected_order)=>{
                             this.setState(()=>({selected_order:_selected_order}) )
@@ -285,9 +268,7 @@ export default withRouter(class ClientDashboard extends React.Component{
                             cart={null}
                             onSelect={(data)=>{
                                 var item = {...data, id:data.PRODUTO_ID}
-                                this.setState({ selected_product: item,selected_item:item },()=>{
-                                    this.update()    
-                                })
+                                this.setState({ selected_product: item,selected_item:item })
                             }}
                             updateProducts={(e)=>{console.log(e)}}
                             onAddProduct={(e)=>{console.log(e)}}
@@ -365,30 +346,12 @@ export default withRouter(class ClientDashboard extends React.Component{
             this.setState({item_index:item_index})
         }   
 
-        // if(this.props.matrix && this.props.matrix != this.state.selected_view){
-        //     let _model = this.props.matrix
-        //     this.setState({selected_view:_model, matrix:this.models[_model].matrix})
-        //     this.update()
-        // }else{
-        //     this.update()
-        // }
-        // console.log("Component Update",this.state.client)
-        // this.props.onLoad?.(this.state.loading)
-        // if(!this.props.client || this.state.show_dashboard == false || this.state.loading) return
         if(this.props.client?.id != this.state.client?.id){
             this.load_client(this.props.client)
         }
     }
 
     load_client(_client){
-        // console.log(this.props.client)
-        // if(!this.props.matrix) var_get("user_matrix_client").then(data=>{
-        //     if(data){
-        //         var _matrix = JSON.parse(data)
-        //         // console.log(_matrix)
-        //         this.setState({matrix:_matrix})
-        //     }
-        // })
         var client = _client? _client:this.props.client
         this.setState({...this.default, client:client, loading:true},()=>{
             const ID = client.id.toString()
@@ -507,18 +470,13 @@ export default withRouter(class ClientDashboard extends React.Component{
                         client_orders:all_orders
                         // pieChartData:_pieChartData
                     },()=>{
-                        this.update()
                         this.chart_bar?.draw_chart(all_orders)
                     })
                 }
             })
         }))
     }
-    
-    update(){
-        
-        // this.reTable?.draw(true)
-    }
+ 
     credit_info(){
         if(this.state.client_credit == null){
             return(
@@ -600,30 +558,27 @@ export default withRouter(class ClientDashboard extends React.Component{
     render_dashboard(){
         switch (this.state.selected_view?.toLowerCase()) {
             case 'chamado':
-                return(<div className="w-full bg m-0 p-0">
+                return(<div className="w-full bg-glass-b m-0 p-0">
                     {this.widgets('callDialog')}
-                </div>)
-            break;
-            case 'financeiro':
-                return(<div className="grid justify-content-between w-auto h-view bg m-0 p-3">
-                    <div className="flex flex-wrap flex-grow-1 md:max-w-25rem sm:col-12 md:col-4 lg:col-3">
-                        {/* {this.widgets('clientName')} */}
-                        {this.widgets('creditInfo')}
-                        {this.widgets('vendedor')}
-                    </div>
-                    <div className="flex justify-content-center flex-wrap flex-grow-1 sm:col-12 md:col-6 lg:col-6">
-                        {this.widgets('clientLocation')}
+                        <div className="grid justify-content-between w-auto h-view m-0 p-3">
+                        <div className="flex flex-wrap flex-grow-1 md:max-w-25rem sm:col-12 md:col-4 lg:col-3">
+                            {/* {this.widgets('clientName')} */}
+                            {this.widgets('creditInfo')}
+                            {this.widgets('vendedor')}
+                        </div>
+                        <div className="flex justify-content-center flex-wrap flex-grow-1 sm:col-12 md:col-6 lg:col-6">
+                            {this.widgets('clientLocation')}
+                        </div>
                     </div>
                 </div>)
             break;
-
             case 'pedidos':
                 return(<div className="w-full h-auto m-0 p-0">
                     {this.widgets('clientOrders')}
                     {this.widgets('salesGroups')}
                     {this.state.selected_group == 0 && <ScrollWrapper speed={100}
                         className="bg flex h-20rem overflow-scroll horizontal-scrollbar col-12 flex-grow-1">
-                        {this.widgets('clientProducts')}
+                        {this.widgets('clientProducts','_pedidos')}
                     </ScrollWrapper>}
                     {this.widgets('productsView')}
                     {this.widgets('salesFooter')}
@@ -635,7 +590,7 @@ export default withRouter(class ClientDashboard extends React.Component{
                     
                     <ScrollWrapper speed={100}
                         className="md:flex-order-0 sm:flex-order-3 flex h-20rem overflow-scroll horizontal-scrollbar sm:col-12 md:col-6 lg:col-6 xl:col-4 flex-grow-1">
-                        {this.widgets('clientProducts')}
+                        {this.widgets('clientProducts','_dashboard')}
                     </ScrollWrapper>
                     <div className="md:flex-order-1 sm:flex-order-2 h-auto sm:col-12 md:col-6 lg:col-6 xl:col-4 w-20rem flex-grow-1">
                         {this.widgets('pieChart')}
