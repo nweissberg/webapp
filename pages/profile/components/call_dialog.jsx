@@ -191,7 +191,7 @@ export default class CallDialog extends React.Component{
     contact_button(button,index){
         const condition = button.condition?.()
         const active_channel = condition == false && this.state.all_channels == true
-        if(condition == false && this.state.all_channels == false){ return(<></>)}
+        if(condition == false && this.state.all_channels == false){ return(<span key={button.label+"_"+index}/>)}
         return(
             <div key={button.label+"_"+index}
                 style={{width:"100px"}}

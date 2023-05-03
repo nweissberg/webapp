@@ -73,9 +73,12 @@ export default class OrderCarousel extends Component {
                         className='pointer-events-auto shadow-none p-button-text p-button-lg bg-1 hover:text-white hover:bg-bluegray-800'
                         icon="pi pi-chevron-left"
                         onClick={(e)=>{
-                            let _select = this.getOrderFromID(this.state.order_id,1)
-                            // this.gotoOrder(_select)
-                            this.props.selectOrder?.(_select)
+                            this.setState({max:this.state.max+2},()=>{
+                                let _select = this.getOrderFromID(this.state.order_id,-1)
+                                // this.gotoOrder(_select)
+                                this.props.selectOrder?.(_select)
+                            })
+                            
                         }}
                     />
                     <Button
@@ -83,14 +86,18 @@ export default class OrderCarousel extends Component {
                         className='pointer-events-auto shadow-none p-button-text p-button-lg bg-1 hover:text-white hover:bg-bluegray-800'
                         icon="pi pi-chevron-right"
                         onClick={(e)=>{
-                            let _select = this.getOrderFromID(this.state.order_id,-1)
-                            // this.gotoOrder(_select)
+                            let _select = this.getOrderFromID(this.state.order_id,1)
                             this.props.selectOrder?.(_select)
                         }}
                     />
                 </div>
                     <div ref={this.carousel_ref} speed={300} className='overflow-scroll scroll-smooth flex w-full scrollbar-none justify-content-between '>
-                        {this.props.orders.reverse().slice(0,this.state.max).map((sale_cart,index)=>{
+                        {/* {this.props.orders.length >= this.state.max && <InViewWrapper timer={0} key={'skeleton_load'} onExecute={(e)=>{this.setState({max:this.state.max+6})}}>
+                            <div className={'order-card product-item flex flex-grow-1 bg h-screen relative'}
+                                style={{maxHeight:"512px", minWidth:"320px", maxWidth:"500px", width:'50%', borderRadius:'10px'}}>
+                            </div>
+                        </InViewWrapper>} */}
+                        {this.props.orders.slice(this.props.orders.length-this.state.max).map((sale_cart,index)=>{
                             if(!this.props.client) return(<OrderCard 
                                 className={"w-"+this.state.card_width}
                                 currentUser={this.props.currentUser}
@@ -135,11 +142,7 @@ export default class OrderCarousel extends Component {
                                 />
                             )
                         })}
-                        {this.props.orders.length >= this.state.max && <InViewWrapper key={'skeleton_load'} inView={(e)=>{this.setState({max:this.state.max+6})}}>
-                            <div className={'order-card product-item flex flex-grow-1 bg h-screen relative'}
-                                style={{maxHeight:"512px", minWidth:"320px", maxWidth:"500px", width:'50%', borderRadius:'10px'}}>
-                            </div>
-                        </InViewWrapper>}
+                        
                 </div>
             </div>
         );

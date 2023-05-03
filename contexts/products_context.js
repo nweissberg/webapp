@@ -4,6 +4,7 @@ import { api_get } from "../pages/api/connect";
 import { alphabetically, normalize, time_ago } from "../pages/utils/util";
 import { async } from "@firebase/util";
 import { readRealtimeData, writeRealtimeData } from "../pages/api/firebase";
+import { LZString } from "../pages/utils/LZString";
 
 const photos_db = localForage.createInstance({
     name:"pilarpapeis_db",
@@ -285,16 +286,16 @@ export default function ProductsProvider({children}){
     const get_photo = async (produto,callback) => {
         
         if(!produto)return
-        return await new Promise((res,rej)=>{
+        return await new Promise(async (res,rej)=>{
          
-            // if((produto.formato_fotografia != '' && produto.formato_fotografia != null) || (produto.photo_uid && produto.formato_fotografia == 'jpg')){
-            //     product_db.setItem(produto.PRODUTO_ID.toString(), produto)
-            //     callback?.(produto)
-            //     res(produto)
-            //     return(produto)
-            // }
+            if(produto.photo_uid){
+                // product_db.setItem(produto.PRODUTO_ID.toString(), produto)
+                callback?.(produto)
+                res(produto)
+                return(produto)
+            }
             console.log("get_photo", produto)
-            api_get({
+            await api_get({
                 credentials: '0pRmGDOkuIbZpFoLnRXB',
                 keys: [{
                     key: 'pid',
@@ -310,19 +311,18 @@ export default function ProductsProvider({children}){
                     var img_buffer = new Buffer.from(image_data.photo)
                     var isUnique = true
                     var photo_uid = ""
-                    for (let i = 0; i < photos.length; i++) {
-                        const _item_data = photos[i];
+                    for(var key in photos){
+                        const _item_data = photos[key];
                         if(_item_data.img_buffer.equals(img_buffer)){
-                            photo_uid = photos[i].uid
+                            photo_uid = key
                             isUnique = false
                             break
                         }
                         // console.log(i)
                     }
                     if(isUnique){
-                        photo_uid = normalize(img_buffer.toString().slice(512, 768)).replace(/\s/g, '')+"_"+img_buffer.length+"_"+normalize(img_buffer.toString().slice(-128)).replace(/\s/g, '')
+                        photo_uid = LZString.compressToEncodedURIComponent( normalize(LZString.compress(img_buffer.toString().slice(512, 768))+"_"+img_buffer.length+"_"+LZString.compress(img_buffer.toString().slice(-128))).replace(/\s/g, ''))+"_"+img_buffer.length
                         const local_data = {
-                            uid:photo_uid,
                             img_buffer:img_buffer
                         }
                         photos_db.setItem(photo_uid,local_data)
@@ -338,29 +338,42 @@ export default function ProductsProvider({children}){
         })
         
     };
+    async function product_data(pid){
+        return await api_get({
+            credentials: '0pRmGDOkuIbZpFoLnRXB',
+            keys: [{
+                key: 'ID_PRODUTO',
+                value: pid,
+                type: 'string',
+            }],
+            query: 'vgYSqaLv5CGaI6LJjAJr',
+        }).then(async ([product_data]) => {
+            // var produto = {...item}
+            
+            console.log(product_data);
+            await get_photo(product_data)
+            .then((produto)=>{    
+                res(produto)
+            })
+
+            // setGenerated(true);
+        });
+    }
     async function load_product(pid){
         //vgYSqaLv5CGaI6LJjAJr 
         console.warn("get_product")
-        return await new Promise((res,rej)=>{
-            api_get({
-                credentials: '0pRmGDOkuIbZpFoLnRXB',
-                keys: [{
-                    key: 'ID_PRODUTO',
-                    value: pid,
-                    type: 'string',
-                }],
-                query: 'vgYSqaLv5CGaI6LJjAJr',
-            }).then(async ([product_data]) => {
-                // var produto = {...item}
-                
-                console.log(product_data);
-                await get_photo(product_data)
-                .then((produto)=>{    
+        return await new Promise(async (res,rej)=>{
+            await product_db.getItem(pid.toString())
+            .then( async(produto)=>{
+                if(produto.photo_uid){
                     res(produto)
-                })
-
-                // setGenerated(true);
-            });
+                }else{
+                    res(await product_data(pid))
+                }
+            }).catch( async (err)=>{
+                console.log(err)
+                res(await product_data(pid))
+            })
         })
     }
 
@@ -369,7 +382,7 @@ export default function ProductsProvider({children}){
         return new Promise((res,rej)=>{
             var _products = {}
             var loaded_promises = []
-            var loaded_photos = []
+            var loaded_photos = {}
             
             product_db.iterate(function(value, key) {
                 // console.log([key, value]);
@@ -395,10 +408,7 @@ export default function ProductsProvider({children}){
                     // local_load_return?.(_top_items.concat(products_array))
                     photos_db.iterate(function(value,key) {
                         // Carrega as photos dos protudos do Navedador
-                        loaded_photos.push({
-                            uid:key,
-                            img_buffer:new Buffer.from(value.img_buffer)
-                        })
+                        loaded_photos[key] = { img_buffer:new Buffer.from(value.img_buffer)}
                         // console.log([key, value]);
     
                     }).then(()=>{

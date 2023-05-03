@@ -76,14 +76,7 @@ export default function UserSearch(props){
                 onChange={onUsersChange}
                 optionLabel="name"
                 filter showClear filterBy="name"
-                placeholder={(()=>{
-                    return(<>
-                        <label style={{color:"var(--text-c)"}}>
-                            <i className='pi pi-user mr-2'/>
-                            Encontre uma pessoa...
-                        </label>
-                    </>)
-                })()}
+                placeholder={'Encontre uma pessoa...'}
                 valueTemplate={selectedusersTemplate}
                 itemTemplate={usersOptionTemplate}
             />

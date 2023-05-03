@@ -6,6 +6,7 @@ import 'primereact/resources/themes/arya-blue/theme.css'
 import 'primeflex/primeflex.css';
 import { Toast } from "primereact/toast";
 import { useState, useRef, useEffect } from "react";
+import { useRouter } from 'next/router'
 import { ProgressBar } from 'primereact/progressbar';
 import "bootstrap/dist/css/bootstrap.min.css"
 import { AuthProvider, useAuth } from './api/auth';
@@ -34,11 +35,60 @@ addLocale('pt', {
 });
 locale('pt')
 
+
+
 PrimeReact.ripple = true;
 
 export default function MyApp({ Component, pageProps }) {
+  const router = useRouter()
+  // console.log(Component,pageProps)
+  const { currentUser, loading } = AuthProvider({})
+
+  useEffect(() => {
+    const handleRouteChange = (url, { shallow }) => {
+      if(process.env.NODE_ENV == 'development') console.log(
+        `App is changing to ${url} ${
+          shallow ? 'with' : 'without'
+        } shallow routing`
+      )
+    }
+    const handleRouteChangeError = (err, url) => {
+      if (err.cancelled) {
+        if(process.env.NODE_ENV == 'development') console.log(`Route to ${url} was cancelled!`)
+      }
+    }
+    router.events.on('routeChangeStart', handleRouteChange)
+    router.events.on('routeChangeError', handleRouteChangeError)
+
+    // If the component is unmounted, unsubscribe
+    // from the event with the `off` method:
+    return () => {
+      router.events.off('routeChangeError', handleRouteChangeError)
+      router.events.off('routeChangeStart', handleRouteChange)
+    }
+  }, [router])
   
-  
+  // useEffect(() => {
+  //   // disable the linting on the next line - This is the cleanest solution
+  //   // eslint-disable-next-line no-floating-promises
+  //   router.push('/login')
+
+  //   // void the Promise returned by router.push
+  //   if (!(currentUser || loading)) {
+  //     void router.push('/login')
+  //   }
+  //   // or use an async function, await the Promise, then void the function call
+  //   async function handleRouteChange() {
+  //     if (!(currentUser || loading)) {
+  //       await router.push('/login')
+  //     }
+  //   }
+  //   void handleRouteChange()
+  // }, [currentUser, loading])
+
+  if(loading) return (<div className='loading'>
+    <ProgressBar mode="indeterminate" style={{height:"2px"}}/>
+  </div>)
   return (<div>
     
     <Head>

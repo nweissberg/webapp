@@ -26,7 +26,7 @@ export default class ProductsViewer extends React.Component{
                         }
                     })
                     if(item?.type == 'split'){
-                        return(<div style={{top:'70px'}}
+                        return(<div key={"prod_"+index} style={{top:'70px'}}
                             className=' text-center p-2  mb-3 z-3 mx-1 sticky bg-bluegray-900 bg-blur-1 w-full border-round-md text-white'>
                             <div className='flex w-full justify-content-center gap-3 align-items-center'>
                                 <i className={(item.icon?item.icon:"pi pi-chevron-down text-cyan-400")+' text-2xl p-0 m-0'}/>

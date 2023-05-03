@@ -493,57 +493,51 @@ export default class SalesFooter extends React.Component{
                                     this.state.loadingClients?
                                         "pi pi-spin pi-hourglass":
                                         this.state.selectedClient?
-                                            "pi pi-info-circle":
-                                            this.state.clients?.length!=0?
-                                                "pi pi-times" :
-                                                "pi pi-user-plus"
+                                            "pi pi-info-circle":"pi pi-user-plus"
                                     }
-                                label={this.state.loadingClients?"Carregando...":this.state.selectedClient?this.state.selectedClient.fantasia : this.state.clients?.length!=0?"":"Adicionar Cliente"}
+                                label={this.state.loadingClients?"Carregando...":this.state.selectedClient?this.state.selectedClient.fantasia : "Adicionar Cliente"}
                                 onClick={(event)=>{
                                     
-                                    if(this.state.clients.length != 0){
-                                        this.setState({clients:[]})
-                                        // this.menu.toggle(event)
-                                    }else{
-                                        this.setState({show_search:!this.state.show_search})
-                                        if(this.state.selectedClient == null ){
-                                            this.setState({loadingClients:true})
-                                            console.log("GET CLIENTS from", this.props.user.name)
-                                            vendedores_db.getItem(this.props.user.email).then((vendedor)=>{
-                                                if(vendedor && this.state.all_clients){
-                                                    // console.log(vendedor.VENDEDOR)
-                                                    var user_clients = this.state.all_clients.filter((client)=>client.vendedor_id == vendedor.id)//vendedor.id
-                                                    // console.log(user_clients)
+                                
+                                    this.setState({show_search:!this.state.show_search})
+                                    if(this.state.selectedClient == null ){
+                                        this.setState({loadingClients:true})
+                                        console.log("GET CLIENTS from", this.props.user.name)
+                                        vendedores_db.getItem(this.props.user.email).then((vendedor)=>{
+                                            if(vendedor && this.state.all_clients){
+                                                // console.log(vendedor.VENDEDOR)
+                                                var user_clients = this.state.all_clients.filter((client)=>client.vendedor_id == vendedor.id)//vendedor.id
+                                                // console.log(user_clients)
 
-                                                    if(user_clients[0] != undefined){
-                                                        var filters = {}
-                                                        Object.keys(user_clients?.[0]).map((col,i) => {
-                                                            filters[col] = {value:'',matchMode: FilterMatchMode.STARTS_WITH}
-                                                        })
-                                                        // console.log(filters)
-                                                        this.setState({client_filters:filters})
-                                                    }
-
-                                                    if( this.props.check_rule(this.props.user,"VER_TODOS_CLIENTES") ){
-                                                        this.setState({clients:this.state.all_clients, loadingClients:false})
-                                                    }else{
-                                                        // console.log("user_clients")
-                                                        this.setState({clients:user_clients, loadingClients:false})
-                                                    }
-                                                    
-                                                }else{
-                                                    if(this.props.check_rule(this.props.user,"VER_TODOS_CLIENTES")){
-                                                        this.setState({clients:this.state.all_clients, loadingClients:false})
-                                                    }else{
-                                                        this.setState({clients:[], loadingClients:false})
-                                                    }
+                                                if(user_clients[0] != undefined){
+                                                    var filters = {}
+                                                    Object.keys(user_clients?.[0]).map((col,i) => {
+                                                        filters[col] = {value:'',matchMode: FilterMatchMode.STARTS_WITH}
+                                                    })
+                                                    // console.log(filters)
+                                                    this.setState({client_filters:filters})
                                                 }
-                                            })
-                                        }else{
-                                            this.menu.toggle(event)
-                                            // console.log(this.state.selectedClient)
-                                        }
+
+                                                if( this.props.check_rule(this.props.user,"VER_TODOS_CLIENTES") ){
+                                                    this.setState({clients:this.state.all_clients, loadingClients:false})
+                                                }else{
+                                                    // console.log("user_clients")
+                                                    this.setState({clients:user_clients, loadingClients:false})
+                                                }
+                                                
+                                            }else{
+                                                if(this.props.check_rule(this.props.user,"VER_TODOS_CLIENTES")){
+                                                    this.setState({clients:this.state.all_clients, loadingClients:false})
+                                                }else{
+                                                    this.setState({clients:[], loadingClients:false})
+                                                }
+                                            }
+                                        })
+                                    }else{
+                                        this.menu.toggle(event)
+                                        // console.log(this.state.selectedClient)
                                     }
+                                
                                 }}
                             />
 
@@ -652,6 +646,10 @@ export default class SalesFooter extends React.Component{
                                     show_search={this.state.clients?.length!=0}
                                     onSelect={(e)=>{
                                         this.setState({searchClient:e})
+                                    }}
+                                    onHide={(client)=>{
+                                        // this.setState({searchClient:client})
+                                        this.setState({selectedClient:client})
                                     }}
                                     selectionMode="single"
                                 />

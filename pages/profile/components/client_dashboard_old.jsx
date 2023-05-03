@@ -8,7 +8,7 @@ import { api_call, api_get } from "../../api/connect";
 import { moneyMask } from "../../utils/util";
 import { Sidebar } from "primereact/sidebar";
 import { Splitter, SplitterPanel } from 'primereact/splitter';
-import GoogleMap from "../../components/maps";
+// import GoogleMap from "../../components/maps";
 import PieChart from "../../components/chart_pie";
 import BarChart from "../../components/chart_bar";
 import CallDialog from "./call_dialog";
@@ -424,13 +424,13 @@ export default class ClientDashboard extends React.Component{
                             <div className="flex flex-wrap flex-grow-1 field sm:col-12 md:col-8 lg:col-5 h-auto ">
                                 <div className="flex-grow-1 field col-12 w-full h-auto ">
                                     <h6 className="select-none text-right">{this.state.client_address.address}</h6>
-                                    <GoogleMap
+                                    {/* <GoogleMap
                                         location={this.state.client_address.location}
                                         title="TESTE GMAPS"
                                         updateLocation={(newLocation)=>{
                                             console.log(newLocation)
                                         }}
-                                    />
+                                    /> */}
                                 </div>
                             </div>}
                             <div className="flex-grow-1 justify-items-between field sm:col-12 md:col-12 lg:col-6 mt-4">

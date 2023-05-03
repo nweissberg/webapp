@@ -142,7 +142,7 @@ export default class ClientOrderCard extends Component {
             >
                 <InViewWrapper
                     className='p-0 m-0 relative w-full h-full'
-                    timer={0}
+                    timer={300}
                     progress={!this.state.loaded}
                     onExecute={(element)=>{
                         this.setState({loaded:true,in_view:true})
@@ -160,7 +160,7 @@ export default class ClientOrderCard extends Component {
                         <div style={{width:"100%"}}>
                             {/* <label className='text-gray-500'>{`Card ${this.props.card_index+1}`}</label> */}
                             <h4 className="mb-1 mt-1" style={{color:"var(--text)"}}>Pedido: {product.id}</h4>
-                            <h5 style={{color:"var(--text-c)"}}>{dateMask(product.date)}</h5>
+                            <h5 style={{color:"var(--text-c)"}}>{dateMask(new Date(product.date))}</h5>
                             
                             {/* <span className={`product-badge status-${product.inventoryStatus.toLowerCase()}`}>{product.inventoryStatus}</span> */}
                             

@@ -1,31 +1,100 @@
 import React, { useContext, useState, useEffect } from "react"
 import ObjectComponent from "../components/object";
-import { useAuth } from "../api/auth"
+import { AuthProvider, useAuth } from "../api/auth"
 import ClientDashboard from "../profile/components/client_dashboard";
-import { useRouter } from 'next/router'
 import localForage from "localforage";
 import { ProgressSpinner } from "primereact/progressspinner";
 import ClientSearch from "./components/client_search";
 import ScrollWrapper from "../components/scroll_wrapper";
 import { useProducts } from "../../contexts/products_context";
 import { readUsers } from "../api/firebase";
-import { shorten, var_get } from "../utils/util";
+import { shorten, sum_array, var_get } from "../utils/util";
 import { ProgressBar } from "primereact/progressbar";
 import { Button } from "primereact/button";
 import ProductSidebar from "../sales/components/product_sidebar";
 import { ResponsiveContext, useResponsive } from "../components/responsive_wrapper";
 import ClientSearchTable from "../sales/components/client_search_table";
+import { withRouter } from 'next/router'
+import { get_data_api } from "../api/connect";
 
 const clientes_db = localForage.createInstance({
     name:"pilarpapeis_db",
     storeName:'clientes'
 });
 
-export default function ClientPage(){
+
+export async function getServerSideProps( context ) {
+    const { query, res } = context
+    res.setHeader(
+        'Cache-Control',
+        'public, s-maxage=10, stale-while-revalidate=59'
+    )
+    const client_credit = await get_data_api({
+        query:"hMM7WFHClaxYEjAxayms",
+        keys:[{ key: "ID_EMPRESA", value:query.id, type: "STRING" }]
+    }).then((client_limit)=>{
+        var reply = 0
+        if(client_limit != null && client_limit.length > 0){
+            reply = client_limit[0].valor_limite_atual1
+        }
+        return reply
+    })
+    const pedidos_cliente = await get_data_api({
+        query:"xqVL0s5dN84T6fgfUjep",
+        keys:[
+            { key: "CLIENTE_ID", value: query.id, type: "STRING" },
+            { key:"EMPRESA_ID", value: "1", type: "STRING" }
+        ],
+    }).then(async(pedidos)=>{
+        
+        pedidos = await pedidos.map(async(pedido)=>{
+            var _pedido = pedido
+            _pedido.cart = await get_data_api({
+                query:"0tPRw4nOqYil3P9lm38T",
+                keys:[
+                    { key: "EMPRESA_ID", value: 1, type: "STRING"},
+                    { key: "CLIENTE_ID", value: query.id, type: "STRING"},
+                    { key: "NFE", value: pedido.documento, type: "STRING"}
+                ]
+            }).then((order_data)=>{
+                // console.log(order_data)
+                if(order_data){
+                    const cart = order_data.map((item)=>{
+                        return({
+                            nome:item.nome_produto,
+                            id:item.produto_id,
+                            quantidade:item.quantidade,
+                            value:item.valor_unitario
+                        })
+                    })
+                    _pedido.total = sum_array(cart.map((product)=>{
+                        return(product.value * product.quantidade)
+                    }))
+                    _pedido.date = pedido.data_emissao
+                    _pedido.id = pedido.documento
+                    return cart
+                }else{
+                    return []
+                }
+            })
+            return _pedido
+        })
+        await Promise.all(pedidos).then((_pedidos)=>{
+            pedidos = _pedidos
+        })
+        return pedidos
+    })
+    // console.log(pedidos_cliente)
+    return { props: {
+        client_credit,
+        pedidos_cliente
+    }}
+}
+
+function ClientPage(props){
     const [ client, set_client ] = useState(null)
     const [ clients_list, set_clients_list ] = useState([])
-    const { asPath } = useRouter();
-    const router = useRouter()
+    // const { asPath } = useRouter();
     const { currentUser } = useAuth()
     const [ loading, set_loading ] = useState(true)
     const [ client_id, set_client_id ] = useState(true)
@@ -44,6 +113,11 @@ export default function ClientPage(){
     } = useProducts()
     
     const {isMobile} = useResponsive()
+
+    // useEffect(()=>{
+    //     console.log(props.client_credit)
+    //     // set_loading(false)
+    // },[props])
 
     // useEffect(()=>{
     //     console.log(isMobile)
@@ -74,40 +148,16 @@ export default function ClientPage(){
                 
             }
         })
-        if(client_id){
-            const client = clients.find(c=>c.id == client_id)
-            console.log(client)
+        if(props.router.query.id){
+            const client = clients.find(c=>c.id == props.router.query.id)
+            // console.log(client)
             set_client(client)
+            set_loading('client')
         }
-    },[clients, client_id])
-    
-    useEffect(()=>{
-        if(client){
-            const divElement = document.getElementById(client.id)
-            if(!divElement) return
-            const parentElement = divElement.parentElement;
-            
-            parentElement.scrollTo(divElement.offsetLeft - (window.innerWidth*0.5) + (divElement.scrollWidth*0.5),0)
-            // console.log(divPosition);
-        }
-    },[client])
-
-    useEffect(()=>{
-        const _client_id = asPath.split('#')[1]?.split('=')[0];
-        const _matrix = asPath.split('#')[1]?.split('=')[1];
-        set_matrix(_matrix)
-        if(client?.id == _client_id) return
-        console.log("ver cliente "+ _client_id, "em "+_matrix)
-        if(_client_id){
-            set_client_id(_client_id)
-            set_loading(true)
-        }
-        
-
-    }, [ asPath ]);
+    },[clients, props.router])
     
     const clients_header = ()=>{
-        return(<ScrollWrapper className="scrollbar-none client_bar_nav gap-2 bg flex w-screen overflow-x-scroll" speed={100}>
+        return(<ScrollWrapper className="scrollbar-none client_bar_nav gap-2 bg flex w-screen overflow-x-scroll" speed={300}>
             <div className={' flex w-10 h-auto align-items-center sticky left-0 z-4 '}>
                 {show_search &&
                 <div className="absolute flex w-auto h-full" >
@@ -134,7 +184,10 @@ export default function ClientPage(){
                             console.log(event)
                             if(event == null) set_filtered([])
                         }}
-                        onSelect={set_client}
+                        onSelect={(c)=>{
+                            set_show_search(false)
+                            set_client(c)
+                        }}
                         set_filtered_clients={(_filtered)=>{
                             // console.log(_filtered)
                             set_filtered(_filtered)
@@ -149,9 +202,12 @@ export default function ClientPage(){
                         <div key={i} id={c?.id} className={(c?.id == client?.id?" sticky top-0 z-3 border-blue-400 border-3 bg-black-alpha-10":" z-0 border-none bg-white-alpha-10" )+" flex cursor-pointer w-max p-2 white-space-nowrap text-white border-round-md mt-2 mb-2 hover:bg-bluegray-800 hover:text-cyan-200 transition-colors transition-duration-300"}
                         onClick={(e)=>{
                             set_client(c)
+                            set_show_search(false)
                             // let route = matrix?"="+matrix:""
-                            router.push('client#'+c.id,undefined,{shallow:true}).then(()=>{
-                                // set_loading(true)
+                        props.router.push({
+                                pathname: '/client',
+                                query: { p:props.router.query.p, id: c.id },
+                                shallow:true
                             })
                         }}>
                         {c.fantasia}
@@ -163,7 +219,7 @@ export default function ClientPage(){
         </ScrollWrapper>)
     }
 
-    if(!client && loading) {
+    if(!client && loading == true ) {
         return(<div className="flex w-full h-screen align-items-center absolute top-0 bg-blur-1">
             <ProgressSpinner/>
         </div>)
@@ -174,20 +230,25 @@ export default function ClientPage(){
                 document.title = "Cliente"
             }}
         >
-            {loading && <ProgressBar mode="indeterminate"/>}
+            {loading != false && <ProgressBar mode="indeterminate"/>}
             <div>
                 <div className="sticky top-0 z-1">
                     {clients_header()}
                 </div>
                 
-                <ClientSearchTable 
+                { !(show_search || loading == 'client') && <ClientSearchTable 
                     user={currentUser}
                     check_rule={check_rule}
                     clients={clients}
                     filtered={filtered}
-                    router={router}
+                    router={props.router}
                     show_search={show_search}
-                />
+                    onHide={(c)=>{
+                        set_show_search(false)
+                        set_loading(true)
+                        set_client(null)
+                    }}
+                />}
             </div>
         </ObjectComponent>)
     }
@@ -199,6 +260,7 @@ export default function ClientPage(){
                 document.title = "Cliente"
             }}
         >
+            {/* <p>{router.query.id}</p> */}
             {/* <div className="flex pointer-events-none bg-gradient-bottom bg-blur-2 fixed h-10rem w-screen" style={{bottom:"0px", zIndex:-11}}/>
             <div className="flex pointer-events-none absolute h-10rem w-screen" style={{top:"calc(100vh + 100px)"}}/> */}
             {/* <div className="flex pointer-events-none fixed bg-gradient-top bg-blur-1 h-10rem w-full justify-content-center text-white top-0 z-1 pt-3 pb-3" /> */}
@@ -214,10 +276,17 @@ export default function ClientPage(){
                 check_rule={check_rule}
                 clients={clients}
                 filtered={filtered}
-                router={router}
+                router={props.router}
                 show_search={show_search}
+                onHide={(c)=>{
+                    set_show_search(false)
+                    set_loading('client')
+                    set_client(null)
+                }}
             />}
             <ClientDashboard 
+                {...props}
+                // router={props.router}
                 fullScreen={true}
                 clients={clients_list}
                 client={client}
@@ -226,7 +295,7 @@ export default function ClientPage(){
                 load_products_client={load_products_client}
                 load_products_group={load_products_group}
                 check_rule={check_rule}
-                matrix={matrix}
+                matrix={props.router.query.p}
                 groups={groups}
                 isMobile={isMobile}
                 onLoad={(value)=>{
@@ -237,3 +306,5 @@ export default function ClientPage(){
         </ObjectComponent>
     );
 }
+
+export default withRouter(ClientPage)

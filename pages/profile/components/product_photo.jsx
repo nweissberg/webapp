@@ -20,6 +20,7 @@ const ProductIcon = (props) => {
    
     const getProductPhoto = ()=>{
         // console.log(props.item)
+        if(!props.item) return;
         product_db.getItem(props.item?.toString()).then((item_data) => {
             if (!item_data) {
                 setGenerated(true);

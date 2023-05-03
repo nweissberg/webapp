@@ -41,12 +41,17 @@ export default class GroupCard extends React.Component {
                         this.setState({loading:true})
                         if(this.props.group.id == 0){
                             // A3dAr3UGEwh6f3QiojkJ
-                            this.props.load_products_client(this.props.group.client.id)
-                            .then((client_products)=>{
-                                // console.log(client_products)
+                            if(typeof(this.props.load_products_client) == 'function'){
+                                this.props.load_products_client(this.props.group.client.id)
+                                .then((client_products)=>{
+                                    // console.log(client_products)
+                                    this.setState({loading:false})
+                                    this.props.searchGroup(client_products)
+                                })
+                            }else{
                                 this.setState({loading:false})
-                                this.props.searchGroup(client_products)
-                            })
+                                this.props.searchGroup(this.props.load_products_client)
+                            }
                             // console.log("Load client items",this.props.group.client)
                             return
                         }else{

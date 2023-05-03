@@ -48,11 +48,11 @@ export default class SalesHeader extends React.Component{
                         //     // mouseTrack: true,
                         //     // mouseTrackRight: 30
                         // }}
-                        icon={this.props.group > 0?"pi pi-chevron-left":"pi pi-th-large"}
-                        label={ this.props.group > 0?this.props.group?.nome?.replace("GRUPO",""):"Segmentos"}
+                        icon={this.props.group.id >= 0?"pi pi-chevron-left":"pi pi-th-large"}
+                        label={ this.props.group.id >= 0?this.props.group?.nome?.replace("GRUPO",""):"Segmentos"}
                         onClick={()=>{
                             
-                            this.setState({search:"",group:0})
+                            this.setState({search:"",group:null})
                             // console.log(this.props.items)
                             if(this.props.search_result.length == 0 && this.props.items.length != this.props.search_result.length){
                                 // if(this.props.group == 0) return
@@ -63,7 +63,7 @@ export default class SalesHeader extends React.Component{
                             }
                         }}
                     >
-                        {this.props.group.id &&
+                        {this.props.group.id >= 0 &&
                             <img style={{borderRadius:"50%",marginLeft:"10px"}}
                                 height={30}
                                 src={`images/grupos/${this.props.group.id}_foto.jpg`}
@@ -77,10 +77,10 @@ export default class SalesHeader extends React.Component{
                             label={this.props.selected_products?.length > 0? this.state.selected_products.length + " Item Selecionado" + (this.state.selected_products.length>1?"s":"") :"Nenhum Selecionado"}
                         />  
                     </div>} */}
-                    {this.props.group == 0 && this.props.sale_cart.name!="" && 
+                    {this.props.group.id == -1 && this.props.sale_cart.name!="" && 
                         <HeaderTitle title="Pedido" value={this.props.sale_cart.name}/>
                     }
-                    {this.props.items.length != 0 && this.props.group > 0 &&
+                    {this.props.items.length != 0 && this.props.group.id >= 0 &&
                         <div className="flex w-screen justify-content-between gap-3">
                             <span className="flex w-full h-full p-input-icon-left p-float-label">
                                 <i className="pi pi-search text-white pl-2" />

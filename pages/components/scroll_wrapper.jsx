@@ -84,16 +84,18 @@ function ScrollWrapper(props) {
     
     
   
-    const div = divRef.current;
-  
-    div.addEventListener('wheel', handleWheel);
-    div.addEventListener('touchstart', handleTouchStart);
-    div.addEventListener('scroll', handleScroll, { passive: false });
-  
+    // const div = divRef.current === true?<></>:divRef.current;
+    if(divRef.current != null){
+      divRef.current.addEventListener('wheel', handleWheel);
+      divRef.current.addEventListener('touchstart', handleTouchStart);
+      divRef.current.addEventListener('scroll', handleScroll, { passive: false });
+    }
     return () => {
-      div.removeEventListener('wheel', handleWheel);
-      div.removeEventListener('touchstart', handleTouchStart);
-      div.removeEventListener('scroll', handleScroll);
+      if(divRef.current != null){
+        divRef.current.removeEventListener('wheel', handleWheel);
+        divRef.current.removeEventListener('touchstart', handleTouchStart);
+        divRef.current.removeEventListener('scroll', handleScroll);
+      }
     };
   }, [props.speed]);
   

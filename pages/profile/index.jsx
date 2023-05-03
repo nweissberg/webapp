@@ -64,7 +64,7 @@ export default function ProfilePage(){
     const [user_position, set_user_position] = useState(null)
 
     const { asPath } = useRouter();
-
+    
     const { check_rule, get_clients, clients, load_products_client } = useProducts()
 
     useEffect(()=>{

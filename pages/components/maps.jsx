@@ -1,10 +1,10 @@
 import React, { Component } from 'react';
-import { GMap, StreetViewPanorama } from 'primereact/gmap';
 import { Button } from 'primereact/button';
 import { Toast } from 'primereact/toast';
 import { api_call } from '../api/connect';
 import Script from 'next/script'
 import { Skeleton } from 'primereact/skeleton';
+// import { GMap } from './gmap';
 
 export default class GoogleMap extends Component {
 
@@ -205,14 +205,14 @@ export default class GoogleMap extends Component {
                 {window.loadedMaps?
                     <div className='grid flex gmap-container border-round-md bg-white-alpha-10 w-full bottom-0 static min-h-20rem'>
                             
-                        <GMap
+                        {/* <GMap
                             overlays={this.state.overlays}
                             options={satelite_view}
                             className=' border-round-1rem
                             p-5 overflow-hidden flex-grow-1 flex w-full max-h-min h-12 col-12'
                             onMapReady={this.onMapReady}
                             onOverlayDragEnd={this.handleDragEnd}
-                        />
+                        /> */}
 
                     </div>
                 :

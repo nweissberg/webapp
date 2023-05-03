@@ -250,9 +250,9 @@ export default class ChannelIcons extends React.Component{
     contact_dot(button,index){
         const condition = button.condition?.()
         const active_channel = condition == false && this.state.all_channels == true
-        if(condition == false && this.state.all_channels == false){ return(<></>)}
+        if(condition == false && this.state.all_channels == false){ return(<span key={"dot_"+index} style={{display:"none"}}/>)}
         return(
-            <>
+            <div key={"dot_"+index}>
                 
                 <div className=" contact-button cursor-pointer"
                     // data-pr-tooltip="No notifications"
@@ -269,7 +269,7 @@ export default class ChannelIcons extends React.Component{
                         backgroundColor:button.color,
                     }}
                 />
-            </>
+            </div>
         )
     }
 

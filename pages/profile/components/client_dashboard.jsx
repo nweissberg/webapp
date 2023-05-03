@@ -1,13 +1,10 @@
 import { Button } from "primereact/button";
-import { Column } from "primereact/column";
-import { DataTable } from "primereact/datatable";
-import { Chart } from 'primereact/chart';
 import { Skeleton } from "primereact/skeleton";
 import React from "react";
-import { api_call, api_get } from "../../api/connect";
-import { capitalize, moneyMask, scrollToBottom, scrollToTop, shorten, var_get, var_set } from "../../utils/util";
+import { api_call, api_get, get_data_api } from "../../api/connect";
+import { capitalize, moneyMask, scrollToBottom, scrollToTop, shorten, sum_array, var_get, var_set } from "../../utils/util";
 import { Sidebar } from "primereact/sidebar";
-import GoogleMap from "../../components/maps";
+// import GoogleMap from "../../components/maps";
 import PieChart from "../../components/chart_pie";
 import BarChart from "../../components/chart_bar";
 import CallDialog from "./call_dialog";
@@ -28,7 +25,9 @@ import ProductsViewer from "../../components/products_viewer";
 import ScrollWrapper from "../../components/scroll_wrapper";
 import DateRangePicker from "../../components/date_interval_filter";
 
-export default withRouter(class ClientDashboard extends React.Component{
+
+
+class ClientDashboard extends React.Component{
     constructor(props){
         super(props)
         this.models={
@@ -55,13 +54,13 @@ export default withRouter(class ClientDashboard extends React.Component{
                 ]
             }
         }
-        let _matrix = this.props.matrix?this.props.matrix.toLowerCase():"chamado"
+        let _matrix =  this.props.router.query.p || "chamado"
         // console.log(_matrix)
         this.default={
             client:null,
             clients:[],
             show_dashboard:false,
-            client_credit:null,
+            // client_credit:null,
             client_orders:[],
             client_products:[],
             client_address:null,
@@ -176,13 +175,13 @@ export default withRouter(class ClientDashboard extends React.Component{
                     if(!this.state.client_address)return(<></>)
                     return(<div className="flex flex-grow-1 align-items-start flex-wrap w-full h-auto">
                         <div className="w-full h-max">
-                            <GoogleMap
+                            {/* <GoogleMap
                                 location={this.state.client_address.location}
                                 title="TESTE GMAPS"
                                 updateLocation={(newLocation)=>{
                                     console.log(newLocation)
                                 }}
-                            />
+                            /> */}
                         </div>
                         <div className={`
                             grid mt-4
@@ -279,7 +278,7 @@ export default withRouter(class ClientDashboard extends React.Component{
                     break;
 
                 case 'salesGroups':
-                    return(<div>
+                    return(<div className="flex flex-grow-1 w-full h-full mt-8 align-items-center">
                         <div id="" className="scrollbar-none z-0 p-0 m-0 relative left-0 overflow-scroll top-0 pt-4 w-screen min-h-30rem" >
                             <GroupIcons
                                 className=''
@@ -287,7 +286,7 @@ export default withRouter(class ClientDashboard extends React.Component{
                                 selected={this.state.selected_group}
                                 client={this.props.client}
                                 load={this.props.load_products_group}
-                                load_client={this.props.load_products_client}
+                                load_client={this.state.client_products}
                                 searchGroup={(data,group)=>{
                                     console.log(data,group)
                                     // scrollToBottom()
@@ -308,6 +307,14 @@ export default withRouter(class ClientDashboard extends React.Component{
                         <div className="fixed w-screen bottom-0 left-0 z-1">
                             <div className="flex w-full h-10rem bg-gradient-bottom absolute bottom-0 left-0 z-0"/>
                             <div className="fadeindown animation-duration-300 animation-ease-out animation-iteration-1 z-1 flex w-full h-5rem bg-glass-c bg-blur-3">    
+                                <Button className="p-button-lg p-button-text text-blue-300" label="Grupos" icon="pi pi-chevron-left"
+                                    onClick={(e)=>{
+                                        this.setState({
+                                            selected_group:null,
+                                            search_result:[]
+                                        })
+                                    }}
+                                />
                                 <div className="fadein animation-duration-500 animation-iteration-1 animation-ease-in justify-content-center w-full flex z-1 relative">
                                     <img className="absolute bottom-0 h-4rem sm:h-4 rem md:h-5rem lg:h-6rem w-auto border-circle mb-4 border-3 border-white shadow-3 z-2" 
                                         src={`images/grupos/${this.state.selected_group.id?this.state.selected_group.id:this.state.selected_group}_foto.jpg`}>
@@ -323,12 +330,14 @@ export default withRouter(class ClientDashboard extends React.Component{
         this.widgets = this.widgets.bind(this)
     }
     componentDidMount(){
+        // console.log(this.props?.client_credit)
         if(this.props?.fullScreen){
             this.load_client()
         }
     }
     
     componentDidUpdate(){
+        // console.log(this.props)
         // this.chart_bar?.draw_chart()
         let item_index = this.state.client_products.findIndex(i=>i.PRODUTO_ID==this.state.selected_product?.id)
         if(this.state.selected_product && this.state.item_index != item_index){
@@ -357,133 +366,102 @@ export default withRouter(class ClientDashboard extends React.Component{
             const ID = client.id.toString()
             this.get_products(client).then((data)=>{
                 if(data) this.setState({client_products:data})
-                this.get_credit(ID).then(
-                    this.get_orders(ID,1000).then(
-                        api_call("api/location",[`${client.rua}, ${client.numero} - ${client.bairro}, ${client.cidade}, ${client.cep}`]).then(
-                            ([address])=>{
-                                // console.log(address)
-                                
-                                this.setState({client_address:address,loading:false})
-                            }
-                        )
+                // this.get_credit(ID).then(
+                    this.get_orders(ID,1000)
+                    api_call("api/location",[`${client.rua}, ${client.numero} - ${client.bairro}, ${client.cidade}, ${client.cep}`]).then(
+                        ([address])=>{
+                            // console.log(address)
+                            
+                            this.setState({client_address:address,loading:false})
+                        }
                     )
-                )
+                // )
             })
         })
     }
 
-    get_credit(ID){
-        return(api_get({
-            credentials:"0pRmGDOkuIbZpFoLnRXB",
-            query:"hMM7WFHClaxYEjAxayms",
-            keys:[{
-                key: "ID_EMPRESA",
-                value: ID,
-                type: "STRING"
-            }]
-        }).then((client_limit)=>{
-            if(client_limit != null && client_limit.length > 0){
-                this.setState({client_credit: client_limit[0].valor_limite_atual1})
-            }else{
-                this.setState({client_credit:0})
-            }
-        }))
-    }
-
     get_orders(ID,max=3){
-        return(api_get({
-            credentials:"0pRmGDOkuIbZpFoLnRXB",
-            query:"xqVL0s5dN84T6fgfUjep",
-            keys:[{
-                key: "CLIENTE_ID",
-                value: ID,
-                type: "STRING"
-            },{
-                key:"EMPRESA_ID",
-                value: "1",
-                type: "STRING"
-            }]
-        }).then(async(pedidos_cliente)=>{
-            if(!pedidos_cliente) return
-            var _client_orders = []
-            pedidos_cliente = pedidos_cliente.slice(0,max).map((order)=>{
-                return(api_get({
-                    credentials:"0pRmGDOkuIbZpFoLnRXB",
-                    query:"0tPRw4nOqYil3P9lm38T",
-                    keys:[{
-                        key: "EMPRESA_ID",
-                        value: 1,
-                        type: "STRING"
-                    },
-                    {
-                        key: "CLIENTE_ID",
-                        value: ID,
-                        type: "STRING"
-                    },
-                    {
-                        key: "NFE",
-                        value: order.documento,
-                        type: "STRING"
-                    }]
-                }).then((order_data)=>{
-                    // console.log(order_data)
-                    if(order_data){
-                        const cart = order_data.map((item)=>{
-                            return({
-                                nome:item.nome_produto,
-                                id:item.produto_id,
-                                quantidade:item.quantidade,
-                                value:item.valor_unitario
-                            })
-                        })
-                        const total = this.sum_array(cart.map((product)=>{
-                            return(product.value * product.quantidade)
-                        }))
-                        _client_orders.push({
-                            id:order.documento,
-                            cart:cart,
-                            total:total,
-                            date:new Date(order_data[0].data_emissao)
-                        })
-                    }
-                }))
-            })
-            await Promise.all(pedidos_cliente).then(()=>{
-                // console.log(_client_orders)
-                if(_client_orders.length == 0){
-                    this.setState({client_orders:null})
-                }else{
-                    const sort_orders = _client_orders.sort((a,b)=>a.id-b.id)
-                    const all_orders = sort_orders.map((o,i)=>{
-                        // console.log(o)
-                        o.index = i
-                        return o
-                    })
-                    const last_order = [...all_orders].pop()
+        if(!this.props.pedidos_cliente) return
+        // this.setState({client_orders:this.props.pedidos_cliente})
+        // console.log(this.props.pedidos_cliente)
+        var _client_orders = this.props.pedidos_cliente
+        // var _pedidos_cliente = this.props.pedidos_cliente.slice(0,max).map( (order)=>{
+        //     return( api_get({
+        //         credentials:"0pRmGDOkuIbZpFoLnRXB",
+        //         query:"0tPRw4nOqYil3P9lm38T",
+        //         keys:[{
+        //             key: "EMPRESA_ID",
+        //             value: 1,
+        //             type: "STRING"
+        //         },
+        //         {
+        //             key: "CLIENTE_ID",
+        //             value: ID,
+        //             type: "STRING"
+        //         },
+        //         {
+        //             key: "NFE",
+        //             value: order.documento,
+        //             type: "STRING"
+        //         }]
+        //     }).then((order_data)=>{
+        //         // console.log(order_data)
+        //         if(order_data){
+        //             const cart = order_data.map((item)=>{
+        //                 return({
+        //                     nome:item.nome_produto,
+        //                     id:item.produto_id,
+        //                     quantidade:item.quantidade,
+        //                     value:item.valor_unitario
+        //                 })
+        //             })
+        //             const total = this.sum_array(cart.map((product)=>{
+        //                 return(product.value * product.quantidade)
+        //             }))
+        //             _client_orders.push({
+        //                 id:order.documento,
+        //                 cart:cart,
+        //                 total:total,
+        //                 date:new Date(order_data[0]?.data_emissao)
+        //             })
+        //         }
+        //     }))
+        // })
+        // Promise.all(_pedidos_cliente).then(()=>{
+        //     // console.log(_client_orders)
+            if(_client_orders.length == 0){
+                this.setState({client_orders:null})
+            }else{
+                const sort_orders = _client_orders.sort((a,b)=>a.id-b.id)
+                const all_orders = sort_orders.map((o,i)=>{
+                    o.index = i
+                    return o
+                })
+                const last_order = [...all_orders].pop()
 
-                    // var _pieChartData = {...this.state.pieChartData}
-                    // _pieChartData.datasets[0].data = last_order.cart.map(item => item.quantidade)
-                    // console.log(_pieChartData)
-                    this.setState({
-                        all_orders:all_orders,
-                        selected_order:last_order,
-                        client_orders:all_orders
-                        // pieChartData:_pieChartData
-                    },()=>{
-                        this.chart_bar?.draw_chart(all_orders)
-                    })
-                }
-            })
-        }))
+                // var _pieChartData = {...this.state.pieChartData}
+                // _pieChartData.datasets[0].data = last_order.cart.map(item => item.quantidade)
+                // console.log(_pieChartData)
+                this.setState({
+                    all_orders:all_orders,
+                    selected_order:last_order,
+                    client_orders:all_orders
+                    // pieChartData:_pieChartData
+                },()=>{
+                    this.chart_bar?.draw_chart(all_orders)
+                })
+            }
+        // })
+        
     }
  
     credit_info(){
-        if(this.state.client_credit == null){
+        if(this.props.client_credit == null){
             return(
                 <Skeleton height="24px" className="mb-2"/>
             )
         }else{
-            if(this.state.client_credit == 0){
+            if(this.props.client_credit == 0){
                 return(<div className="flex align-items-start justify-content-between gap-2">
                     <h5 style={{color:"var(--text-c)"}}>Não pussuí: </h5>
                     <Button label="Solicitar"
@@ -493,16 +471,11 @@ export default withRouter(class ClientDashboard extends React.Component{
             }
             return(<div className="flex align-items-start justify-content-between gap-2">
                 <h5 style={{color:"var(--text-c)"}}>Limite de Crédito: </h5>
-                <h5 className="text-bluegray-300" >{moneyMask(this.state.client_credit)}</h5>
+                <h5 className="text-bluegray-300" >{moneyMask(this.props.client_credit)}</h5>
             </div>)
         }
     }
 
-    sum_array(array){
-        return(array.reduce(function (x, y) {
-            return x + y;
-        }, 0))
-    }
     data_line(label,data,color="var(--text)"){
         return(<div className="flex align-items-start justify-content-between gap-2">
             <h5 style={{color:"var(--text-c)", whiteSpace:"nowrap"}}>{label}</h5>
@@ -516,12 +489,10 @@ export default withRouter(class ClientDashboard extends React.Component{
         const total_orders = this.state.client_orders.length
         if(total_orders != 0){
             var order_sum = this.state.client_orders.map((order)=>{
-                return this.sum_array(order.cart.map((product)=>{
-                    return(product.value * product.quantidade)
-                }))
+                return order.total
             })
             
-            var orders_total = this.sum_array(order_sum)
+            var orders_total = sum_array(order_sum)
 
             return(<div>
                 {this.data_line(`${total_orders} pedidos:`,moneyMask(orders_total))}
@@ -574,12 +545,12 @@ export default withRouter(class ClientDashboard extends React.Component{
             break;
             case 'pedidos':
                 return(<div className="w-full h-auto m-0 p-0">
-                    {this.widgets('clientOrders')}
-                    {this.widgets('salesGroups')}
-                    {this.state.selected_group == 0 && <ScrollWrapper speed={100}
+                    {this.state.selected_group == null && this.widgets('salesGroups')}
+                    {/* {this.state.selected_group == 0 && <ScrollWrapper speed={100}
                         className="bg flex h-20rem overflow-scroll horizontal-scrollbar col-12 flex-grow-1">
                         {this.widgets('clientProducts','_pedidos')}
-                    </ScrollWrapper>}
+                    </ScrollWrapper>} */}
+                    {this.state.selected_group == 0 && this.widgets('clientOrders')}
                     {this.widgets('productsView')}
                     {this.widgets('salesFooter')}
                 </div>)
@@ -642,17 +613,12 @@ export default withRouter(class ClientDashboard extends React.Component{
             // className={(k!=this.state.selected_view?"p-button-text text-gray-600 pt-0 hover:text-white ":"p-button-outlined bg-surface text-indigo-300 ")}
             className={(k!=this.state.selected_view?" text-white bg-black-alpha-30 ":" bg-primary-600 text-blue-900")+" w-auto min-w-max max-w-20rem p-button-rounded capitalize text-2xl md:icon-only p-2 lg:m-2 shadow-none border-2 border-blue-500"}
             onClick={(e)=>{
-                this.setState({selected_view:k})
-                // if(this.state.selected_view != this.props.matrix) return
-                // this.setState({selected_view:k},()=>{
-                //     this.reloadMatrix(this.models[k].matrix, ()=>{
-                //         try {
-                //             this.props.router.push('client#'+this.state.client.id+"="+k)
-                //         } catch (error) {
-                //             console.error(error.message)
-                //         }
-                //     })
-                // })
+                this.props.router?.push({
+                    pathname: '/client',
+                    query: { p: k, id: this.state.client.id },
+                }, undefined,{shallow:true}).then(()=>{
+                    this.setState({selected_view:k})
+                })
             }}
         />)
     }
@@ -668,11 +634,10 @@ export default withRouter(class ClientDashboard extends React.Component{
                 onClick={(e)=>{
                     var _client = this.lastClient()
                     this.load_client(_client)
-                    try {
-                        this.props.router.push('client#'+_client.id)
-                    } catch (error) {
-                        console.log(error.message)
-                    }
+                    this.props.router?.push({
+                        pathname: '/client',
+                        query: { p: this.props.router.query.p, id: _client.id },
+                    })
                 }}
             />
             
@@ -705,9 +670,10 @@ export default withRouter(class ClientDashboard extends React.Component{
                 onClick={(e)=>{
                     var _client = this.nextClient()
                     this.load_client(_client)
-                
-                    this.props.router.push('client#'+_client.id)
-                    
+                    this.props.router?.push({
+                        pathname: '/client',
+                        query: { p: this.props.router.query.p, id: _client.id },
+                    })
                 }}
             />
         </div>)
@@ -774,4 +740,6 @@ export default withRouter(class ClientDashboard extends React.Component{
         }
         
     }
-})
+}
+
+export default withRouter(ClientDashboard)

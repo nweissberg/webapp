@@ -128,7 +128,7 @@ export default class BarChart extends React.Component{
             _barChartData.datasets = [{...new_set}]
 
             _client_orders.map((order)=>{
-                var new_date = order.date.toLocaleDateString('pt-BR', { day: "2-digit", month: '2-digit', year: "2-digit"})
+                var new_date = new Date(order.date).toLocaleDateString('pt-BR', { day: "2-digit", month: '2-digit', year: "2-digit"})
                 
                 if(prev_date == new_date) {
                     index += 1

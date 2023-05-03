@@ -58,6 +58,7 @@ export default withRouter(class ObjectView extends React.Component {
         this.deleteAction = this.deleteAction.bind(this);
 		this.state.interval = null
 		this.change_room = (path_to)=>{
+			
 			this.props.router.push(path_to)
 			// this.setState({redirect:true},()=>{
 			// 	writeRealtimeData("rooms"+this.props.router.asPath+"/"+this.state.currentUser.uid, null)
@@ -75,7 +76,7 @@ export default withRouter(class ObjectView extends React.Component {
 				label:'Perfil',
 				icon:'pi pi-fw pi-user',
 				command:(()=>{
-					this.change_room('/');
+					this.change_room('/profile#'+this.props.user.uid);
 				})
 			},
 			{
@@ -537,8 +538,7 @@ export default withRouter(class ObjectView extends React.Component {
 									onContextMenu={(event)=>{
 										event.stopPropagation()
 										event.preventDefault()
-										this.change_room('/')
-										
+										this.change_room('/profile#'+this.props.user.uid);
 									}}
 								/>}
 								{/* {this.state.currentUser && 

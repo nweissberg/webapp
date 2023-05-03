@@ -8,7 +8,7 @@ import { api_call, api_get } from "../../api/connect";
 import { moneyMask } from "../../utils/util";
 import { Sidebar } from "primereact/sidebar";
 import { Splitter, SplitterPanel } from 'primereact/splitter';
-import GoogleMap from "../../components/maps";
+// import GoogleMap from "../../components/maps";
 import PieChart from "../../components/chart_pie";
 import BarChart from "../../components/chart_bar";
 import CallDialog from "./call_dialog";

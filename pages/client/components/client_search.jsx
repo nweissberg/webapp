@@ -12,7 +12,7 @@ const ClientSearch = (props) => {
     const [ filtered_clients, set_filtered_clients ] = useState([]);
     // const { clients, get_clients } = useProducts()
     const [ clients, set_clients ] = useState([]);
-    const autocomplete_ref = useRef(null)
+    var autocomplete_ref = useRef(null)
     
     useEffect(()=>{
         if(props.clients) set_clients(props.clients)
@@ -117,7 +117,7 @@ const ClientSearch = (props) => {
         return(<div className="flex justify-content-center align-items-center p-2">
         
             <AutoComplete
-                ref={(o)=>autocomplete_ref = o}
+                ref={autocomplete_ref}
                 inputClassName='border-indigo-500 hover:border-indigo-300 text-lg font-bold uppercase'
                 className='p-button-text w-15rem'
                 autoFocus
@@ -176,7 +176,7 @@ const ClientSearch = (props) => {
                     style={{minWidth:"75vw"}}
                     type='search'
                     id='client_search'
-                    ref={(o)=>autocomplete_ref = o}
+                    ref={autocomplete_ref}
                     className='flex flex-grow-1 w-screen border-indigo-500 hover:border-indigo-300 text-lg font-bold uppercase w-max'
                     // autoFocus
                     value={search_query}

@@ -7,7 +7,7 @@ import React from "react";
 import { api_call, api_get } from "../../api/connect";
 import { capitalize, moneyMask, scrollToBottom, shorten, var_get, var_set } from "../../utils/util";
 import { Sidebar } from "primereact/sidebar";
-import GoogleMap from "../../components/maps";
+// import GoogleMap from "../../components/maps";
 import PieChart from "../../components/chart_pie";
 import BarChart from "../../components/chart_bar";
 import CallDialog from "./call_dialog";
@@ -178,13 +178,13 @@ export default withRouter(class ClientDashboard extends React.Component{
                 if(!this.state.client_address)return(<></>)
                 return(<div>
                     <h6 className="white-space-normal select-none text-right">{this.state.client_address.address}</h6>
-                    <GoogleMap
+                    {/* <GoogleMap
                         location={this.state.client_address.location}
                         title="TESTE GMAPS"
                         updateLocation={(newLocation)=>{
                             console.log(newLocation)
                         }}
-                    />
+                    /> */}
                 </div>)
             },
             clientOrder:()=>{

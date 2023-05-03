@@ -1,7 +1,7 @@
 import React, { useContext, useState, useEffect } from "react";
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, sendPasswordResetEmail } from "firebase/auth";
 import { auth, readUserData, get_fingerprint, writeRealtimeData } from "./firebase";
-import { useVisitorData } from '@fingerprintjs/fingerprintjs-pro-react'
+// import { useVisitorData } from '@fingerprintjs/fingerprintjs-pro-react'
 import localForage from "localforage";
 import { api_get } from "./connect";
 
@@ -30,11 +30,11 @@ export function AuthProvider({children}){
     const [currentUser, setCurrentUser] = useState(null);
     const [loading, setLoading] = useState(true)
 
-    const {
-        isLoading,
-        error,
-        data,
-      } = useVisitorData();
+    // const {
+    //     isLoading,
+    //     error,
+    //     data,
+    //   } = useVisitorData();
 
     function signup(email,password){
         return createUserWithEmailAndPassword(auth, email, password)
@@ -116,7 +116,8 @@ export function AuthProvider({children}){
         login,
         signup,
         resetPassword,
-        updateUser
+        updateUser,
+        loading
     }
 
     // if (isLoading) {
