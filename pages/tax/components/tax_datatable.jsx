@@ -93,7 +93,7 @@ export default class TaxDataTable extends React.Component{
             }
         ];
     }
-    
+
     get_data_api(query,state){
         return(api_get({
             credentials:"0pRmGDOkuIbZpFoLnRXB",
@@ -125,31 +125,14 @@ export default class TaxDataTable extends React.Component{
         })
     }
     
-    get_all_data(){
-        const attr = {
-            callee:this,
-            process:(data) =>{
-                return data.map((i)=>{
-                    if(i.prazo_entrega) i.prazo_entrega = new Date(i.prazo_entrega)
-                    i.data_emissao = new Date(i.data_emissao)
-                    return(i)
-                })
-            },onReady:(state,data)=>{
-                console.log(state,data)
-                this.setState({[state]:data})
-            }
-        }
-        // get_data_api({...attr, query:"Sgnl05dUjKiqMe9hxZ2U",state:'ordem_compras'})
-        // .then((testData)=>{console.log(testData)})
-
-        return Promise.all([
-            this.get_data_api("Sgnl05dUjKiqMe9hxZ2U","ordem_compras"),
-            this.get_data_api("Sgnl05dUjKiqMe9hxZ2U","ordem_compras"),
-            this.get_data_api("vU88G1zOu60JLRq7LtrI","faturamento"),
-            this.get_data_api("Oov68ZUpr29y7QxbXw6R","entrada"),
-            this.get_data_api("Jj7fmO9XscYDkDKgz8TV","saida"),
-            this.get_data_api("JDeHJRlQ0q2YbaUvh1WK","pedidos"),
-            this.get_data_api("TayZrwYoXAPjcVLD0hnQ","compras"),
+    async get_all_data(){
+        return await Promise.all([
+            get_data_api("Sgnl05dUjKiqMe9hxZ2U","ordem_compras"),
+            get_data_api("vU88G1zOu60JLRq7LtrI","faturamento"),
+            get_data_api("Oov68ZUpr29y7QxbXw6R","entrada"),
+            get_data_api("Jj7fmO9XscYDkDKgz8TV","saida"),
+            get_data_api("JDeHJRlQ0q2YbaUvh1WK","pedidos"),
+            get_data_api("TayZrwYoXAPjcVLD0hnQ","compras"),
             this.get_empresas(),
         ])
     }
@@ -227,23 +210,23 @@ export default class TaxDataTable extends React.Component{
         console.log(_empresas)
         
 
-        this.state.faturamento.map((item)=>{
+        this.state.faturamento?.map((item)=>{
             if( this.test_date(item.data_emissao) == false) return(null)
             _empresas[item.empresa_id].faturamento += item.valor_total_geral
         })
 
-        this.state.compras.map((item)=>{
+        this.state.compras?.map((item)=>{
             if( this.test_date(item.data_emissao) == false) return(null)
             _empresas[item.empresa_id].compras += item.valor_total
         })
 
-        this.state.pedidos.map((item)=>{
+        this.state.pedidos?.map((item)=>{
             if( this.test_date(item.data_emissao) == false) return(null)
             _empresas[item.empresa_id].pedidos += item.Sum_valor_total
         })
         
         
-        this.state.entrada.map((item)=>{
+        this.state.entrada?.map((item)=>{
             _empresas[item.empresa_id].entrada ||= {cofins:0,icms:0,ipi:0,pis:0,icms_st:0,total:0}
             if( this.test_date(item.data_emissao) == false) return(null)
             _empresas[item.empresa_id].entrada.cofins += item.Sum_valor_cofins
@@ -253,7 +236,7 @@ export default class TaxDataTable extends React.Component{
             _empresas[item.empresa_id].entrada.icms_st += item.Sum_valor_icms_st
         })
 
-        this.state.saida.map((item)=>{
+        this.state.saida?.map((item)=>{
             _empresas[item.empresa_id].saida ||= {cofins:0,icms:0,ipi:0,pis:0,icms_st:0,total:0}
             if( this.test_date(item.data_emissao) == false) return(null)
             _empresas[item.empresa_id].saida.cofins += item.Sum_valor_cofins
@@ -307,7 +290,7 @@ export default class TaxDataTable extends React.Component{
         var_get("tax_columns").then((active_cols)=>{
             if(active_cols) this.setState({selected_columns:JSON.parse(active_cols)});
         })
-        return(this.get_all_data().then(async ()=>{await this.buid_datatable()}))
+        return(this.get_all_data().then(async (data)=>{data && await this.buid_datatable()}))
     }
     
     onColumnToggle(event){

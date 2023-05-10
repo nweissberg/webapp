@@ -450,7 +450,7 @@ export default class ProductSidebar extends React.Component{
                             year: "2-digit"
                         }}
                     />
-                    {this.state.documentos.length >= 1 && <SelectButton
+                    {this.state.documentos?.length >= 1 && <SelectButton
                         unselectable={false}
                         value={this.state.chart_mode}
                         options={["Mês","Dia"]}

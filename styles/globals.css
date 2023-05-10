@@ -321,8 +321,9 @@ body::-webkit-scrollbar{
  
 /* Handle for vertical scrollbar */
 ::-webkit-scrollbar-thumb {
-  background: var(--transparent);
-  background: linear-gradient(90deg, var(--transparent) 0%, var(--transparent) 39%, var(--secondary) 40%, var(--secondary) 60%, var(--transparent) 61%);
+
+	background: var(--transparent);
+	background: linear-gradient(90deg, var(--transparent) 0%, var(--transparent) 39%, var(--secondary) 40%, var(--secondary) 60%, var(--transparent) 61%);
 }
 
 /* Handle on hover */
@@ -347,9 +348,21 @@ body::-webkit-scrollbar{
 	width: 0px;
 	height: 0px;
 }
-
+/* clears all the style in the object */
 ::-webkit-scrollbar-corner {
-	background: #0000; 
+	background: #0000;
+}
+
+::-webkit-resizer {
+	border: 6px solid transparent;
+	border-bottom-color: var(--text-b);
+	border-right-color: var(--text-b);
+	outline: 3px solid var(--surface-b);
+	outline-offset: -3px;
+}
+*:hover::-webkit-resizer, *:focus::-webkit-resizer {
+	border-bottom-color: var(--info);
+	border-right-color: var(--info);
 }
 
 label {
@@ -1441,4 +1454,9 @@ iframe {
 .hljs {
 	font-size: large !important;
 	background: none !important;
-  }
+}
+
+.inputText{
+	/* height: 100% !important; */
+	min-height: max-content !important;
+}

@@ -1,17 +1,13 @@
 import React from "react";
-import { Dropdown } from 'primereact/dropdown';
-import { ToggleButton } from 'primereact/togglebutton';
 import { Button } from "primereact/button";
 import { OverlayPanel } from 'primereact/overlaypanel';
 import { InputText } from "primereact/inputtext";
-import { Calendar } from "primereact/calendar";
-import { isDeepEqual } from "../../utils/util";
-import { Editor } from 'primereact/editor';
-import ReactDOM from 'react-dom';
-import { Steps } from 'primereact/steps';
+import { isDeepEqual, normalize, print } from "../../utils/util";
 import { SelectButton } from 'primereact/selectbutton';
 import SpeechToText from "../../components/speech_to_text";
 import UserSearch from "./user_search";
+import WeekdaySearch from "../../components/next_weekdays_dropdown";
+import { z } from "zod";
 
 export default class CallDialog extends React.Component{
     constructor(props){
@@ -21,14 +17,27 @@ export default class CallDialog extends React.Component{
             made_contact:false,
             got_problem:false,
             selectedChannel:"",
-            selectedUser:null,
-            selectedDate:null,
+            help_user:null,
+            call_return_date:null,
             problem_type:"",
-            description:"",
+            call_description:"",
+            help_description:"",
             step_index:1,
-            all_channels:false
+            all_channels:false,
+            remove_description:'',
+            remove_reason:'',
+            issues:[]
         }
         this.state={ ...this.original }
+        
+        // validador de formulário ZOD
+        this.fileName = z.preprocess((val) => {
+            try { return eval(val) } catch (error) { return val }
+            }, z.string({
+                required_error:"Nome é obrigatório",
+                invalid_type_error:"Nome deve ser texto"
+            }).min(3,{message:"Nome deve ter no mínimo 3 caracteres"})
+        );
         
         this.deleteOptions = [
             {name: 'Empresa Fechou', value: 1},
@@ -186,8 +195,19 @@ export default class CallDialog extends React.Component{
                 },
             }
         ]
+        this.send_call = this.send_call.bind(this)
+
     }
+
+    // update(options={state:this.state, key:null,value:null},callback=()=>{}){
+    //     var _state = (options.key && options.value)?{[options.key]:options.value}:this.state
+    //     this.setState({...this.state, ..._state},callback)
+    // }
     
+    // componentDidUpdate(){
+    //     this.props.onUpdate?.(this.state)
+    // }
+
     contact_button(button,index){
         const condition = button.condition?.()
         const active_channel = condition == false && this.state.all_channels == true
@@ -227,17 +247,19 @@ export default class CallDialog extends React.Component{
             </div>
         )
     }
-    testForm(){
-        if(isDeepEqual(this.original,this.state) ||
-            this.state.selectedUser==null ||
-            this.state.selectedDate==null ) return true
+    // testForm(){
+    //     if(isDeepEqual(this.original,this.state) ||
+    //         this.state.help_user==null ||
+    //         this.state.selectedDate==null ) return true
 
-        if(this.state.made_contact && 
-            this.state.selectedChannel == "") return true
+    //     if(this.state.made_contact && 
+    //         this.state.selectedChannel == "") return true
 
-        if(this.state.got_problem && 
-            this.state.problem_type == "") return true
-    }
+    //     if(this.state.got_problem && 
+    //         this.state.problem_type == "") return true
+    // }
+
+    
 
     contact_icon(){
         const contact_data = this.contact_channels.find((i)=>i.value == this.state.selectedChannel)
@@ -253,11 +275,36 @@ export default class CallDialog extends React.Component{
     // componentDidMount(){
     //     console.log(this.props.all_users)
     // }
+
+    testForm(key,label){
+        const result = z.object({
+            [key]: z.string({
+                required_error: label + " é um campo obrigatório",
+                invalid_type_error: label + " deve ser texto"
+            }).min(20,{
+                message:"Descrição deve ter no mínimo 20 caracteres"
+            })
+        }).safeParse(this.state);
+        print(result)
+        // if (!result.success) {}
+        this.setState({issues:!result.success?result.error.issues:[]})
+    }
+
+    send_call(){
+        this.setState({...this.original})
+        this.props.onSend?.(this.state)
+    }
+
     call_window(){
-        const footer_button = "flex w-full h-full bg pt-1 pb-1 m-0 pl-2 pr-2 p-button-outlined p-button-lg p-button-rounded "
-        return(<div className="call-dialog w-full h-full">
-            <div style={{height:"70px"}} className="flex flex-column m-3 mb-6 justify-content-between">
-                <div className="flex h-full align-items-start">
+        const footer_button = "flex w-auto p-4 h-full bg pt-1 pb-1 m-0 pl-2 pr-2 p-button-text shadow-none p-button-lg p-button-rounded "
+        
+        
+        
+        
+        
+        return(<div className="flex grid flex-wrap w-auto h-full p-3">
+            <div style={{height:"70px"}} className="col-12 flex w-full flex-grow-1">
+                <div className="flex flex-grow-1 w-full h-full align-items-start">
                     {this.state.selectedChannel != "" &&
                         this.contact_icon()
                     }
@@ -268,8 +315,9 @@ export default class CallDialog extends React.Component{
             </div>
             
             {this.state.step_index == 0 &&
-                <div className="flex-grow-1 justify-content-center">
-                    <div className="m-4">
+                <div className="flex flex-wrap p-fluid grid formgrid h-min">
+                    <div className="flex-grow-1 justify-content-center">
+                    
                         <label>Selecione</label>
                         <SelectButton
                             unselectable={false}
@@ -281,24 +329,37 @@ export default class CallDialog extends React.Component{
                         {this.state.selectedDelete == 3 &&
                             <div className="mt-2">
                                 <label>Motivo</label>
-                                <InputText className="flex w-full"/>
+                                <InputText value={this.state.remove_reason} onChange={(e)=>this.setState({remove_reason:e.target.value})} className="flex w-full"/>
                                 
                             </div>
                         }
+                        {(()=>{
+                            const zod_issue = this.state.issues.find((i)=>i.path[0] == 'remove_description')
+                            return( <div className="flex flex-wrap m-0 w-full h-min">
+                                <label>Comentário</label>
+                                {/* <InputTextarea
+                                    style={{minHeight:"50px"}}
+                                    disabled={this.state.selectedDelete == 0}
+                                    className="flex w-full"
+                                /> */}
+                                <SpeechToText
+                                    className={zod_issue?'p-invalid':''}
+                                    onChange={(text)=>{
+                                        this.setState({remove_description:text})
+                                    }}
+                                    onBlur={()=>{
+                                        if(normalize(this.state.remove_description) != '') this.testForm('remove_description','Comentário')
+                                    }}
+                                    uid={this.props.client.id+ '_call_remove'}
+                                />
+                                <span className="p-error text-sm">{zod_issue?.message}</span>
+                            </div>)
+                        })()}
                         
-                        <div className="mt-2">
-                            <label>Comentário</label>
-                            {/* <InputTextarea
-                                style={{minHeight:"50px"}}
-                                disabled={this.state.selectedDelete == 0}
-                                className="flex w-full"
-                            /> */}
-                            <SpeechToText />
-                        </div>
                     </div>
-                    <div className="m-4 gap-3 flex justify-content-center align-items-center">
+                    <div className="mb-4 flex w-full justify-content-center align-items-center mt-2">
                         <Button label="Voltar"
-                            className="pt-1 pb-1 p-button-secondary p-button-outlined p-button-lg p-button-rounded "
+                            className={footer_button + "p-button-secondary"}
                             icon="pi pi-chevron-left"
                             onClick={(e)=>{
                                 this.setState({step_index:1,selectedDelete:0})
@@ -306,11 +367,25 @@ export default class CallDialog extends React.Component{
                         />
 
                         <Button label="Remover"
-                            className="pt-1 pb-1 p-button-danger p-button-outlined p-button-lg p-button-rounded "
+                            className={footer_button + "p-button-danger"}
                             icon="pi pi-trash"
                             iconPos="right"
                             onClick={(e)=>{
-                                this.setState({step_index:1})
+                                this.testForm('remove_description','Comentário')
+                                // const result = z.string({
+                                //     required_error:"Descrição é obrigatória",
+                                //     invalid_type_error:"Descrição deve ser texto"
+                                // }).min(20,{
+                                //     message:"Descrição deve ter no mínimo 20 caracteres"
+                                // }).safeParse(this.state.remove_description);
+
+                                // if (!result.success) {
+                                //     print(result.error.issues[0].message,'error');
+                                // }else{
+                                //     print(result.data)
+                                //     this.setState({step_index:1})
+                                // }
+
                             }}
                         />
                     </div>
@@ -334,18 +409,18 @@ export default class CallDialog extends React.Component{
                                 this.setState({step_index:0})
                             }}
                         />
-                    <Button label={!this.state.all_channels?"Adicionar":"Voltar"}
-                        className={footer_button + (!this.state.all_channels?"":"p-button-warning")}
-                        icon={!this.state.all_channels?"pi pi-plus":"pi pi-times"}
-                        iconPos="right"
-                        onClick={(e)=>{
-                            this.setState({all_channels:!this.state.all_channels})
-                        }}
-                    />
+                        <Button label={!this.state.all_channels?"Adicionar":"Voltar"}
+                            className={footer_button + (!this.state.all_channels?"":"p-button-warning")}
+                            icon={!this.state.all_channels?"pi pi-plus":"pi pi-times"}
+                            iconPos="right"
+                            onClick={(e)=>{
+                                this.setState({all_channels:!this.state.all_channels})
+                            }}
+                        />
                     </div>
                 </div>
             }
-            {this.state.step_index == 2 && <div>
+            {this.state.step_index == 2 && <div className="flex-grow-1 justify-content-center">
                 <div className="flex p-fluid grid formgrid">
                     <div className="flex-grow-1 field sm:col-6 md:col-3 lg:col-3">
                         <label>Consegui Contato?</label>
@@ -358,22 +433,21 @@ export default class CallDialog extends React.Component{
                         />
 
                         <label className="mt-3">Data de Retorno</label>
-                        <Calendar
-                            locale="pt"
-                            value={this.state.selectedDate}
-                            onChange={(e) => this.setState({ selectedDate: e.value })}
-                            showTime
-                            // style={{width:"200px"}}
-                            touchUI
-                            // inline
-                            showButtonBar 
-                            minDate={new Date()}
-                            maxDate={new Date(Date.now() + 1000*60*60*24*5)}
+                        <WeekdaySearch
+                            maxDays={this.state.made_contact==false?2:5}
+                            onChange={(e)=>{
+                                this.setState({call_return_date:e})
+                            }}
                         />
-
+                        
                         <div className=" mt-3">
                             <label>Descreva como foi</label>
-                            <SpeechToText />
+                            <SpeechToText
+                                uid={this.props.client.id+ '_call_description'}
+                                onChange={(text)=>{
+                                    this.setState({call_description:text})
+                                }}
+                            />
                         </div>
                     </div>
 
@@ -388,18 +462,40 @@ export default class CallDialog extends React.Component{
                         />
                         <div className=" mt-3">
                             <label style={{color:this.state.got_problem==false?"var(--text-b)":""}} className="mb-2">Quem pode ajudar?</label>
-                            <UserSearch hideUser={true} disabled={this.state.got_problem==false} all_users={this.props.all_users} currentUser={this.props.user} />
+                            <UserSearch
+                                hideUser={true}
+                                disabled={this.state.got_problem==false}
+                                all_users={this.props.all_users}
+                                currentUser={this.props.user}
+                                onChange={(e)=>{
+                                    this.setState({help_user:{name:e.name, uid:e.uid}})
+                                    // console.log(e)
+                                }}
+                            />
                         </div>
                         <div className=" mt-3">
                             <label style={{color:this.state.got_problem==false?"var(--text-b)":""}}>Descreva a necessidade</label>
-                            <SpeechToText disabled={this.state.got_problem==false} />
+                            <SpeechToText
+                                uid={this.props.client.id+ '_call_help'}
+                                disabled={this.state.got_problem==false}
+                                onChange={(text)=>{
+                                    this.setState({help_description:text})
+                                }}
+                            />
                         </div>
                     </div>
                 </div>
             </div>}
-            
+            {this.state.step_index == 3 && <div className="flex p-fluid grid formgrid">
+                <div className="flex col-6 flex-grow-1">
+                    <pre className='text-white max-w-30rem text-overflow-ellipsis overflow-hidden'>
+                        {JSON.stringify(this.state,null,2)}
+                    </pre>
 
-            {this.state.step_index > 1 && <div className="mt-4 gap-3 flex justify-content-center align-items-center">
+                </div>
+            </div>
+            }
+            {this.state.step_index > 1 && <div className="flex flex-grow-1 justify-content-center w-full col-12">
                 {this.state.step_index == 2 && <Button label="Cancelar"
                     className={footer_button + "p-button-warning"}
                     icon="pi pi-times"
@@ -407,6 +503,7 @@ export default class CallDialog extends React.Component{
                         this.setState({...this.original})
                     }}
                 />}
+                
                 {this.state.step_index > 2 && <Button label="Voltar"
                     className={footer_button + "p-button-secondary"}
                     icon="pi pi-chevron-left"
@@ -421,6 +518,7 @@ export default class CallDialog extends React.Component{
                     iconPos="right"
                     onClick={(e)=>{
                         this.setState({step_index:this.state.step_index+1})
+                        this.props.onUpdate?.(this.state)
                     }}
                 />}
 
@@ -428,9 +526,7 @@ export default class CallDialog extends React.Component{
                     className={footer_button +"p-button-success"}
                     icon="pi pi-send"
                     iconPos="right"
-                    onClick={(e)=>{
-                        this.setState({...this.original})
-                    }}
+                    onClick={this.send_call}
                 />}
 
             </div>}
@@ -438,8 +534,10 @@ export default class CallDialog extends React.Component{
         </div>)
     }
     render(){
+        return (<div className="flex w-full h-full justify-content-center align-items-center">
+            {this.call_window()}
+        </div>)
         if(this.props?.fullScreen == true){
-            return(this.call_window())
         }
         return(
             <div>

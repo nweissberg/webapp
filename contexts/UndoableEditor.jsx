@@ -2,7 +2,7 @@ import React, { useState, useReducer, useEffect } from 'react';
 import undo from './undo';
 import { Button } from 'primereact/button';
 import { InputText } from 'primereact/inputtext';
-import { var_get, var_set } from '../pages/utils/util';
+import { print, var_get, var_set } from '../pages/utils/util';
 
 function editObject(object, key, value) {
 	const newObj = { ...object };
@@ -12,12 +12,12 @@ function editObject(object, key, value) {
 
 function loadObject(object, value) {
 	const newObj = { ...object };
-    console.log(newObj, value)
+    print((newObj, value))
 	// newObj = value;
 	return newObj;
 }
 
-function UndoableEditor({uid = 'undo_history', object, setObject, showHistory, editor = false }) {
+function UndoableEditor({onLoad, uid = 'undo_history', object, setObject, showHistory, editor = false }) {
     const [show, setShow] = useState(showHistory)
 	const [state, dispatch] = useReducer(undo((state, action) => {
 		switch (action.type) {
@@ -33,23 +33,26 @@ function UndoableEditor({uid = 'undo_history', object, setObject, showHistory, e
 			}
 		}
 	}), object);
+	
 
 	const [currentKey, setCurrentKey] = useState('');
 	const [currentValue, setCurrentValue] = useState('');
 
     useEffect(()=>{
         handleReload()
+		onLoad?.({onEdit,handleUndo,handleRedo})
     },[uid])
 
     useEffect(()=>{
         if(!state) return
-        var_set(uid, JSON.stringify(state),{compress:true})
         var _object = {...state}
+		_object.length = _object?.history?.length || 0
+        if(_object.length > 0) var_set(uid, JSON.stringify(state),{compress:true})
         delete _object.history
         delete _object.actions
-        delete _object.index
+        // delete _object.index
         setObject(_object)
-    },[state, setObject])
+    },[state])
     
     const handleReload = () => {
         var_get(uid,{decompress:true}).then((value)=>{
@@ -69,6 +72,12 @@ function UndoableEditor({uid = 'undo_history', object, setObject, showHistory, e
 
 	const handleValueChange = (event) => {
 		setCurrentValue(event.target.value);
+	};
+
+	const onEdit = (key, value) => {
+		if (key !== '' && value !== '') dispatch({
+			type: 'edit', payload: { key, value, time: new Date().getTime()}
+		});
 	};
 
 	const handleEdit = () => {
@@ -94,7 +103,8 @@ function UndoableEditor({uid = 'undo_history', object, setObject, showHistory, e
 		dispatch({ type: 'redo' });
 	};
     
-    if(!editor)return(<></>)
+
+    if(!editor)return(<div></div>)
 	return (
 		<div className='sticky z-0 flex w-screen h-max bottom-0 left-0 flex-wrap justify-content-center'>
             {show && <pre className={"text-green-300 flex col-12"}>

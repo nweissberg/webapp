@@ -8,7 +8,7 @@ import ClientSearch from "./components/client_search";
 import ScrollWrapper from "../components/scroll_wrapper";
 import { useProducts } from "../../contexts/products_context";
 import { readUsers } from "../api/firebase";
-import { shorten, sum_array, var_get } from "../utils/util";
+import { print, shorten, sum_array, var_get } from "../utils/util";
 import { ProgressBar } from "primereact/progressbar";
 import { Button } from "primereact/button";
 import ProductSidebar from "../sales/components/product_sidebar";
@@ -26,8 +26,7 @@ const clientes_db = localForage.createInstance({
 export async function getServerSideProps( context ) {
     const { query, res } = context
     res.setHeader(
-        'Cache-Control',
-        'public, s-maxage=10, stale-while-revalidate=59'
+        'Cache-Control','s-maxage=86400'
     )
     const client_credit = await get_data_api({
         query:"hMM7WFHClaxYEjAxayms",
@@ -41,48 +40,51 @@ export async function getServerSideProps( context ) {
     })
     const pedidos_cliente = await get_data_api({
         query:"xqVL0s5dN84T6fgfUjep",
-        keys:[
-            { key: "CLIENTE_ID", value: query.id, type: "STRING" },
-            { key:"EMPRESA_ID", value: "1", type: "STRING" }
-        ],
+        keys:[{ key: "CLIENTE_ID", value: query.id, type: "STRING" },
+            { key:"EMPRESA_ID", value: "1", type: "STRING" }],
     }).then(async(pedidos)=>{
-        
-        pedidos = await pedidos.map(async(pedido)=>{
-            var _pedido = pedido
-            _pedido.cart = await get_data_api({
-                query:"0tPRw4nOqYil3P9lm38T",
-                keys:[
-                    { key: "EMPRESA_ID", value: 1, type: "STRING"},
-                    { key: "CLIENTE_ID", value: query.id, type: "STRING"},
-                    { key: "NFE", value: pedido.documento, type: "STRING"}
-                ]
-            }).then((order_data)=>{
-                // console.log(order_data)
-                if(order_data){
-                    const cart = order_data.map((item)=>{
-                        return({
-                            nome:item.nome_produto,
-                            id:item.produto_id,
-                            quantidade:item.quantidade,
-                            value:item.valor_unitario
+        if(pedidos == null || pedidos.length == 0){
+            return null
+        }else{
+
+            pedidos = await pedidos.map(async(pedido)=>{
+                var _pedido = pedido
+                _pedido.cart = await get_data_api({
+                    query:"0tPRw4nOqYil3P9lm38T",
+                    keys:[
+                        { key: "EMPRESA_ID", value: 1, type: "STRING"},
+                        { key: "CLIENTE_ID", value: query.id, type: "STRING"},
+                        { key: "NFE", value: pedido.documento, type: "STRING"}
+                    ]
+                }).then((order_data)=>{
+                    // console.log(order_data)
+                    if(order_data && order_data.length>0){
+                        const cart = order_data.map((item)=>{
+                            return({
+                                nome:item.nome_produto,
+                                id:item.produto_id,
+                                quantidade:item.quantidade,
+                                value:item.valor_unitario
+                            })
                         })
-                    })
-                    _pedido.total = sum_array(cart.map((product)=>{
-                        return(product.value * product.quantidade)
-                    }))
-                    _pedido.date = pedido.data_emissao
-                    _pedido.id = pedido.documento
-                    return cart
-                }else{
-                    return []
-                }
+                        _pedido.total = sum_array(cart.map((product)=>{
+                            return(product.value * product.quantidade || 0)
+                        }))
+                        _pedido.date = pedido.data_emissao
+                        _pedido.id = pedido.documento
+                        return cart
+                    }else{
+                        return []
+                    }
+                })
+                return _pedido
             })
-            return _pedido
-        })
-        await Promise.all(pedidos).then((_pedidos)=>{
-            pedidos = _pedidos
-        })
-        return pedidos
+            await Promise.all(pedidos).then((_pedidos)=>{
+                pedidos = _pedidos
+            })
+            return pedidos
+        }
+
     })
     // console.log(pedidos_cliente)
     return { props: {
@@ -108,21 +110,23 @@ function ClientPage(props){
         clients,
         get_clients,
         load_products_client,
-        groups,
         load_products_group,
+        groups,
+        load_groups,
     } = useProducts()
     
     const {isMobile} = useResponsive()
 
-    // useEffect(()=>{
-    //     console.log(props.client_credit)
-    //     // set_loading(false)
-    // },[props])
+    useEffect(()=>{
+        // console.log(groups)
+        if(groups.length == 0) load_groups()
+        // set_loading(false)
+    },[])
 
-    // useEffect(()=>{
-    //     console.log(isMobile)
-    //     // set_is_mobile(isMobile)
-    // },[isMobile])
+    useEffect(()=>{
+        print(isMobile)
+        // set_is_mobile(isMobile)
+    },[isMobile])
 
     useEffect(()=>{
         if(clients.length == 0) get_clients(currentUser)
@@ -139,13 +143,12 @@ function ClientPage(props){
     },[clients_list])
 
     useEffect(()=>{
-        if(clients.length == 0) return
+        // if(clients.length == 0) return null;
         var_get("clients_filtered").then((data)=>{
             if(data){
                 var _clients = data.split(',').map(c=>clients.find(c_db=>c == c_db.id))
                 // console.log(_clients)
                 set_clients_list([...new Set(_clients)])
-                
             }
         })
         if(props.router.query.id){
@@ -160,18 +163,16 @@ function ClientPage(props){
         return(<ScrollWrapper className="scrollbar-none client_bar_nav gap-2 bg flex w-screen overflow-x-scroll" speed={300}>
             <div className={' flex w-10 h-auto align-items-center sticky left-0 z-4 '}>
                 {show_search &&
-                <div className="absolute flex w-auto h-full" >
-                    <div className="relative flex w-20rem h-full bg-glass-b left-0"/>
-                    <div className="relative flex w-20rem h-full bg-gradient-right "/>
-                </div>
+                    <div className="absolute flex w-auto h-full" >
+                        <div className="relative flex w-20rem h-full bg-glass-b left-0"/>
+                        <div className="relative flex w-20rem h-full bg-gradient-right "/>
+                    </div>
                 }
                 {!show_search && <div className="absolute z-0 flex w-5rem h-full bg-gradient-right "/>}
                 <Button
                     icon={(show_search?'pi pi-chevron-left':'pi pi-pencil text-green-500 ')+' text-xl'}
                     className={"relative left-0 mx-2 p-button-lg p-button-rounded p-3 " +(show_search?'':'p-button-text text-white shadow-none')}
-                    onClick={(e)=>{
-                        set_show_search(!show_search)
-                    }}
+                    onClick={(e)=>{ set_show_search(!show_search) }}
                 />
                 {show_search &&<div className="absolute ml-6 fadein flex flex-grow-1 animation-iteration-1 animation-duration-400 w-full ">
                     <ClientSearch
@@ -204,13 +205,13 @@ function ClientPage(props){
                             set_client(c)
                             set_show_search(false)
                             // let route = matrix?"="+matrix:""
-                        props.router.push({
+                            props.router.push({
                                 pathname: '/client',
                                 query: { p:props.router.query.p, id: c.id },
-                                shallow:true
+                                shallow:false
                             })
                         }}>
-                        {c.fantasia}
+                        {c?.fantasia}
                         </div>
                         )
                     })
@@ -218,25 +219,20 @@ function ClientPage(props){
             
         </ScrollWrapper>)
     }
-
-    if(!client && loading == true ) {
-        return(<div className="flex w-full h-screen align-items-center absolute top-0 bg-blur-1">
-            <ProgressSpinner/>
-        </div>)
-    }else if(!client && currentUser){
+    if((!client && show_search) && currentUser){
         return(<ObjectComponent
             user={currentUser}
             onLoad={(e)=>{
                 document.title = "Cliente"
             }}
         >
-            {loading != false && <ProgressBar mode="indeterminate"/>}
+            
             <div>
                 <div className="sticky top-0 z-1">
                     {clients_header()}
                 </div>
                 
-                { !(show_search || loading == 'client') && <ClientSearchTable 
+                { !(!show_search || loading == 'client' || loading != false ) && <ClientSearchTable 
                     user={currentUser}
                     check_rule={check_rule}
                     clients={clients}
@@ -271,7 +267,7 @@ function ClientPage(props){
             </div> */}
             
             {clients_header()}
-            {filtered.length > 0 && show_search && <ClientSearchTable 
+            {filtered.length > 0 && show_search  && <ClientSearchTable 
                 user={currentUser}
                 check_rule={check_rule}
                 clients={clients}

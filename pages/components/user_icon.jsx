@@ -41,7 +41,7 @@ export default class UserIcon extends React.Component{
         if(this.state.user == null){
             return(<><Skeleton key={this.props.key +'_tmp'} width={size+"px"} height={size+"px"} borderRadius="50%"/></>)
         }
-        return(<div key={this.props.key} className={this.props.pointer?'shadow-3':""}
+        return(<div key={this.props.key +'_cursor'} className={this.props.pointer?'shadow-3':""}
         style={this.props.pointer?{
             backgroundColor:"white",
             borderRadius:"2px 50% 50% 50%",

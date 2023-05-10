@@ -1,6 +1,6 @@
 import { deepEqual } from '@firebase/util';
 import axios from 'axios';
-import { isDeepEqual } from '../utils/util';
+import { isDeepEqual, print } from '../utils/util';
 
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_DB_URL
@@ -45,7 +45,7 @@ const api_call = ((path,body,cloud=true)=>{
       api_cloud.post(path, body)
       .then((data) => {
         if(data){
-          console.log('CLOUD')
+          print((Date.now(),'CLOUD'))
           api_buffer = api_buffer.filter((request)=>isDeepEqual(request,body) == false)
           res(data)
         }else{
@@ -56,7 +56,7 @@ const api_call = ((path,body,cloud=true)=>{
       api.post(path, body)
       .then((data) => {
         if(data){
-          console.log('LOCAL')
+          print((Date.now(),'LOCAL'))
           api_buffer = api_buffer.filter((request)=>isDeepEqual(request,body) == false)
           res(data)
         }else{
@@ -69,26 +69,26 @@ const api_call = ((path,body,cloud=true)=>{
 
 var api_buffer = []
 const api_get = ((body, headers)=>{
-  // console.log(api_buffer)
+  print(api_buffer)
   
   var isLoading = api_buffer.find((requested)=>isDeepEqual(body,requested))
   
   
   return new Promise(function(res, rej) {
-    if(isLoading) { return(null) }
+    if(isLoading) { res(null) }
     
     api_buffer.push(body)
     api_cloud.post("/api/query", body, headers)
     .then((data) => {
       if(data){
-        // console.log(Date.now(),'CLOUD')
+        print((Date.now(),'CLOUD'))
         api_buffer = api_buffer.filter((request)=>isDeepEqual(request,body) == false)
         res(data)
       }else{
         api.post("/api/query", body, headers)
         .then((data) => {
           if(data){
-            // console.log(Date.now(),'LOCAL')
+            print((Date.now(),'LOCAL'))
             api_buffer = api_buffer.filter((request)=>isDeepEqual(request,body) == false)
             res(data)
           }else{

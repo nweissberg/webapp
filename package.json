@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@fingerprintjs/fingerprintjs-pro-react": "^2.3.3",
+    "@huggingface/inference": "^2.3.0",
     "axios": "^1.4.0",
     "blockly": "^9.3.3",
     "bootstrap": "^5.2.3",

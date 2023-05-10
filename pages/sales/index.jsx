@@ -36,15 +36,13 @@ export default function SalesPage(){
     const [loaded_group, set_loaded_group] = useState([0,0,0,0,0])
     
     const {
-        load_top_products,
         load_products_client,
         load_products_group,
+        load_top_products,
         products,
         groups,
-        load_local_products,
         profiles,
         all_products,
-        load_groups,
         check_rule
     } = useProducts()
 
@@ -66,7 +64,7 @@ export default function SalesPage(){
 
     useEffect(()=>{
         console.log(sale_cart)
-        load_groups()
+        // load_groups()
     },[])
 
     // useEffect(()=>{
@@ -104,7 +102,7 @@ export default function SalesPage(){
                             //     set_group_filter(true)
                             // }}
                             load_products_group={(group_id)=>{
-                                // load_top_products(group_id)
+                                load_top_products(group_id)
                                 return load_products_group(group_id)
                             }}
                             load_products_client={(client_id)=>{

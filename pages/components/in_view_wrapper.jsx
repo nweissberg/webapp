@@ -29,7 +29,7 @@ class InViewWrapper extends Component {
                     this.inView?.(this)
                     this.onExecute?.(this);
                 },(time)=>{
-                    console.log(time)
+                    // console.log(time)
                     this.setState((state) => {
                         return { progress: time };
                     });

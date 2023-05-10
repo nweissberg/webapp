@@ -2,7 +2,7 @@ import { Button } from "primereact/button";
 import { Skeleton } from "primereact/skeleton";
 import React from "react";
 import { api_call, api_get, get_data_api } from "../../api/connect";
-import { capitalize, moneyMask, scrollToBottom, scrollToTop, shorten, sum_array, var_get, var_set } from "../../utils/util";
+import { capitalize, moneyMask, print, scrollToBottom, scrollToTop, shorten, sum_array, var_get, var_set } from "../../utils/util";
 import { Sidebar } from "primereact/sidebar";
 // import GoogleMap from "../../components/maps";
 import PieChart from "../../components/chart_pie";
@@ -24,6 +24,7 @@ import GroupIcons from "../../components/groups_icons";
 import ProductsViewer from "../../components/products_viewer";
 import ScrollWrapper from "../../components/scroll_wrapper";
 import DateRangePicker from "../../components/date_interval_filter";
+import UndoableEditor from "../../../contexts/UndoableEditor";
 
 
 
@@ -61,6 +62,7 @@ class ClientDashboard extends React.Component{
             clients:[],
             show_dashboard:false,
             // client_credit:null,
+            history:{},
             client_orders:[],
             client_products:[],
             client_address:null,
@@ -75,46 +77,66 @@ class ClientDashboard extends React.Component{
             search_result:[]
         }
         this.state={ ...this.default}
+        
+        this.undoable = null
         this.header = this.header.bind(this)
         this.reloadMatrix = this.reloadMatrix.bind(this)
         this.matrix_button = this.matrix_button.bind(this)
         this.render_dashboard = this.render_dashboard.bind(this)
         
         this.widgets = (component='empty',parent='_root')=>{
+            var ret_component = null
             switch (component) {
                 case 'empty':
-                    return(<></>)
+                    ret_component = <></>
+
                     break;
                 case 'clientName':
-                    return(<div className="flex flex-grow-1 text-center flex-wrap w-full h-auto justify-content-center gap-2 align-items-center">
+                    ret_component = <div className="flex flex-grow-1 text-center flex-wrap w-full h-auto justify-content-center gap-2 align-items-center">
                         <h5 className=" text-overflow-ellipsis overflow-hidden hide_on_phone" style={{color:"var(--text-c)"}}>{this.state.client?.razao_social}</h5>
                         <h4 className="white-space-normal text-white">{this.state.client?.fantasia}</h4>
-                    </div>)
+                    </div>
+
                     break;
                 case 'vendedor':
-                    return(<div className="flex w-full h-max justify-content-between align-items-between">
+                    ret_component = <div className="flex w-full h-max justify-content-between align-items-between p-5">
                         <label style={{color:"var(--text-c)"}}>Responsável:</label>
                         <h6 className="white-space-normal text-right text-bluegray-300">{this.state.client?.vendedor_nome}</h6>
-                    </div>)
+                    </div>
                     break;
                 case 'creditInfo':
-                    return(<div className="flex-grow-1 justify-items-between field">
+                    ret_component = <div className="flex-grow-1 justify-items-between field w-full h-auto max-h-min justify-content-center align-items-center p-3">
                         {this.credit_info()}
                         {this.state.client_orders != null && this.order_info()}
-                    </div>)
+                    </div>
                     break;
                 case 'callDialog':
-                    return(<div className="flex w-full h-auto px-4 py-2">
+                    ret_component = <>
                         <CallDialog
                             fullScreen
                             client={this.state.client}
                             user={this.props.user}
                             all_users={this.props.all_users}
+                            onUpdate={(data)=>{
+                                console.log(data)
+                                this.undoable.onEdit("call_data",data)
+                            }}
                         />
-                    </div>)
+                        <UndoableEditor
+                            uid={this.props.client.id+"_call_history"}
+                            onLoad={(fns)=>{this.undoable = fns}}
+                            object={this.state.history}
+                            setObject={(_history)=>{
+                                // print(_history.call_data)
+                                this.setState({history:_history, call_data: _history.call_data})
+                                // this.props.onChange?.(this.state.finalTranscript)
+                            }}
+                        />
+                    </>
                     break;
+                    
                 case 'barChart':
-                    return(<div className=" flex w-max h-auto" >
+                    ret_component = <div className=" flex w-max h-auto" >
                         <BarChart
                             ref={(el)=> this.chart_bar = el}
                             orders={this.state.client_orders}
@@ -124,10 +146,10 @@ class ClientDashboard extends React.Component{
                                 this.setState(()=>({selected_order:_selected_order}))
                             }}
                         />
-                    </div>)
+                    </div>
                     break;
                 case 'pieChart':
-                    return(<div className="flex w-auto h-auto">
+                    ret_component = <div className="flex w-auto h-auto">
                         <PieChart
                             order={this.state.selected_order}
                             selection={this.state.selected_product}
@@ -136,11 +158,11 @@ class ClientDashboard extends React.Component{
                                 this.setState({selected_product:_item})
                             }}
                         />
-                    </div>)
+                    </div>
                     break;
 
                 case 'clientProducts':
-                    return(<div className=" flex gap-1 w-auto justify-content-end ">
+                    ret_component = <div className=" flex gap-1 w-auto justify-content-end ">
                         {this.state.client_products.map((i,key)=>{
                             if(!i.PRODUTO_ID)return
                             let isSelected = (this.state.selected_product?.id == i.PRODUTO_ID)
@@ -168,12 +190,12 @@ class ClientDashboard extends React.Component{
                                 </div>
                             </div>)
                         })}
-                    </div>)
+                    </div>
                     break;
 
                 case 'clientLocation':
                     if(!this.state.client_address)return(<></>)
-                    return(<div className="flex flex-grow-1 align-items-start flex-wrap w-full h-auto">
+                    ret_component = <div className="flex flex-grow-1 align-items-start flex-wrap w-full h-auto">
                         <div className="w-full h-max">
                             {/* <GoogleMap
                                 location={this.state.client_address.location}
@@ -225,11 +247,11 @@ class ClientDashboard extends React.Component{
                             />
                             
                         </div>
-                    </div>)
+                    </div>
                     break;
                     
                 case 'clientOrders':
-                    return(<OrderCarousel
+                    ret_component = <OrderCarousel
                         client={true}
                         currentUser={false}
                         selected_product={this.state.selected_product}
@@ -254,13 +276,13 @@ class ClientDashboard extends React.Component{
                             console.log("Delete", name)
     
                         }}
-                    />)
+                    />
                     break; 
                     
                 case 'productsView':
-                    if(this.state.search_result.length == 0) return(<></>)
-                    return(
-                    <div className="">
+                    if(this.state.search_result.length == 0) ret_component = <></>
+                    
+                    ret_component = <div className="">
                         <ProductsViewer
                             products={this.state.search_result}
                             scroll={30}
@@ -274,11 +296,11 @@ class ClientDashboard extends React.Component{
                             onSubProduct={(e)=>{console.log(e)}}
                         />
                     </div>
-                )
+                
                     break;
 
                 case 'salesGroups':
-                    return(<div className="flex flex-grow-1 w-full h-full mt-8 align-items-center">
+                    ret_component = <div className="flex flex-grow-1 w-full h-full mt-8 align-items-center">
                         <div id="" className="scrollbar-none z-0 p-0 m-0 relative left-0 overflow-scroll top-0 pt-4 w-screen min-h-30rem" >
                             <GroupIcons
                                 className=''
@@ -298,34 +320,34 @@ class ClientDashboard extends React.Component{
                                 }}
                             />
                         </div>
-                            
-                    </div>)
+                    </div>
                     break;
                 case 'salesFooter':
-                    if(this.state.selected_group == null) return(<></>)
-                    return(
-                        <div className="fixed w-screen bottom-0 left-0 z-1">
-                            <div className="flex w-full h-10rem bg-gradient-bottom absolute bottom-0 left-0 z-0"/>
-                            <div className="fadeindown animation-duration-300 animation-ease-out animation-iteration-1 z-1 flex w-full h-5rem bg-glass-c bg-blur-3">    
-                                <Button className="p-button-lg p-button-text text-blue-300" label="Grupos" icon="pi pi-chevron-left"
-                                    onClick={(e)=>{
-                                        this.setState({
-                                            selected_group:null,
-                                            search_result:[]
-                                        })
-                                    }}
-                                />
-                                <div className="fadein animation-duration-500 animation-iteration-1 animation-ease-in justify-content-center w-full flex z-1 relative">
-                                    <img className="absolute bottom-0 h-4rem sm:h-4 rem md:h-5rem lg:h-6rem w-auto border-circle mb-4 border-3 border-white shadow-3 z-2" 
-                                        src={`images/grupos/${this.state.selected_group.id?this.state.selected_group.id:this.state.selected_group}_foto.jpg`}>
-                                    </img>
-                                </div>
+                    if(this.state.selected_group == null) ret_component = <></>
+                    ret_component = <div className="fixed w-screen bottom-0 left-0 z-1">
+                        <div className="flex w-full h-10rem bg-gradient-bottom absolute bottom-0 left-0 z-0"/>
+                        <div className="fadeindown animation-duration-300 animation-ease-out animation-iteration-1 z-1 flex w-full h-5rem bg-glass-c bg-blur-3">    
+                            <Button className="p-button-lg p-button-text text-blue-300" label="Grupos" icon="pi pi-chevron-left"
+                                onClick={(e)=>{
+                                    this.setState({
+                                        selected_group:null,
+                                        search_result:[]
+                                    })
+                                }}
+                            />
+                            <div className="fadein animation-duration-500 animation-iteration-1 animation-ease-in justify-content-center w-full flex z-1 relative">
+                                <img className="absolute bottom-0 h-4rem sm:h-4 rem md:h-5rem lg:h-6rem w-auto border-circle mb-4 border-3 border-white shadow-3 z-2" 
+                                    src={`images/grupos/${this.state.selected_group?.id?this.state.selected_group.id:this.state.selected_group}_foto.jpg`}>
+                                </img>
                             </div>
                         </div>
-                    )
+                    </div>
+                    break;
                 default:
                     break;
+                
             }
+            return ret_component
         }
         this.widgets = this.widgets.bind(this)
     }
@@ -337,7 +359,7 @@ class ClientDashboard extends React.Component{
     }
     
     componentDidUpdate(){
-        // console.log(this.props)
+        console.log(this.state.history.call_data)
         // this.chart_bar?.draw_chart()
         let item_index = this.state.client_products.findIndex(i=>i.PRODUTO_ID==this.state.selected_product?.id)
         if(this.state.selected_product && this.state.item_index != item_index){
@@ -362,19 +384,19 @@ class ClientDashboard extends React.Component{
 
     load_client(_client){
         var client = _client? _client:this.props.client
-        this.setState({...this.default, client:client, loading:true},()=>{
+        if(client) this.setState({...this.default, client:client, loading:true},()=>{
             const ID = client.id.toString()
             this.get_products(client).then((data)=>{
                 if(data) this.setState({client_products:data})
                 // this.get_credit(ID).then(
                     this.get_orders(ID,1000)
-                    api_call("api/location",[`${client.rua}, ${client.numero} - ${client.bairro}, ${client.cidade}, ${client.cep}`]).then(
-                        ([address])=>{
-                            // console.log(address)
+                    // api_call("api/location",[`${client.rua}, ${client.numero} - ${client.bairro}, ${client.cidade}, ${client.cep}`]).then(
+                    //     ([address])=>{
+                    //         // console.log(address)
                             
-                            this.setState({client_address:address,loading:false})
-                        }
-                    )
+                    //         this.setState({client_address:address,loading:false})
+                    //     }
+                    // )
                 // )
             })
         })
@@ -529,16 +551,17 @@ class ClientDashboard extends React.Component{
     render_dashboard(){
         switch (this.state.selected_view?.toLowerCase()) {
             case 'chamado':
-                return(<div className="w-full bg-glass-b m-0 p-0">
-                    {this.widgets('callDialog')}
-                        <div className="grid justify-content-between w-auto h-view m-0 p-3">
-                        <div className="flex flex-wrap flex-grow-1 md:max-w-25rem sm:col-12 md:col-4 lg:col-3">
+                return(<div className="flex w-auto min-w-screen h-full flex-grow-1 m-0 justify-content-center align-items-start ">
+                    
+                    <div className="bg-glass-b min-h-30rem h-auto bg-blur-1 flex flex-wrap grid justify-content-between w-full m-0 p-0 pt-4">
+                    <div className=" flex flex-wrap md:col-12 lg:col-2 flex-grow-1">
                             {/* {this.widgets('clientName')} */}
                             {this.widgets('creditInfo')}
                             {this.widgets('vendedor')}
                         </div>
-                        <div className="flex justify-content-center flex-wrap flex-grow-1 sm:col-12 md:col-6 lg:col-6">
-                            {this.widgets('clientLocation')}
+                        <div className=" p-2 flex flex-wrap md:col-12 lg:col-6 flex-grow-1">
+                            {/* {this.widgets('clientLocation')} */}
+                            {this.widgets('callDialog')}
                         </div>
                     </div>
                 </div>)
@@ -688,7 +711,7 @@ class ClientDashboard extends React.Component{
         if(this.props?.fullScreen == true){
             // console.log(this.props.isMobile)
             return(<div className=" m-0 p-0">
-                {(!this.props.client || this.state.loading) && <ProgressBar mode='indeterminate' className="mt-0"/>}
+                {(!this.props.client && this.state.loading != false) && <ProgressBar mode='indeterminate' className="mt-0"/>}
                 {this.header()}
                 
                 {this.render_dashboard()}

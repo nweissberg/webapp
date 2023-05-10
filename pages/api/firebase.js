@@ -21,6 +21,7 @@ import {
     Timestamp
 } from "firebase/firestore"; 
 import { api_get } from "./connect";
+import { print } from "../utils/util";
 
 var roles_db = localForage.createInstance({
     name:"pilarpapeis_db",
@@ -50,27 +51,27 @@ const app = initializeApp({
 const fb_db = getFirestore(app);
 const fb_rtdb = getDatabase(app);
 
-function requestPermission() {
-    console.log('Requesting permission...');
-    return Notification.requestPermission().then((permission) => {
+async function requestPermission() {
+    print('Requesting permission...');
+    return await Notification.requestPermission().then((permission) => {
         if (permission === 'granted') {
-            console.log('Notification permission granted.');
+            print('Notification permission granted.');
             return(true);
         }
     });
 }
 export function get_token(user){
     requestPermission().then((permission)=>{
-        console.log(permission);
+        print(permission);
 
-        console.log("GET TOKEN")
+        print("GET TOKEN")
         var messaging
         try {
             messaging = getMessaging(app);
         } catch (error) {
             messaging = false
         }
-        // console.log("messaging",messaging)
+        // print("messaging",messaging)
 
         if(messaging == false) return(false);
 
@@ -79,17 +80,17 @@ export function get_token(user){
             if (currentToken) {
                 // Send the token to your server and update the UI if necessary
                 // ...
-                console.log("Sending the token to server", currentToken)
+                print("Sending the token to server", currentToken)
                 writeRealtimeData("fcmTokens/"+user.rp_user.id, currentToken)
                 return(currentToken);
             } else {
                 // Show permission request UI
-                console.log('No registration token available. Request permission to generate one.');
+                print('No registration token available. Request permission to generate one.');
                 // ...
                 return(null);
             }
             }).catch((err) => {
-                console.log('An error occurred while retrieving token. ', err);
+                print(('An error occurred while retrieving token. ', err),'error');
                 return(err);
                 // ...
             }
@@ -109,10 +110,10 @@ export async function add_data(table, data){
             uid: docRef.id
         });
 
-        console.log("Document written with ID: ", docRef.id, updateTimestamp);
+        print("Document written with ID: ", docRef.id, updateTimestamp);
         return(docRef.id)
     } catch (e) {
-        console.error("Error adding document: ", e);
+        print(("Error adding document: ",e),'error');
     }
 }
 
@@ -325,7 +326,7 @@ export function readRealtimeData(path){
 export async function writeNewOrder(user, sales_cart) {
     var user_orders = {}
     await readRealtimeData('/user-orders/' + user.uid + '/').then((user_orders_data)=>{
-        console.log(user_orders)
+        print(user_orders)
         if(user_orders_data != null) user_orders = user_orders_data
     })
     
@@ -389,7 +390,7 @@ export async function get_vendedor(user){
             type: 'string',
         }],
         query:"EqhINomPMMpG9XVrmcHA"
-    }).then(async([data])=>{
+    }).then(async(data)=>{
         if(data){
             return(data)
             // data.map((vendedor)=>{
@@ -428,7 +429,7 @@ onAuthStateChanged(auth, (user) => {
     // console.log(user)
     if (user) {
         get_vendedor(user).then(vendedor=>{
-            console.log(vendedor)
+            print(vendedor)
         })
         // console.log(user)
         // get_fingerprint(user)
@@ -441,12 +442,12 @@ onAuthStateChanged(auth, (user) => {
                 roles.map((role, index)=>{
                     roles_db.setItem(index.toString(),role)
                 })
-                // console.log(snapshot.val());
+                // print(snapshot.val());
             } else {
-                console.log("No data available");
+                print("No data available");
             }
         }).catch((error) => {
-            console.error(error);
+            print(error,'error');
         });
 
     } else {

@@ -1,8 +1,7 @@
 import React, { useContext, useState, useEffect } from "react";
 import localForage from "localforage";
 import { api_get } from "../pages/api/connect";
-import { alphabetically, normalize, time_ago } from "../pages/utils/util";
-import { async } from "@firebase/util";
+import { alphabetically, normalize, print, time_ago } from "../pages/utils/util";
 import { readRealtimeData, writeRealtimeData } from "../pages/api/firebase";
 import { LZString } from "../pages/utils/LZString";
 
@@ -137,7 +136,13 @@ export default function ProductsProvider({children}){
         })
     }
 
-    function load_top_products(group_id){
+    async function load_top_products(group_id){
+        
+        await groups_db.getItem(group_id).then((group_data)=>{
+            if(group_data?.top_items?.length > 0){
+                return group_data.top_items
+            }
+        })
         api_get({
             credentials:"0pRmGDOkuIbZpFoLnRXB",
             keys:[{
@@ -222,7 +227,7 @@ export default function ProductsProvider({children}){
                 await Promise.all(promises)
                 // console.log("asdfasdfasfddf")
                 set_products_map(_products_map)
-                console.log(_products)
+                print(_products)
                 res(Object.values(_products).sort((a,b)=>a.PRECO_VENDA-b.PRECO_VENDA))
             })
         })
@@ -230,50 +235,9 @@ export default function ProductsProvider({children}){
     async function load_groups(){
         var _groups = {}
         return groups_db.iterate(function(value,key){
-            load_top_products(key)
             _groups[key] = value
         }).then(()=>{
-            // console.log(_groups)
-            var _group_array = Object.values(_groups)
-            if(_group_array.length > 0) {
-                const days_ago = time_ago(_group_array[0].updated, "days")
-
-                console.log("LAST group update:", days_ago)
-                if(days_ago < 7){
-                    set_groups(_group_array)
-                    return
-                }
-            }
-            api_get({
-                credentials: "0pRmGDOkuIbZpFoLnRXB",
-                keys:[],
-                query:"xl2lTq2AZQFJt1Vl4r0t" //script sql: "categorias"
-            }).then(async (data)=>{
-                if(data){
-                    const _data = data.map(async(group)=>{
-                        return await groups_db.getItem(group.id.toString()).then((group_data)=>{
-                            if(group_data){
-                                console.log(group_data)
-                                group = group_data
-                            }else{
-                                group.state = 0
-                                group.load = 0,
-                                group.filtros = []
-                            }
-                            group.updated = Date.now()
-                            groups_db.setItem(group.id.toString(),group)
-                            _groups[group.id] = group
-                        })
-                        // return(group)
-                    })
-                    await Promise.all(_data)
-
-                    // console.log(_groups)
-                    set_groups(Object.values(_groups))
-                }
-            })
-        
-
+            set_groups(Object.values(_groups))
         })
     }
     function moveToStart(data,index){
@@ -294,7 +258,7 @@ export default function ProductsProvider({children}){
                 res(produto)
                 return(produto)
             }
-            console.log("get_photo", produto)
+            print(("get_photo", produto))
             await api_get({
                 credentials: '0pRmGDOkuIbZpFoLnRXB',
                 keys: [{
@@ -350,10 +314,10 @@ export default function ProductsProvider({children}){
         }).then(async ([product_data]) => {
             // var produto = {...item}
             
-            console.log(product_data);
+            print(product_data);
             await get_photo(product_data)
             .then((produto)=>{    
-                res(produto)
+                return(produto)
             })
 
             // setGenerated(true);
@@ -361,17 +325,17 @@ export default function ProductsProvider({children}){
     }
     async function load_product(pid){
         //vgYSqaLv5CGaI6LJjAJr 
-        console.warn("get_product")
+        print("get_product",'warn')
         return await new Promise(async (res,rej)=>{
             await product_db.getItem(pid.toString())
             .then( async(produto)=>{
-                if(produto.photo_uid){
+                if(produto.photo_uid || produto.formato_fotografia == null){
                     res(produto)
                 }else{
                     res(await product_data(pid))
                 }
             }).catch( async (err)=>{
-                console.log(err)
+                print(err,'error')
                 res(await product_data(pid))
             })
         })
@@ -418,7 +382,7 @@ export default function ProductsProvider({children}){
                             set_products(_products)
                             
                             // impede o auto reload dos produtos na nuvem (Deixa mais rápido o filtro)
-                            console.log("Done loading group "+group_id+" LOCAL")
+                            print("Done loading group "+group_id+" LOCAL")
                             res(_products)
                         }
                         // console.log(loaded_photos)
@@ -440,7 +404,7 @@ export default function ProductsProvider({children}){
                         }).then(async(data)=>{
                             
                             if(!data)return
-                            console.log(data.length+" products")
+                            print(data.length+" products")
                             // return
                             for (let index = 0; index < data.length; index++) {
                                 var produto = data[index];
@@ -483,7 +447,7 @@ export default function ProductsProvider({children}){
         // const unsubscribe = () => {
             // if(loading){
                 // load_product("10006")
-                load_local_products()
+                // load_local_products()
                 
                 load_groups()
                 

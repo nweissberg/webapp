@@ -57,9 +57,9 @@ export default class GroupIcons extends React.Component{
                     </div>}
                     {this.props.groups.map((group,group_index)=>{
                         if(this.props.selected?.id == group.id) return(<></>)
-                        return(<div key={group_index} className="sm:m-0 ml-7 p-2">
+                        return(<div key={"group_"+group_index} className="sm:m-0 ml-7 p-2">
                             <GroupCard 
-                                key={group_index} 
+                                key={"group_"+group_index} 
                                 load_products_group={this.props.load}
                                 load_products_client={this.props.load_products_client}
                                 group={group}

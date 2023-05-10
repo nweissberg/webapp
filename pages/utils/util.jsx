@@ -1,3 +1,6 @@
+export function print(e,n="log"){"development"===process.env.NODE_ENV&&console[n]((new Error).stack.split("\n")[2].split("/").slice(-2).join("/").slice(0,-1),e)};
+// function that prints the data to the console if enviroment is development
+
 //-> ######################################### <-//
 //-> ### Funções para facilitar nossa vida ### <-//
 //-> ######################################### <-//
@@ -622,18 +625,15 @@ export function deepClone(obj){
 	if (toType(obj) !== 'object' || obj === null) {
 		return obj;
 	}
-  
 	// Handle functions
 	if (typeof obj === 'function') {
 		return JSON.stringify(obj());
 	}
-  
 	// Handle arrays
 	if (toType(obj) === 'array'){
 		const newArray = obj.map(item => deepClone(item));
 		return JSON.stringify(newArray);
 	}
-  
 	// Handle objects
 	const newObj = {};
 	for (let key in obj) {
@@ -650,3 +650,25 @@ async function loadYaml(path) {
 	const data = await response.text();
 	return yaml.load(data);
 }
+
+// javascript function that returns the name in portuguese and the Date() object of next 5 days in a week except weekends
+export function getNextWeekdays(days = 5, mode='long') {
+	// const weekdays = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
+	const result = [];
+	let currentDate = new Date();
+	let count = 0;
+	while (count < days) {
+		currentDate.setDate(currentDate.getDate() + 1);
+		const dayOfWeek = currentDate.getDay();
+		if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+			result.push({
+				label: capitalize(currentDate.toLocaleDateString('pt-BR', {weekday: mode})),
+				value: dayOfWeek,
+				date: new Date(currentDate)
+			});
+			count++;
+		}
+	}
+	return result;
+  }
+  

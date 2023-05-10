@@ -17,6 +17,7 @@ import { locale, addLocale } from 'primereact/api';
 import PrimeReact from 'primereact/api';
 import Head from 'next/head'
 import ResponsiveProvider from './components/responsive_wrapper';
+import { print } from './utils/util';
 
 addLocale('pt', {
   firstDayOfWeek: 0,
@@ -35,8 +36,6 @@ addLocale('pt', {
 });
 locale('pt')
 
-
-
 PrimeReact.ripple = true;
 
 export default function MyApp({ Component, pageProps }) {
@@ -46,7 +45,7 @@ export default function MyApp({ Component, pageProps }) {
 
   useEffect(() => {
     const handleRouteChange = (url, { shallow }) => {
-      if(process.env.NODE_ENV == 'development') console.log(
+      print(
         `App is changing to ${url} ${
           shallow ? 'with' : 'without'
         } shallow routing`
@@ -54,7 +53,7 @@ export default function MyApp({ Component, pageProps }) {
     }
     const handleRouteChangeError = (err, url) => {
       if (err.cancelled) {
-        if(process.env.NODE_ENV == 'development') console.log(`Route to ${url} was cancelled!`)
+        print(`Route to ${url} was cancelled!`)
       }
     }
     router.events.on('routeChangeStart', handleRouteChange)
