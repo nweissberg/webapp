@@ -23,7 +23,7 @@ export default class UserIcon extends React.Component{
             }else if(this.props.uid) await readRealtimeData("users/"+this.props.uid).then((user_data)=>{
                 user = user_data
             })
-            roles_db.getItem(user.role.toString())
+            if(this.props.role == true) roles_db.getItem(user.role.toString())
             .then((user_role)=>{
                 user.job = user_role
                 this.setState({user:user})

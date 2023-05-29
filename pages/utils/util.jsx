@@ -535,6 +535,57 @@ export function time_ago(date, value = false){
 	
 }
 
+export function time_until(date, value = false) {
+	if (!date) return;
+	
+	const date_now = Date.now();
+	const date_until = new Date(date);
+	
+	const min_until = Math.floor((date_until - date_now) / 1000 / 60);
+	const hours_until = min_until / 60;
+	const days_until = hours_until / 24;
+	const months_until = days_until / 30;
+	
+	if (value !== false) {
+	  let ret = 0;
+	  switch (value) {
+		case "minutes":
+		  ret = min_until;
+		  break;
+		
+		case "hours":
+		  ret = hours_until;
+		  break;
+  
+		case "days":
+		  ret = days_until;
+		  break;
+  
+		case "months":
+		  ret = months_until;
+		  break;
+		  
+		default:
+		  ret = date_until - date_now;
+		  break;
+	  }
+	  return ret;
+	}
+	
+	if (min_until < 1) {
+	  return "Agora";
+	} else if (min_until < 60) {
+	  return "Em " + min_until + " minuto" + (min_until > 1 ? "s" : "");
+	} else if (hours_until < 24) {
+	  return "Em " + Math.ceil(hours_until) + " hora" + (Math.ceil(hours_until) > 1 ? "s" : "");
+	} else if (days_until < 30) {
+	  return "Em " + Math.floor(days_until) + " dia" + (Math.floor(days_until) > 1 ? "s" : "");
+	} else if (months_until < 12) {
+	  return "Em " + Math.floor(months_until) + " mês" + (Math.floor(months_until) > 1 ? "es" : "");
+	}
+  }
+  
+  
 export function alphabetically(a, b, key) {
 	// Use toUpperCase() to ignore character casing
 	const nameA = a[key].toUpperCase();

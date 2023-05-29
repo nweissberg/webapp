@@ -401,14 +401,14 @@ export default class CallDialog extends React.Component{
                     </div>
 
                     <div className="mb-4 gap-3 flex justify-content-center align-items-center ">
-                        <Button label="Excluir"
+                        {!this.state.all_channels && <Button label="Excluir"
                             className={footer_button + "p-button-secondary"}
                             icon="pi pi-user-minus"
                             iconPos="right"
                             onClick={(e)=>{
                                 this.setState({step_index:0})
                             }}
-                        />
+                        />}
                         <Button label={!this.state.all_channels?"Adicionar":"Voltar"}
                             className={footer_button + (!this.state.all_channels?"":"p-button-warning")}
                             icon={!this.state.all_channels?"pi pi-plus":"pi pi-times"}
@@ -487,11 +487,24 @@ export default class CallDialog extends React.Component{
                 </div>
             </div>}
             {this.state.step_index == 3 && <div className="flex p-fluid grid formgrid">
-                <div className="flex col-6 flex-grow-1">
-                    <pre className='text-white max-w-30rem text-overflow-ellipsis overflow-hidden'>
+                <div className="flex col-6 flex-grow-1 text-white">
+                    {/* <pre className='text-white max-w-30rem text-overflow-ellipsis overflow-hidden'>
                         {JSON.stringify(this.state,null,2)}
-                    </pre>
+                    </pre> */}
+                    {!this.state.got_problem &&
+                    <div className="w-full">
+                        {this.state.call_description}
+                    </div>
+                    }
+                    {this.state.got_problem && <div className="grid w-full">
+                        <div className="sm:col-12 md:col-6">
+                            {this.state.call_description}
+                        </div>
 
+                        <div className="sm:col-12 md:col-6">
+                            {this.state.help_description}
+                        </div>
+                    </div>}
                 </div>
             </div>
             }
@@ -537,50 +550,6 @@ export default class CallDialog extends React.Component{
         return (<div className="flex w-full h-full justify-content-center align-items-center">
             {this.call_window()}
         </div>)
-        if(this.props?.fullScreen == true){
-        }
-        return(
-            <div>
-                <OverlayPanel
-                    ref={(el) => this.op = el}
-                    id="overlay_panel"
-                    visible={ this.props.show }
-                    onHide={()=>{
-                        this.props?.onHide?.()
-                    }}
-                    className="flex p-0"
-                    appendTo={this.props.overlay_panel}
-                >
-                    {this.call_window()}
-                </OverlayPanel>
-                <div className="flex">
-                    <Button
-                        ref={(el) => this.button = el}
-                        icon="pi pi-phone"
-                        className="p-button-outlined p-button-rounded p-button-success"
-                        label='Abrir'
-                        onClick={(e) => {
-                            this.op.toggle(e)
-                            // console.log(rowData)
-                            // scrollToTop()
-                            // set_call_dialog(true)
-                        }}
-                    />
-                    {isDeepEqual(this.original,this.state) == false && <div
-                        style={{
-                            paddingLeft:"6px",
-                            
-                            transform:"Translate(-5px,-5px)",
-                            position:"absolute",
-                            backgroundColor:"var(--info)",
-                            width:"20px",
-                            height:"20px",
-                            borderRadius:"50%"
-                        }} ><span className="m-0 p-0" style={{color:"var(--text-a)",position:"absolute",transform:"TranslateY(-2px)"}}>{this.state.step_index-1}</span></div>
-                    }
-                </div>
-            </div>
-            
-        )
+        
     }
 }
