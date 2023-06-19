@@ -26,6 +26,7 @@ import ScrollWrapper from "../../components/scroll_wrapper";
 import DateRangePicker from "../../components/date_interval_filter";
 import UndoableEditor from "../../../contexts/UndoableEditor";
 import { add_data, get_data, query_data } from "../../api/firebase";
+import SalesPage from "../../sales";
 
 
 
@@ -95,8 +96,8 @@ class ClientDashboard extends React.Component{
 					break;
 				case 'clientName':
 					ret_component = <div className="flex flex-grow-1 text-center flex-wrap w-full h-auto justify-content-center gap-2 align-items-center">
-						<h5 className=" text-overflow-ellipsis overflow-hidden hide_on_phone" style={{color:"var(--text-c)"}}>{this.state.client?.razao_social}</h5>
 						<h4 className="white-space-normal text-white">{this.state.client?.fantasia}</h4>
+						<h5 className=" text-overflow-ellipsis overflow-hidden hide_on_phone" style={{color:"var(--text-c)"}}>{this.state.client?.razao_social}</h5>
 					</div>
 
 					break;
@@ -128,7 +129,10 @@ class ClientDashboard extends React.Component{
 								var _data = ['selectedChannel','made_contact', 'call_return_date', 'call_description']
 								if(data.got_problem) _data = [ ... _data, 'help_user', 'help_description' ]
 								var callData = Object.fromEntries(Object.entries(data).filter(([key]) => _data.includes(key)));
-								callData['client'] = this.state.client.id
+								callData['client'] = {
+									id:this.state.client.id,
+									name:this.state.client.fantasia
+								}
 								add_data('calls', callData).then((doc_uid) => {
 									console.log(doc_uid)
 								})
@@ -314,6 +318,7 @@ class ClientDashboard extends React.Component{
 				case 'salesGroups':
 					ret_component = <div className="flex flex-grow-1 w-full h-screen mt-8 align-items-start">
 						<div id="" className="scrollbar-none z-0 relative left-0 overflow-scroll pt-8 mt-4 w-screen min-h-30rem" >
+							{/* <SalesPage /> */}
 							<GroupIcons
 								className=''
 								groups={this.props.groups}
@@ -559,7 +564,7 @@ class ClientDashboard extends React.Component{
 				return(<div className="flex w-auto min-w-screen h-full flex-grow-1 m-0 justify-content-center align-items-start ">
 					<div className="bg-glass-b min-h-30rem h-auto bg-blur-1 flex flex-wrap grid justify-content-between w-full m-0 p-0 pt-4">
 						<div className=" flex flex-wrap md:col-12 lg:col-2 flex-grow-1">
-							{/* {this.widgets('clientName')} */}
+							{this.widgets('clientName')}
 							{this.widgets('creditInfo')}
 							{this.widgets('vendedor')}
 						</div>
@@ -567,58 +572,13 @@ class ClientDashboard extends React.Component{
 							{/* {this.widgets('clientLocation')} */}
 							{this.widgets('callDialog')}
 						</div>
-						{this.state.client_calls.length>0 && <div className="align-items-start flex flex-wrap h-30rem text-white gap-2 justify-content-center w-full mb-8">
-							{this.state.client_calls.map(call=>{
-								return(<div className="p-3 border-2 border-blue-700 bg-glass-c border-round-md sm:w-full md:w-50 lg:w-30 max-w-30rem flex-grow-1 h-full">
-										<div className=" w-full h-full align-content-between">
-											<div className="flex justify-content-between align-items-end col-12">
-												<h4>O contato{call.enviado?' ':' não '}foi realizado</h4><h5 className="text-sm text-green-500 text-right font-bold">Via {channels[call.selectedChannel]} {time_ago(call.enviado)}</h5>
-											</div>
-											<label className="col-12 line-height-4 text-justify">{call.call_description}</label>
-											<div className="flex justify-content-between align-items-start col-12">
-												<h5 className="font-bold">Retornar { time_until(call.call_return_date).toLowerCase() }</h5>
-												<span className="text-right">
-													{call.call_return_date - Date.now() < 0 && <h5 className="underline-red">Atrasado {time_ago(call.call_return_date).toLocaleLowerCase()}</h5>}
-													{call.call_return_date - Date.now() > 0 && <label className="text-green-500 text-right font-bold">{
-														call.call_return_date.toLocaleDateString("pt-br", {
-															hour12: false,
-															month: 'long',
-															day: "2-digit",
-															year: "numeric",
-															weekday: 'long'
-														})}
-													</label>}
-												</span>
-											</div>
-											{call.help_user.uid != this.props.user.uid && <label className="col-12 line-height-4 text-justify">Foi solicitada a ajuda de <span className="font-bold text-purple-300">{call.help_user.name}</span>: {call.help_description}</label>}
-											{call.help_user.uid == this.props.user.uid && <label className="col-12 line-height-4 text-justify"><span className="font-bold"><span className="text-purple-300">Você</span> foi solicitado para ajudar:</span> {call.help_description}</label>}
-										</div>
-									<div>
-										<Button label='Retornar'
-											className={footer_button}
-											icon='pi pi-phone'
-											iconPos="right"
-											onClick={(e)=>{
-												// this.setState({all_channels:!this.state.all_channels})
-											}}
-										/>
-									</div>
-								</div>)
-							})}
-						</div>}
+						{this.state.client_calls.length>0 && <></>}
 					</div>
 				</div>)
 			break;
 			case 'pedidos':
 				return(<div className="w-full h-auto m-0 p-0">
-					{this.state.selected_group == null && this.widgets('salesGroups')}
-					{/* {this.state.selected_group == 0 && <ScrollWrapper speed={100}
-						className="bg flex h-20rem overflow-scroll horizontal-scrollbar col-12 flex-grow-1">
-						{this.widgets('clientProducts','_pedidos')}
-					</ScrollWrapper>} */}
-					{this.state.selected_group == 0 && this.widgets('clientOrders')}
-					{this.widgets('productsView')}
-					{this.widgets('salesFooter')}
+					<SalesPage client={this.props.client}/>
 				</div>)
 			break;
 			
@@ -708,21 +668,15 @@ class ClientDashboard extends React.Component{
 			/>
 			
 			
-			<div className="grid ">
+			<div className="flex flex-wrap justify-content-center">
 				<div className="col-12 sm:col-12 md:col-5 lg:col-4 flex-grow-1 flex flex-wrap h-full min-w-30rem align-items-center justify-content-center ">
 					<div className="horizontal-scrollbar flex h-full align-items-center gap-2 overflow-x-scroll mt-3 ">
 						{Object.keys(this.models).map(this.matrix_button)}
 					</div>
 				</div>
-				<div className="col-12 flex flex-grow-1 text-center justify-content-center h-auto w-full align-content-center m-0 p-0">
-					<h4 className="white-space-normal text-white show_on_mobile ">{this.state.client?.fantasia}</h4>
-
-				</div>
-				<div className=" md:col-6 lg:col-5 flex flex-grow-1 text-center justify-content-between gap-2 h-min align-content-center m-0 p-0">
-					<h4 className="white-space-normal text-white hide_on_mobile">{this.state.client?.fantasia}</h4>
-					<h4 className=" text-overflow-ellipsis overflow-hidden hide_on_mobile " style={{color:"var(--text-c)"}}>{this.state.client?.razao_social}</h4>
-					{/* <DateRangePicker /> */}
-				</div>
+				{/* <div className="absolute top-100">
+					<DateRangePicker />
+				</div> */}
 			</div>
 			<Button
 				disabled={this.nextClient() == null}
@@ -747,7 +701,7 @@ class ClientDashboard extends React.Component{
 	render(){
 		if(!this.state.client){
 			return(<div className="flex w-full h-screen align-items-center absolute top-0 bg-blur-1">
-				<ProgressSpinner/>
+				{/* <ProgressSpinner/> */}
 			</div>)
 		}
 

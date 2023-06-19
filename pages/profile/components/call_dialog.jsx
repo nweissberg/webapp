@@ -302,20 +302,20 @@ export default class CallDialog extends React.Component{
         
         
         
-        return(<div className="flex grid flex-wrap w-auto h-full p-3">
-            <div style={{height:"70px"}} className="col-12 flex w-full flex-grow-1">
-                <div className="flex flex-grow-1 w-full h-full align-items-start">
+        return(<div className="flex grid flex-wrap w-full h-full p-3">
+            <div style={{height:"70px"}} className="col-12 flex w-full flex-grow-1 justify-content-end">
+                
                     {this.state.selectedChannel != "" &&
                         this.contact_icon()
                     }
                     <h3 className="text-bluegray-300">{this.step_items[this.state.step_index].label}</h3>
                     
-                </div>
+                
                 {/* <label style={{ textAlign:"right", position:"absolute",top:"55px", right:"20px", width:"300px"}}>{this.props.client.fantasia}</label> */}
             </div>
             
             {this.state.step_index == 0 &&
-                <div className="flex flex-wrap p-fluid grid formgrid h-min">
+                <div className="flex flex-wrap w-full p-fluid grid formgrid h-min">
                     <div className="flex-grow-1 justify-content-center">
                     
                         <label>Selecione</label>

@@ -21,7 +21,7 @@ const pedidos_db = localForage.createInstance({
     storeName:'pedidos'
 });
 
-export default function SalesPage(){
+export default function SalesPage(props){
     var load_products = true
     const [ sale_cart, set_sale_cart] = useState({name:"", items:[]})
     const [ cart_obj, set_cart_obj] = useState(null)
@@ -30,7 +30,7 @@ export default function SalesPage(){
     const [ selected_item, set_selected_item] = useState(null)
     const [ select_item, set_select_item] = useState(null)
     const router = useRouter()
-    const [client, set_client] = useState(null)
+    const [client, set_client] = useState(props?.client)
     const {test_context} = useSales()
     
     const [loaded_group, set_loaded_group] = useState([0,0,0,0,0])
@@ -46,10 +46,11 @@ export default function SalesPage(){
         check_rule
     } = useProducts()
 
-    // useEffect(()=>{
-    //     console.log(sale_cart)
-    //     window.addEventListener('resize', ()=>{})
-    // },[])
+    useEffect(()=>{
+        console.log(props?.client)
+        set_client(props?.client)
+        // window.addEventListener('resize', ()=>{})
+    },[props.client])
 
     // useEffect(()=>{
     //     // console.log(currentUser)
@@ -67,14 +68,15 @@ export default function SalesPage(){
         // load_groups()
     },[])
 
-    // useEffect(()=>{
-    //     console.log(groups)
-    // },[groups])
+    useEffect(()=>{
+        console.log(groups)
+    },[groups])
 
     // if(currentUser == null) return(<ProgressBar mode="indeterminate" style={{ height: '6px', marginBottom:"-6px" }}/>)
 
     return(
         <ObjectComponent
+            header={props?.client?false:true}
             user={currentUser}
             onLoad={(e)=>{
                 document.title = "Vendas"
@@ -233,6 +235,10 @@ export default function SalesPage(){
                 </div>
 
                 <SalesFooter
+                    client={client}
+                    // set_client={(selected_client)=>{
+                    //     set_client(selected_client)
+                    // }}
                     user={currentUser}
                     sale_cart={sale_cart}
                     profiles={profiles}
@@ -273,6 +279,7 @@ export default function SalesPage(){
                     }}
                     setClient={(client)=>{
                         set_client(client)
+                        // props.set_client(client)
                     }}
                     // showGroups={()=>{
                     //     cart_obj.setState({search_result:[]})

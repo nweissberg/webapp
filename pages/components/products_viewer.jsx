@@ -26,11 +26,11 @@ export default class ProductsViewer extends React.Component{
                         }
                     })
                     if(item?.type == 'split'){
-                        return(<div key={"prod_"+index} style={{top:'70px'}}
-                            className=' text-center p-2  mb-3 z-3 mx-1 sticky bg-bluegray-900 bg-blur-1 w-full border-round-md text-white'>
+                        return(<div key={"prod_"+index} style={{top:'62px'}}
+                            className=' text-center z-3 p-1 m-0 sticky bg-bluegray-900 bg-blur-1 w-full border-round-md text-white'>
                             <div className='flex w-full justify-content-center gap-3 align-items-center'>
                                 <i className={(item.icon?item.icon:"pi pi-chevron-down text-cyan-400")+' text-2xl p-0 m-0'}/>
-                                <h3>{item.PRODUTO_NOME}</h3>
+                                <h4>{item.PRODUTO_NOME}</h4>
                                 <i className={(item.icon?item.icon:"pi pi-chevron-down text-cyan-400")+' text-2xl p-0 m-0'}/>
                             </div>
                         </div>)
@@ -55,14 +55,14 @@ export default class ProductsViewer extends React.Component{
                     inView={(e)=>{
                         this.setState({scroll:this.state.scroll+30})
                     }}
-                    className='hover:bg-white-alpha-20 active:bg-white-alpha-10 cursor-pointer text-center p-2 mb-3 mx-1 relative bg-glass-c bg-blur-1 w-full h-auto border-round-md text-white'
+                    className='cursor-pointer text-center p-2 mb-3 mx-1 relative w-full h-auto border-round-md text-white'
                     
                 >
                     <div onClick={(e)=>{
                         scrollToTop()
-                    }} className='flex w-full h-3rem justify-content-center gap-3 align-items-center sticky'>
+                    }} className='flex w-full h-2rem justify-content-center gap-3 align-items-center sticky'>
                         <i className='pi pi-chevron-up text-2xl text-cyan-500 p-0 m-0'/>
-                        <h3>Para o topo</h3>
+                        <h4>Para o topo</h4>
                         <i className='pi pi-chevron-up text-2xl text-cyan-500 p-0 m-0'/>
                     </div>
                     

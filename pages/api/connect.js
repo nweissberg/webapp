@@ -36,7 +36,7 @@ api_cloud.interceptors.response.use(function(response){
 
 const api_call = ((path,body,cloud=true)=>{
   var isLoading = api_buffer.find((requested)=>isDeepEqual(body,requested))
-
+  print(api_buffer)
   return new Promise(function(res, rej) {
     if(isLoading) { return(null) }
 

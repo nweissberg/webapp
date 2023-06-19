@@ -3,8 +3,9 @@ import { Button } from 'primereact/button';
 import { InputText } from 'primereact/inputtext';
 import SaleInfo from "./sale_info";
 import BarcodeScanner from "./barcode_scanner";
-import { scrollToBottom, scrollToTop, similarText } from "../../utils/util";
+import { print, scrollToBottom, scrollToTop, similarText } from "../../utils/util";
 import HeaderTitle from "../../components/title";
+import ClientIcon from "../../components/client_icon";
 
 export default class SalesHeader extends React.Component{
     constructor(props){
@@ -21,24 +22,13 @@ export default class SalesHeader extends React.Component{
     componentDidMount(){
         this.props.onLoad?.(this)
     }
+    componentDidUpdate(){
+        print(this.props.client)
+    }
     render(){
         return(
             <div className="sticky top-0 z-3 ">
                 <div className="p-2 flex w-screen justify-content-between bg-glass-c bg-blur-2  gap-3">
-                    {/* <div>
-                        <Button
-                            className="p-button-outlined"
-                            style={{
-                                marginRight:"8px",
-                                ...this.header_button
-                            }}
-                            label={window.innerWidth > 500?  (this.props.show_cart? "Pesquisar Produtos" : "Visualizar Carrinho"):""}
-                            icon={ this.props.show_cart? "pi pi-search" : "pi pi-shopping-cart" }
-                            onClick={this.props.toggle_cart}
-                        />
-                    </div> */}
-                    
-                    
                     {<Button
                         className={this.header_button + " min-w-max md:w-auto"}
                         // style={{ minWidth:"80px"}}
@@ -139,7 +129,7 @@ export default class SalesHeader extends React.Component{
                             />
                         </div>}
                     
-                    <div>
+                    {/* <div>
                         <BarcodeScanner
                             item={this.state.barcode_item}
                             onDetected={(barcode)=>{
@@ -167,7 +157,8 @@ export default class SalesHeader extends React.Component{
                                 this.props.addItemToCart(_item)
                             }}
                         />
-                    </div>
+                    </div> */}
+                    <ClientIcon client={this.props.client}/>
                     
                 </div>
                 <SaleInfo

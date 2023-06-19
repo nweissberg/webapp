@@ -287,7 +287,7 @@ body::-webkit-scrollbar {
 }
 
 .p-dialog-mask.p-component-overlay {
-  backdrop-filter: blur(10px) !important;
+  backdrop-filter: var(--blur-2) !important;
 }
 
 .background-container {
@@ -411,7 +411,7 @@ a {
 }
 
 body > div.swal2-container.swal2-center.swal2-backdrop-show {
-  backdrop-filter: blur(10px);
+  backdrop-filter: var(--blur-2);
 }
 body::-webkit-scrollbar {
   width: 0px !important;
@@ -518,7 +518,7 @@ body::-webkit-scrollbar {
   padding: 10px;
   margin-bottom: 5px;
   color: var(--text);
-  backdrop-filter: blur(10px);
+  backdrop-filter: var(--blur-2);
   overflow: scroll;
   cursor: pointer;
   border-radius: 5px;
@@ -550,7 +550,7 @@ body::-webkit-scrollbar {
 .scan_barcode {
   max-width: 200px;
   background-color: var(--glass-c) !important;
-  backdrop-filter: blur(10px) !important;
+  backdrop-filter: var(--blur-2) !important;
   border-radius: 30px !important;
   transition: background-color 0.2s;
   border: 0px !important;
@@ -1036,7 +1036,7 @@ body::-webkit-scrollbar {
 
 .price-tag-multiple {
   outline: 2px solid var(--primary-c);
-  backdrop-filter: blur(5px);
+  backdrop-filter: var(--blur-1);
   background-color: var(--glass);
   cursor: pointer;
 }
@@ -1047,7 +1047,7 @@ body::-webkit-scrollbar {
 
 .price-tag-sale {
   outline: 2px solid var(--primary-c);
-  backdrop-filter: blur(5px);
+  backdrop-filter: var(--blur-1);
   background-color: var(--glass);
   cursor: pointer;
 }
@@ -1058,7 +1058,7 @@ body::-webkit-scrollbar {
 
 .price-tag-sale-negative {
   outline: 2px solid var(--warn-b);
-  backdrop-filter: blur(5px);
+  backdrop-filter: var(--blur-1);
   background-color: var(--glass);
   cursor: pointer;
 }
@@ -1069,7 +1069,7 @@ body::-webkit-scrollbar {
 
 .price-tag-sale-positive {
   outline: 2px solid var(--success);
-  backdrop-filter: blur(5px);
+  backdrop-filter: var(--blur-1);
   background-color: var(--glass);
   cursor: pointer;
 }
@@ -1080,7 +1080,7 @@ body::-webkit-scrollbar {
 
 .price-tag-discount {
   outline: 2px solid var(--secondary-c);
-  backdrop-filter: blur(5px);
+  backdrop-filter: var(--blur-1);
   background-color: var(--glass-b);
   cursor: pointer;
 }
@@ -1361,6 +1361,12 @@ iframe {
   .md\:icon-only > .p-button-label {
     display: none;
   }
+  :root{
+    --blur-1: blur(0px);
+    --blur-2: blur(0px);
+    --blur-3: blur(0px);
+    --blur-4: blur(0px);
+  }
 }
 @media screen and (max-width: 992px) {
   .hide_on_mobile {
@@ -1479,4 +1485,32 @@ iframe {
 .underline-red {
 	text-decoration: underline;
 	text-decoration-color: var(--orange-500);
+}
+
+.p-inplace-content-close{
+  border: none !important;
+  box-shadow: none !important;
+  background-color: #0003 !important;
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 50% !important;
+  color: #fff !important;
+}
+.p-inplace-content-close > span{
+  font-size: 20px !important;
+  font-weight: bolder !important;
+}
+.p-inplace-content-close:hover{
+  color: var(--blue-300) !important;
+  background-color: #000A !important;
+  /* border: 2px solid white!important */
+}
+.p-inplace > *{
+  outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+.p-inplace-display{
+  width: 100vw !important;
+  background-color: #0000 !important;
 }

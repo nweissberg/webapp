@@ -114,6 +114,7 @@ export default function OrderPage(){
         
     return(
         <ObjectComponent
+            header={false}
             user={currentUser}
             onLoad={(e)=>{
                 document.title = "Pedido"

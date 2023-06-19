@@ -91,7 +91,7 @@ export default withRouter(class ClientsDatatable extends React.Component{
                             icon="pi pi-eye"
                             className="p-button-outlined p-button-rounded"
                             onClick={(e)=>{
-                                this.props.router.push('client#'+ rowData.id)
+                                this.props.router.push('client?p=chamado&id='+ rowData.id)
                             }}
                         />);
                         return( 

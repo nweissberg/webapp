@@ -72,13 +72,15 @@ const ProductIcon = (props) => {
         <div className={"border-round-1rem flex relative h-"+size+"rem z-0 p-0 justify-content-center " + (props?.bg == true?"w-full":"min-w-max w-"+size+"rem overflow-hidden")}>
             
             {props?.bg == true && <> <img
+                quality={10}
                 className='absolute z-0 top-0 w-full h-full'
                 src={item?.photo != null ? item.photo : `images/grupos/${item?.ID_CATEGORIA}_null.jpg`}
                 onError={(e) => (e.target.src = 'images/sem_foto.jpg')}
             />
-            <div className=' bg-blur-2 flex w-full h-full absolute'></div></>}
+            <div className=' flex w-full h-full absolute'></div></>}
             <>
             <img
+                quality={1}
                 className={"relative z-1 "}
                 src={item?.photo != null ? item.photo : `images/grupos/${item?.ID_CATEGORIA}_null.jpg`}
                 onError={(e) => (e.target.src = 'images/sem_foto.jpg')}

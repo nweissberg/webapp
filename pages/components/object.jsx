@@ -95,14 +95,14 @@ export default withRouter(class ObjectView extends React.Component {
 				  	this.change_room('/admin');
 				})
 			},
-			{
-				key:"menu_clients",
-				label:'Clientes',
-				icon:'pi pi-fw pi-building',
-				command:(()=>{
-					this.change_room('/client');
-				})
-			},
+			// {
+			// 	key:"menu_clients",
+			// 	label:'Clientes',
+			// 	icon:'pi pi-fw pi-building',
+			// 	command:(()=>{
+			// 		this.change_room('/client');
+			// 	})
+			// },
 			{
 				key:"menu_restapi",
 				label:'Database',
@@ -349,7 +349,7 @@ export default withRouter(class ObjectView extends React.Component {
 		return (
 			<div style={{position:"relative", zIndex:1}}>
 				{logotipo()}
-				{users_in_room.length > 0 && 
+				{users_in_room.length > 0 && this.props?.show_users != false && 
 				<div style={{position:"absolute", zIndex:1}}>
 					{users_in_room.map((user, uindex)=>{
 						if(user == this.state.currentUser.uid) return

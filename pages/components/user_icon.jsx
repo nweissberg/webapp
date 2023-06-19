@@ -21,13 +21,17 @@ export default class UserIcon extends React.Component{
             if(this.props.user){
                 user = this.props.user
             }else if(this.props.uid) await readRealtimeData("users/"+this.props.uid).then((user_data)=>{
+                // console.log(user_data)
                 user = user_data
             })
-            if(this.props.role == true) roles_db.getItem(user.role.toString())
-            .then((user_role)=>{
-                user.job = user_role
+            if(this.props.role == true){
+                roles_db.getItem(user.role.toString()).then((user_role)=>{
+                    user.job = user_role
+                    this.setState({user:user})
+                })
+            }else{
                 this.setState({user:user})
-            })
+            }
         }
     }
     componentDidMount(){
@@ -39,9 +43,9 @@ export default class UserIcon extends React.Component{
     render(){
         const size = !this.props.pointer?(this.props.size || 50):30
         if(this.state.user == null){
-            return(<><Skeleton key={this.props.key +'_tmp'} width={size+"px"} height={size+"px"} borderRadius="50%"/></>)
+            return(<><Skeleton className={this.props.className } key={this.props.key +'_tmp'} width={size+"px"} height={size+"px"} borderRadius="50%"/></>)
         }
-        return(<div key={this.props.key +'_cursor'} className={this.props.pointer?'shadow-3':""}
+        return(<div key={this.props.key +'_cursor'} className={(this.props.pointer?'shadow-3 ':" ") +this.props.className }
         style={this.props.pointer?{
             backgroundColor:"white",
             borderRadius:"2px 50% 50% 50%",
@@ -54,7 +58,8 @@ export default class UserIcon extends React.Component{
                 transform:`Translate(${size-20}px, ${size-30}px)`,
                 zIndex:1
             }}>
-                    {/* <Link href={{
+                <Link
+                    href={{
                         pathname: '/profile',
                         hash: "#"+this.props.uid
                     }}
@@ -62,7 +67,7 @@ export default class UserIcon extends React.Component{
                     prefetch={false}
                     passHref
                     legacyBehavior
-                > */}
+                >
                     <Button
                         tooltip={this.props.profiles[this.state.user.role]?.name}
                         tooltipOptions={{position:"top"}}
@@ -75,10 +80,10 @@ export default class UserIcon extends React.Component{
                             border:"0px"
                         }}
                     />
-                {/* </Link> */}
+                </Link>
             </div>}
             <div className={this.props.inline?"flex gap-3 align-items-center":""}>
-                {/* <Link href={{
+                <Link href={{
                         pathname: '/profile',
                         hash: "#"+this.props.uid
                     }}
@@ -86,18 +91,17 @@ export default class UserIcon extends React.Component{
                     prefetch={false}
                     passHref
                     legacyBehavior
-                > */}
+                >
                     <Button
                         tooltip={this.props.icon_only!= true && this.props.name == false? this.state.user.name:""}
                         tooltipOptions={{position:this.props.tooltip || "left"}}
                         className="p-button-rounded w-min p-0 p-button-text" style={{border:"0px"}}
                     >   
-                    
                         <img className={!this.props.pointer?'shadow-7':""}
                             src={'./images/avatar/'+this.state.user.photo+'_icon.jpg'} width={size}
                         />
                     </Button>
-                    {/* </Link> */}
+                </Link>
                 {this.props.inline && <div className="flex flex-grow-1 gap-3 justify-content-between">
                     {this.props.fullname != false? <label>{this.state.user.name}</label>:<label>{this.state.user.name.split(" ")[0]}</label>}
                     {this.props.currentUser?.uid == this.state.user.uid && <label style={{color:"var(--info)"}}>você</label>}

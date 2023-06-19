@@ -2,7 +2,7 @@ import React, { useRef, useState, useEffect } from "react"
 import ObjectComponent from "../components/object";
 import { useAuth } from "../api/auth"
 import { Button } from "primereact/button";
-import { auth, get_data, readUsers , readRealtimeData, writeRealtimeData, readUser } from '../api/firebase';
+import { auth, get_data, readUsers , readRealtimeData, writeRealtimeData, readUser, query_data } from '../api/firebase';
 import { signOut } from "firebase/auth";
 import { useRouter } from 'next/router'
 import { ProgressBar } from "primereact/progressbar";
@@ -21,6 +21,7 @@ import { useSales } from "../contexts/context_sales";
 import UserSearch from "./components/user_search";
 import ClientsDatatable from "./components/clients_datatable";
 import { Inplace, InplaceDisplay, InplaceContent } from 'primereact/inplace';
+import UserCalls from "../components/user_call_viewer";
 
 const produtos_db = localForage.createInstance({
     name:"pilarpapeis_db",
@@ -194,7 +195,28 @@ export default function ProfilePage(){
     },[drafts])
 
     
-
+    
+    // function get_calls(){
+	// 	query_data('calls',{
+	// 		"users": {
+	// 			"mode":"or",
+	// 			"user_uid": ['==', selected_user.uid],
+	// 			"help_user.uid": ['==', selected_user.uid]
+	// 		}
+	// 	}).then(data => {
+	// 		var _docs = []
+	// 		data.forEach((doc)=>{
+	// 			var doc_data = doc.data()
+	// 			doc_data.call_return_date = doc_data.call_return_date.toDate()
+	// 			doc_data.enviado = doc_data.enviado.toDate()
+	// 			_docs.push(doc_data)
+	// 		})
+    //         console.log(_docs)
+	// 		// this.setState({calls:_docs})
+		
+	// 		// this.setState({client_calls:_docs})
+	// 	})
+	// }
     
 
     const tooltip_options = {
@@ -545,7 +567,7 @@ export default function ProfilePage(){
                                     style={Math.floor(tab_index)==1?button_style:button_style_b}
                                     onClick={(event)=>{
                                         get_clients(selected_user)
-                                        set_tab_index(tab_index => 1.1)
+                                        set_tab_index(tab_index => 1.2)
                                         scrollToBottom()
                                     }}
                                 />
@@ -605,6 +627,7 @@ export default function ProfilePage(){
                                         style={{...tab_index==1.2?button_style:button_style_b,minHeight:"auto"}}
                                         onClick={(event)=>{
                                             set_tab_index(tab_index => 1.2)
+                                            // get_calls()
                                         }}
                                     />
                                 </div>
@@ -630,6 +653,10 @@ export default function ProfilePage(){
                                     load_products_client={load_products_client}
                                 />
                             </div>}
+                            {tab_index == 1.2 && <div className="flex w-full">
+                                <UserCalls clients={clients} user={selected_user} currentUser={currentUser} />
+                            </div>}
+
                             {/* <div>
                                 <div className="flex-grow-1">
                                     <div className="flex flex-wrap justify-content-between">

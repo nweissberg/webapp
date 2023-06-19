@@ -71,9 +71,9 @@ export default function Home(props){
                 document.title = "Pilar Papéis"
             }}
         >
-            <div className="flex bg-glass-b bg-blur-2 text-green-500 p-2">
+            {/* <div className="flex bg-glass-b bg-blur-2 text-green-500 p-2">
                 <pre>{JSON.stringify(props.groups, null, 2)}</pre>
-            </div>
+            </div> */}
         </ObjectComponent>
     );
 }

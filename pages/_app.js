@@ -13,8 +13,7 @@ import { AuthProvider, useAuth } from './api/auth';
 import SalesProvider from './contexts/context_sales';
 import ProductsProvider from '../contexts/products_context';
 import { FpjsProvider } from '@fingerprintjs/fingerprintjs-pro-react';
-import { locale, addLocale } from 'primereact/api';
-import PrimeReact from 'primereact/api';
+import PrimeReact, { locale, addLocale } from 'primereact/api';
 import Head from 'next/head'
 import ResponsiveProvider from './components/responsive_wrapper';
 import { print } from './utils/util';
@@ -39,11 +38,12 @@ locale('pt')
 PrimeReact.ripple = true;
 
 export default function MyApp({ Component, pageProps }) {
-  const router = useRouter()
   // console.log(Component,pageProps)
   const { currentUser, loading } = AuthProvider({})
-
+  
+  const router = useRouter()
   useEffect(() => {
+    // print(router.asPath)
     const handleRouteChange = (url, { shallow }) => {
       print(
         `App is changing to ${url} ${

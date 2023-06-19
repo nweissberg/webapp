@@ -355,6 +355,7 @@ export default class SalesCart extends React.Component {
                     all_products={this.props.all_products}
                     search_result={this.state.search_result}
                     group={this.state.selected_group}
+                    client={this.props.client}
                     onLoad={(obj)=>{
                         this.setState({search_field:obj})
                     }}

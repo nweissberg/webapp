@@ -170,7 +170,7 @@ function ClientPage(props){
                 }
                 {!show_search && <div className="absolute z-0 flex w-5rem h-full bg-gradient-right "/>}
                 <Button
-                    icon={(show_search?'pi pi-chevron-left':'pi pi-pencil text-green-500 ')+' text-xl'}
+                    icon={(show_search?'pi pi-chevron-left':'pi pi-search text-green-500 ')+' text-xl'}
                     className={"relative left-0 mx-2 p-button-lg p-button-rounded p-3 " +(show_search?'':'p-button-text text-white shadow-none')}
                     onClick={(e)=>{ set_show_search(!show_search) }}
                 />
@@ -222,6 +222,7 @@ function ClientPage(props){
     if((!client && show_search) && currentUser){
         return(<ObjectComponent
             user={currentUser}
+            
             onLoad={(e)=>{
                 document.title = "Cliente"
             }}
@@ -252,6 +253,8 @@ function ClientPage(props){
     return(
         <ObjectComponent
             user={currentUser}
+            show_users={false}
+            header={false}
             onLoad={(e)=>{
                 document.title = "Cliente"
             }}
@@ -280,7 +283,7 @@ function ClientPage(props){
                     set_client(null)
                 }}
             />}
-            <ClientDashboard 
+            {client && <ClientDashboard 
                 {...props}
                 // router={props.router}
                 fullScreen={true}
@@ -297,7 +300,7 @@ function ClientPage(props){
                 onLoad={(value)=>{
                     set_loading(value)
                 }}
-            />
+            />}
             
         </ObjectComponent>
     );

@@ -1,6 +1,6 @@
 import React from "react";
 import { Button } from 'primereact/button';
-import { deepEqual, format_mask, moneyMask, scrollToBottom, scrollToTop } from "../../utils/util";
+import { deepEqual, format_mask, moneyMask, print, scrollToBottom, scrollToTop } from "../../utils/util";
 import { ConfirmPopup, confirmPopup } from 'primereact/confirmpopup';
 import { Toast } from 'primereact/toast';
 // import AnimatedNumbers from "react-animated-numbers";
@@ -43,7 +43,9 @@ export default class SalesFooter extends React.Component{
             filtered:[],
             warnings:[],
             warn_alerts:{},
-            show_search:false
+            show_search:false,
+            selectedClient:null
+            
         }
         this.footer,
         this.onWarningSelect = this.onWarningSelect.bind(this);
@@ -88,7 +90,7 @@ export default class SalesFooter extends React.Component{
                                 return
                             }
                             this.setState({loadingClients:true})
-                            console.log("Consultar "+ this.state.selectedClient.fantasia)
+                            print("Consultar "+ this.state.selectedClient.fantasia)
                             api_get({
                                 credentials:"0pRmGDOkuIbZpFoLnRXB",
                                 keys:[{
@@ -98,7 +100,7 @@ export default class SalesFooter extends React.Component{
                                 }],
                                 query:"hMM7WFHClaxYEjAxayms"
                             }).then(async(data)=>{
-                                console.log(data)
+                                print(data)
                                 this.setState({loadingClients:false})
                                 if(data.length > 0){
                                     Swal.fire(
@@ -184,9 +186,9 @@ export default class SalesFooter extends React.Component{
                             add_data("orders",_order)
                             // writeNewOrder(this.props.user,_order)
                             .then((data)=>{
-                                // console.log(data)
+                                // print(data)
                                 _order.uid = data
-                                console.log(_order)
+                                print(_order)
                                 pedidos_db.getItem(this.props.user.uid).then((data)=>{
                                     // data.drafts = data.drafts.filter(cart=>cart.name==name)
                                     
@@ -204,7 +206,7 @@ export default class SalesFooter extends React.Component{
                                     // set_drafts(data.drafts)
                                 })
                             })
-                            console.log(_order)
+                            print(_order)
                         }
                     }
                 ]
@@ -238,12 +240,13 @@ export default class SalesFooter extends React.Component{
     }
 
     accept(event) {
-        console.log(this.state.save_name)
+        print(this.state.save_name)
         // this.setState({save_visible:false})
         var _sale_cart = {...this.props.sale_cart}
         _sale_cart.name = this.state.save_name
+        _sale_cart.client = {fantasia:selectedClient.fantasia, id:selectedClient.id}
 
-        // console.log(_sale_cart.items)
+        print(_sale_cart)
         pedidos_db.getItem(this.props.user.uid).then((data)=>{
             var _drafts = []
             if(data){
@@ -257,7 +260,7 @@ export default class SalesFooter extends React.Component{
             }
             
             if(_drafts.find((item)=>item.name == _sale_cart.name) == undefined){
-                console.log("New Cart")
+                print("New Cart")
                 _drafts.unshift(_sale_cart)
             }
             // return(true)
@@ -269,7 +272,7 @@ export default class SalesFooter extends React.Component{
                     detail: `Pedido ${this.state.save_name} salvo!`,
                     sticky: this.props.sale_cart.name!=""?false:true
                 });
-                // console.log("Pedido Salvo")
+                // print("Pedido Salvo")
                 // this.props.save_cart?.(_sale_cart.items)
             })
         })
@@ -294,7 +297,7 @@ export default class SalesFooter extends React.Component{
                     placeholder={this.state.save_name?this.state.save_name:"Digite aqui..."}
                     type="text"
                     onChange={(event)=>{
-                        // console.log(event.target.value)
+                        // print(event.target.value)
                         this.setState({save_name:event.target.value})
                     }}
                 />
@@ -303,7 +306,7 @@ export default class SalesFooter extends React.Component{
                     className="p-button-outlined"
                     icon="pi pi-check"
                     onClick={()=>{
-                        // console.log(this.state.save_name)
+                        // print(this.state.save_name)
                         this.accept()
                     }}
                 />
@@ -314,7 +317,7 @@ export default class SalesFooter extends React.Component{
     }
 
     componentDidMount(){
-        // console.log("Did mount", this.props.sale_cart.name)
+        // print("Did mount", this.props.sale_cart.name)
         
         if(this.props.user && this.props.sale_cart.items.length > 0){
             pedidos_db.getItem(this.props.user.uid).then((data)=>{
@@ -335,7 +338,7 @@ export default class SalesFooter extends React.Component{
         })
     }
     // componentWillUnmount(){
-    //     console.log("Will unmount")
+    //     print("Will unmount")
     // }
     alert_warning(warning, options){
         var _warn_alerts = {...this.state.warn_alerts}
@@ -358,7 +361,7 @@ export default class SalesFooter extends React.Component{
     }
 
     add_warning(warning, msg="",data=[]){
-        // console.log(data)
+        // print(data)
         if( !this.state.warnings.includes(warning)){
             var _warnings = [...this.state.warnings];
             _warnings.push(warning)
@@ -386,18 +389,18 @@ export default class SalesFooter extends React.Component{
             this.setState({warnings:_warnings},(()=>{
                 this.alert_warning(warning,{msg,type:"del"});
             }))
-            // console.log(_warnings)
+            // print(_warnings)
         }
     }
     componentDidUpdate(){
-        // console.log("Did update", this.props.sale_cart.name)
+        // print("Did update", this.props.sale_cart.name)
         var sale_total = this.props.sale_cart.items.length > 0 ? this.props.sale_cart.items.map((item)=>{return((item.data?.PRECO-(item.data?.PRECO*(item.discount/100)))*item.quantity)}).reduce((sum,i)=> sum + i) : 0
-        // console.log(sale_total)
+        // print(sale_total)
         // readRealtimeData("users/"+this.props.user.uid).then((user_data)=>{
-        //     console.log(user_data)
+        //     print(user_data)
         // })
-        // console.log(this.props.user)
-        this.props.setClient?.(this.state.selectedClient)
+        // print(this.props.user)
+        // this.props.setClient?.(this.state.selectedClient)
         var warning = ""
         var items = []
         const test_items = this.props.sale_cart.items.filter((item)=>{
@@ -423,7 +426,7 @@ export default class SalesFooter extends React.Component{
                 Minimo:1000
             }).then((ret_data)=>{
                 warning = "min_value"
-                // console.log(ret_data)
+                // print(ret_data)
                 if(ret_data == false){
                     this.add_warning(warning)
                 }else{
@@ -485,7 +488,7 @@ export default class SalesFooter extends React.Component{
                     {/* </div> */}
                     <div className="flex flex-wrap flex-grow-1 flex-shrink-1 justify-content-between col-8 h-full p-0">
                         <div className="flex  p-0 align-items-center gap-1 flex-grow-1 flex-shrink-1 w-full max-w-min">
-                            <Button
+                            {!this.props?.client && <Button
                                 disabled={this.state.loadingClients}
                                 className="p-button-lg flex overflow-hidden p-button-rounded px-3 py-2 sm:icon-only p-button-glass-light border-2 border-white "
                                 
@@ -502,26 +505,26 @@ export default class SalesFooter extends React.Component{
                                     this.setState({show_search:!this.state.show_search})
                                     if(this.state.selectedClient == null ){
                                         this.setState({loadingClients:true})
-                                        console.log("GET CLIENTS from", this.props.user.name)
+                                        print(("GET CLIENTS from", this.props.user.name))
                                         vendedores_db.getItem(this.props.user.email).then((vendedor)=>{
                                             if(vendedor && this.state.all_clients){
-                                                // console.log(vendedor.VENDEDOR)
+                                                // print(vendedor.VENDEDOR)
                                                 var user_clients = this.state.all_clients.filter((client)=>client.vendedor_id == vendedor.id)//vendedor.id
-                                                // console.log(user_clients)
+                                                // print(user_clients)
 
                                                 if(user_clients[0] != undefined){
                                                     var filters = {}
                                                     Object.keys(user_clients?.[0]).map((col,i) => {
                                                         filters[col] = {value:'',matchMode: FilterMatchMode.STARTS_WITH}
                                                     })
-                                                    // console.log(filters)
+                                                    // print(filters)
                                                     this.setState({client_filters:filters})
                                                 }
 
                                                 if( this.props.check_rule(this.props.user,"VER_TODOS_CLIENTES") ){
                                                     this.setState({clients:this.state.all_clients, loadingClients:false})
                                                 }else{
-                                                    // console.log("user_clients")
+                                                    // print("user_clients")
                                                     this.setState({clients:user_clients, loadingClients:false})
                                                 }
                                                 
@@ -535,11 +538,11 @@ export default class SalesFooter extends React.Component{
                                         })
                                     }else{
                                         this.menu.toggle(event)
-                                        // console.log(this.state.selectedClient)
+                                        // print(this.state.selectedClient)
                                     }
                                 
                                 }}
-                            />
+                            />}
 
                             <i aria-haspopup
                                 aria-controls="overlay_panel"
@@ -607,14 +610,14 @@ export default class SalesFooter extends React.Component{
                                         dropdown={false}
                                         user={this.props.user}
                                         onChange={(event)=>{
-                                            // console.log(event)
+                                            // print(event)
                                             if(event == null) this.setState({filtered:[]})
                                         }}
                                         onSelect={(e)=>{
-                                            console.log(e)
+                                            print(e)
                                         }}
                                         set_filtered_clients={(_filtered)=>{
-                                            console.log(_filtered)
+                                            print(_filtered)
                                             this.setState({filtered:_filtered})
                                         }}
                                     />
@@ -650,6 +653,7 @@ export default class SalesFooter extends React.Component{
                                     onHide={(client)=>{
                                         // this.setState({searchClient:client})
                                         this.setState({selectedClient:client})
+                                        this.set_client?.(client)
                                     }}
                                     selectionMode="single"
                                 />

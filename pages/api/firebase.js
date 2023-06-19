@@ -1,6 +1,6 @@
 import { initializeApp, getApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
-import { getMessaging, getToken } from "firebase/messaging";
+import { getMessaging, getToken, onMessage } from "firebase/messaging";
 // import { getAnalytics } from "firebase/analytics";
 import { getAuth, onAuthStateChanged, signOut } from "firebase/auth";
 import { getDatabase, ref, set, get, update, onValue, push, child } from "firebase/database";
@@ -66,7 +66,7 @@ export function get_token(user) {
     requestPermission().then((permission) => {
         print(permission);
 
-        print("GET TOKEN")
+        console.log("GET TOKEN")
         var messaging
         try {
             messaging = getMessaging(app);
@@ -76,6 +76,11 @@ export function get_token(user) {
         // print("messaging",messaging)
 
         if (messaging == false) return (false);
+
+        onMessage(messaging, (payload) => {
+            console.log('Message received. VAI PORRAAA!!!', payload);
+            // ...
+        });
 
         getToken(messaging, { vapidKey: 'BHQpF3gOvqdeBGlMigwwt-5SntfwEe2GhtRw2V2Y7EwjL1HKa1lZX8Sfy7re62w7QnFfq9erRIsaIbx75o3ooPY' })
             .then((currentToken) => {

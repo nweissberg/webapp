@@ -130,7 +130,7 @@ class SpeechToText extends React.Component {
                     disabled={this.props.disabled?this.props.disabled:false}
                     ref={(el)=> this.text_field = el}
                     className={'inputText '+ this.props?.className}
-                    value={this.state.finalTranscript +(this.state.interimTranscript==""?"":this.state.break+ this.state.interimTranscript)}
+                    value={this.state.finalTranscript}
                     // autoResize
                     onChange={this.onChange}
                     onFocus={(e)=>{

@@ -131,7 +131,7 @@ class ProductCard extends React.Component {
                                     color:"white",
                                     // borderRadius:"2px",
                                     background:"#0000",
-                                    backdropFilter:"blur(3px) brightness(110%) contrast(150%)"
+                                    // backdropFilter:"blur(3px) brightness(110%) contrast(150%)"
                                 }}
                                 onClick={(event)=>{
                                     if(this.state.view_state == 'hidden' || (this.state.view_state == 'hover' && window.innerWidth > 500)){
