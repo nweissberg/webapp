@@ -1514,3 +1514,26 @@ iframe {
   width: 100vw !important;
   background-color: #0000 !important;
 }
+
+.p-tree-header{
+  position: sticky !important;
+  top: 40px !important;
+  padding: 10px;
+  background: linear-gradient(0deg, rgba(2, 0, 36, 0) 0%, var(--glass-b) 33%);
+  backdrop-filter: blur(3px);
+  z-index: 1;
+}
+.p-tree{
+  padding: 0px !important;
+}
+.p-togglebutton:hover{
+  background-color: var(--glass-b) !important;
+}
+
+.p-togglebutton > * {
+  color: white !important;
+}
+
+.p-togglebutton{
+  backdrop-filter: blur(3px);
+}

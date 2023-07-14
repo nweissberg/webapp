@@ -230,7 +230,7 @@ export default withRouter(class ObjectView extends React.Component {
 		if(this.state.interval == null){
 			document.addEventListener("mousemove", this.onMouseMove );
 			document.addEventListener("scroll",this.onScroll);
-			document.addEventListener('touchmove', this.onTouch, { passive: false });
+			document.addEventListener('touchmove', this.onTouch);// { passive: false }
 
 			this.setState({interval:setInterval(()=>{
 	
@@ -349,7 +349,7 @@ export default withRouter(class ObjectView extends React.Component {
 		return (
 			<div style={{position:"relative", zIndex:1}}>
 				{logotipo()}
-				{users_in_room.length > 0 && this.props?.show_users != false && 
+				{users_in_room.length > 0 && this.props?.show_users == true && 
 				<div style={{position:"absolute", zIndex:1}}>
 					{users_in_room.map((user, uindex)=>{
 						if(user == this.state.currentUser.uid) return

@@ -5,6 +5,7 @@ import { Column } from 'primereact/column';
 import { capitalize, moneyMask, shorten, time_ago } from '../../utils/util';
 import OrderTimeline from '../../order/components/order_timeline';
 import ProductIcon from './product_photo';
+import ClientIcon from '../../components/client_icon';
 
 export default class OrderCard extends Component {
     constructor(props) {
@@ -33,7 +34,13 @@ export default class OrderCard extends Component {
                 <div className="product-item-content">
                     
                     <div>
-                    {product.client && <h5 style={{color:"var(--text-c)"}}>{product.client.fantasia}</h5>}
+                        {/* {product.client && <h5 style={{color:"var(--text-c)"}}>{product.client.fantasia}</h5>} */}
+                        {product.client && <ClientIcon
+                            client_id={product.client}
+                            // onClick={(e)=>{
+                            //     console.log("TESTE")
+                            // }}
+                        />}
                         <h4 className="mb-1 mt-1" style={{color:"var(--text)"}}>{product.name == ''?'SEM NOME':product.name}</h4>
                         <h6 className="mt-0 mb-3" style={{color:"var(--info)"}}>{product.items.length} itens</h6>
                         {/* <span className={`product-badge status-${product.inventoryStatus.toLowerCase()}`}>{product.inventoryStatus}</span> */}

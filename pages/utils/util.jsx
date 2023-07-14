@@ -93,7 +93,7 @@ export function shorten(sentance,max=8,middle=true){
 	if(middle){
 		return(sentance_array.length < max ? sentance : sentance_array.slice(0,(max/2)).join(' ') + " ... " + sentance_array.slice(-(max/2)).join(' '))
 	}else{
-		return(sentance_array.length > max? sentance_array.slice(0,max).join(' ')+"...": sentance)
+		return(sentance_array.length > max? sentance_array.slice(0,max).join(' ')+" (...) ": sentance)
 	}
 }
 
@@ -721,5 +721,25 @@ export function getNextWeekdays(days = 5, mode='long') {
 		}
 	}
 	return result;
-  }
-  
+}
+
+export async function fetchWithTimeout(url, options, timeout = 5000) {
+    const abortController = new AbortController();
+    const timeoutId = setTimeout(() => {
+        abortController.abort();
+        console.log("Request timed out");
+    }, timeout);
+
+    try {
+        const response = await fetch(url, { ...options, signal: abortController.signal });
+        if (!response.ok) {
+            console.log(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        clearTimeout(timeoutId);
+        return data;
+    } catch (error) {
+        clearTimeout(timeoutId);
+        throw error;
+    }
+}

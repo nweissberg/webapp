@@ -96,9 +96,10 @@ export default function ProfilePage(){
             life: 3000
         });
     }
-    
+    // 8270
     useEffect(()=>{
         if(currentUser == null) return
+        console.log(currentUser)
         if(selected_user == null) {
             if(!find_user) {
                 set_selected_user(currentUser);
@@ -160,11 +161,11 @@ export default function ProfilePage(){
             })
             
             await Promise.all(items_data).then(()=>{
-                const client = clients.find(c=>c.id == order_data.client)
-                if(client){
-                    order_data.client = client
-                    order_data.key = order_data.uid
-                }
+                // const client = clients.find(c=>c.id == order_data.client)
+                // if(client){
+                //     order_data.client = client
+                //     order_data.key = order_data.uid
+                // }
                 _orders.push(order_data)
             })
         })
@@ -653,7 +654,7 @@ export default function ProfilePage(){
                                     load_products_client={load_products_client}
                                 />
                             </div>}
-                            {tab_index == 1.2 && <div className="flex w-full">
+                            {tab_index == 1.2 && <div className="flex w-max">
                                 <UserCalls clients={clients} user={selected_user} currentUser={currentUser} />
                             </div>}
 

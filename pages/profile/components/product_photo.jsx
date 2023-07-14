@@ -74,6 +74,7 @@ const ProductIcon = (props) => {
             {props?.bg == true && <> <img
                 quality={10}
                 className='absolute z-0 top-0 w-full h-full'
+                style={{filter:'blur(5px)'}}
                 src={item?.photo != null ? item.photo : `images/grupos/${item?.ID_CATEGORIA}_null.jpg`}
                 onError={(e) => (e.target.src = 'images/sem_foto.jpg')}
             />

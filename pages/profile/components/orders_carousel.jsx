@@ -11,7 +11,7 @@ export default class OrderCarousel extends Component {
         this.state = {
             order_id:0,
             card_width:12,
-            max:6
+            max:20
         };
         this.carousel_ref = createRef()
     }
@@ -97,7 +97,7 @@ export default class OrderCarousel extends Component {
                                 style={{maxHeight:"512px", minWidth:"320px", maxWidth:"500px", width:'50%', borderRadius:'10px'}}>
                             </div>
                         </InViewWrapper>} */}
-                        {this.props.orders.slice(this.props.orders.length-this.state.max).map((sale_cart,index)=>{
+                        {this.props.orders.map((sale_cart,index)=>{//.slice(this.props.orders.length-this.state.max)
                             if(!this.props.client) return(<OrderCard 
                                 className={"w-"+this.state.card_width}
                                 currentUser={this.props.currentUser}

@@ -5,7 +5,7 @@ import SaleInfo from "./sale_info";
 import BarcodeScanner from "./barcode_scanner";
 import { print, scrollToBottom, scrollToTop, similarText } from "../../utils/util";
 import HeaderTitle from "../../components/title";
-import ClientIcon from "../../components/client_icon";
+// import ClientIcon from "../../components/client_icon";
 
 export default class SalesHeader extends React.Component{
     constructor(props){
@@ -22,13 +22,13 @@ export default class SalesHeader extends React.Component{
     componentDidMount(){
         this.props.onLoad?.(this)
     }
-    componentDidUpdate(){
-        print(this.props.client)
-    }
+    // componentDidUpdate(){
+    //     print(this.props.client)
+    // }
     render(){
         return(
             <div className="sticky top-0 z-3 ">
-                <div className="p-2 flex w-screen justify-content-between bg-glass-c bg-blur-2  gap-3">
+                <div className="p-2 flex w-screen justify-content-between bg-glass-b bg-blur-2  gap-3">
                     {<Button
                         className={this.header_button + " min-w-max md:w-auto"}
                         // style={{ minWidth:"80px"}}
@@ -158,7 +158,7 @@ export default class SalesHeader extends React.Component{
                             }}
                         />
                     </div> */}
-                    <ClientIcon client={this.props.client}/>
+                    {/* {this.props.client && <ClientIcon client={this.props.client}/>} */}
                     
                 </div>
                 <SaleInfo

@@ -95,16 +95,16 @@ const api_get = ((body, headers)=>{
             res(null)
           }
         }).catch(error => {
-          rej(null)
+          rej(error)
           console.log(error)
         })
       }
     }).catch(error => {
-      rej(null)
+      rej(error)
       console.log(error)
     })
   },function (error){
-    return(null)
+    return(error)
   })
 })
 
@@ -134,4 +134,4 @@ async function get_data_api(attr = {}){
 }
 
 export default api;
-export{ api_call, api_get, get_data_api };
+export{ api_call, api_get, get_data_api, api_cloud, api };

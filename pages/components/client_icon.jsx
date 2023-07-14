@@ -20,7 +20,7 @@ export default class ClientIcon extends React.Component{
             var client = null
             if(this.props.client){
                 client = this.props.client
-            }else if(this.props.uid) await clients_db.getItem(this.props.client.id.toString())
+            }else if(this.props.client_id) await clients_db.getItem(this.props.client_id.toString())
 			.then((client_data)=>{
                 console.log(client_data)
                 client = client_data
@@ -30,23 +30,30 @@ export default class ClientIcon extends React.Component{
         }
     }
     componentDidMount(){
+        console.log(this.props.client)
         this.getClient()
     }
-    componentDidUpdate(){
-		console.log(this.props.client)
-        this.getClient()
-    }
+    // componentDidUpdate(){
+	// 	console.log(this.props.client)
+    //     this.getClient()
+    // }
     render(){
         const size = !this.props.pointer?(this.props.size || 50):30
-        if(this.props.client == null){
-            return(<><Skeleton className={this.props.className } key={this.props.key +'_tmp'} width={size+"px"} height={size+"px"} borderRadius="50%"/></>)
+        if(this.state.client == null){
+            return(<><Skeleton className={this.props.className } key={this.props.key +'_tmp'} width={size+"px"} height={size+"px"} borderRadius="5px"/></>)
         }
-        return(<div key={this.props?.key +'_cursor'} className={(this.props.pointer?'shadow-3 ':" ") +this.props.className }
-        style={this.props.pointer?{
-            backgroundColor:"white",
-            borderRadius:"2px 50% 50% 50%",
-            padding:"2px"
-        }:{}}>
+        if(this.props.onClick){
+            return(<div>
+                <Button
+					iconPos="right"
+					icon='pi pi-building text-lg icon-right'
+					label={this.state.client.name || this.state.client.fantasia}
+					className='sm:icon-only w-full p-button-text p-button-glass-dark border-none shadow-none '
+                    onClick={this.props.onClick}
+				/>
+            </div>)
+        }
+        return(<div>
             <Link
 				// as={"/profile#"+this.props.uid}
 				prefetch={true}
@@ -54,13 +61,13 @@ export default class ClientIcon extends React.Component{
 				legacyBehavior
 				href={{
 					pathname: '/client',
-					query:{p:"chamado", id:this.props.client.id}
+					query:{p:"chamado", id:this.state.client.id}
 				}}
 			>
 				<Button
 					iconPos="right"
 					icon='pi pi-building text-lg icon-right'
-					label={this.props.client.name || this.props.client.fantasia}
+					label={this.state.client.name || this.state.client.fantasia}
 					className='sm:icon-only w-full p-button-text p-button-glass-dark border-none shadow-none '
 				/>
 			</Link>

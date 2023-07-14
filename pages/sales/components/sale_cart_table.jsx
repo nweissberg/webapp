@@ -183,12 +183,12 @@ export default class SalesCartTable extends React.Component{
             <div style={{
                 backdropFilter:"blur(10px)",
                 width:'100%',
-                height:"100vh",
+                // height:"100vh",
                 top:this.props?.editable != false?"50px":"0px",
                 // paddingTop:this.props?.editable != false?"0px":"0px",
-                paddingBottom:"30px",
+                paddingBottom:"100px",
                 overflowX:"hidden",
-                height:window.innerWidth>960?"calc(100vh - 110px)":"100vh",
+                height:'calc(100svh)'//window.innerWidth>960?"calc(100vh - 110px)":"100vh",
             }}>
                 {/* <HelloWorld className={'bg'} /> */}
                 <Sidebar
@@ -301,7 +301,7 @@ export default class SalesCartTable extends React.Component{
                         'data.PRODUTO_NOME'
                     ]}
                     filters={this.state.filters1}
-                    responsiveLayout="scroll"
+                    // responsiveLayout="scroll"
                     size="small"
                     value={this.props.sale_cart?.items}
                     selectionMode="row"

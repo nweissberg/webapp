@@ -12,7 +12,7 @@ class ProductCard extends React.Component {
             interval:null,
             item:this.props.item,
             view_state:'hidden',
-            show_math:true,
+            show_math:false,
             show_date:false
         }
     }

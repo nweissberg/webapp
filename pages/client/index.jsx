@@ -52,7 +52,7 @@ export async function getServerSideProps( context ) {
                 _pedido.cart = await get_data_api({
                     query:"0tPRw4nOqYil3P9lm38T",
                     keys:[
-                        { key: "EMPRESA_ID", value: 1, type: "STRING"},
+                        { key: "EMPRESA_ID", value: '1', type: "STRING"},
                         { key: "CLIENTE_ID", value: query.id, type: "STRING"},
                         { key: "NFE", value: pedido.documento, type: "STRING"}
                     ]
@@ -70,6 +70,7 @@ export async function getServerSideProps( context ) {
                         _pedido.total = sum_array(cart.map((product)=>{
                             return(product.value * product.quantidade || 0)
                         }))
+                        // console.log("TESTE -> ",pedido.documento, pedido.data_emissao)
                         _pedido.date = pedido.data_emissao
                         _pedido.id = pedido.documento
                         return cart
@@ -86,7 +87,7 @@ export async function getServerSideProps( context ) {
         }
 
     })
-    // console.log(pedidos_cliente)
+    console.log(pedidos_cliente)
     return { props: {
         client_credit,
         pedidos_cliente
@@ -95,6 +96,7 @@ export async function getServerSideProps( context ) {
 
 function ClientPage(props){
     const [ client, set_client ] = useState(null)
+    const [ load_client, set_load_client ] = useState(null)
     const [ clients_list, set_clients_list ] = useState([])
     // const { asPath } = useRouter();
     const { currentUser } = useAuth()
@@ -154,6 +156,7 @@ function ClientPage(props){
         if(props.router.query.id){
             const client = clients.find(c=>c.id == props.router.query.id)
             // console.log(client)
+            set_load_client(null)
             set_client(client)
             set_loading('client')
         }
@@ -202,13 +205,13 @@ function ClientPage(props){
                     return(
                         <div key={i} id={c?.id} className={(c?.id == client?.id?" sticky top-0 z-3 border-blue-400 border-3 bg-black-alpha-10":" z-0 border-none bg-white-alpha-10" )+" flex cursor-pointer w-max p-2 white-space-nowrap text-white border-round-md mt-2 mb-2 hover:bg-bluegray-800 hover:text-cyan-200 transition-colors transition-duration-300"}
                         onClick={(e)=>{
-                            set_client(c)
-                            set_show_search(false)
+                            set_load_client(c)
+                            set_loading(true)
+                            // set_show_search(false)
                             // let route = matrix?"="+matrix:""
                             props.router.push({
                                 pathname: '/client',
-                                query: { p:props.router.query.p, id: c.id },
-                                shallow:false
+                                query: { p:'chamado', id: c.id },
                             })
                         }}>
                         {c?.fantasia}
@@ -222,12 +225,11 @@ function ClientPage(props){
     if((!client && show_search) && currentUser){
         return(<ObjectComponent
             user={currentUser}
-            
+            header={true}
             onLoad={(e)=>{
                 document.title = "Cliente"
             }}
         >
-            
             <div>
                 <div className="sticky top-0 z-1">
                     {clients_header()}
@@ -254,7 +256,7 @@ function ClientPage(props){
         <ObjectComponent
             user={currentUser}
             show_users={false}
-            header={false}
+            header={true}
             onLoad={(e)=>{
                 document.title = "Cliente"
             }}
@@ -302,6 +304,17 @@ function ClientPage(props){
                 }}
             />}
             
+            {(load_client && props.router.query.id != load_client?.id || loading) && <div
+                className="flex fixed z-2 top-0 left-0 w-screen min-h-max h-screen bg-glass-b "
+                style={{backdropFilter:"blur(5px)"}}>
+                <div className="center z-3 absolute w-max max-w-full p-3">
+                    <h4 className="text-blue-300">Carregando...</h4>
+                    <h1 className="text-white text-center">{load_client?.fantasia}</h1>
+                    <h3 className="text-gray-300 text-center">{load_client?.razao_social}</h3>
+                    <ProgressBar mode="indeterminate"/>
+                    
+                </div>
+            </div>}
         </ObjectComponent>
     );
 }

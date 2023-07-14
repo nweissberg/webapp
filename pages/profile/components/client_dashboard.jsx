@@ -431,8 +431,12 @@ class ClientDashboard extends React.Component{
 	}
 
 	get_orders(){
-		if(!this.props.pedidos_cliente) return
-		var _client_orders = this.props.pedidos_cliente
+		if(!this.props.pedidos_cliente){
+			this.setState({client_orders:null})
+			return
+		}else{
+			var _client_orders = this.props.pedidos_cliente
+		}
 		
 		if(_client_orders.length == 0){
 			this.setState({client_orders:null})
@@ -671,7 +675,8 @@ class ClientDashboard extends React.Component{
 			<div className="flex flex-wrap justify-content-center">
 				<div className="col-12 sm:col-12 md:col-5 lg:col-4 flex-grow-1 flex flex-wrap h-full min-w-30rem align-items-center justify-content-center ">
 					<div className="horizontal-scrollbar flex h-full align-items-center gap-2 overflow-x-scroll mt-3 ">
-						{Object.keys(this.models).map(this.matrix_button)}
+						{this.props.pedidos_cliente && Object.keys(this.models).map(this.matrix_button)}
+						{!this.props.pedidos_cliente && Object.keys(this.models).slice(0,2).map(this.matrix_button)}
 					</div>
 				</div>
 				{/* <div className="absolute top-100">

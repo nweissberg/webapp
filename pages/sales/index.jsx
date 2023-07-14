@@ -273,9 +273,10 @@ export default function SalesPage(props){
                         })
                         await Promise.all(_items).then((data)=>{
                             console.log(data)
-                            set_sale_cart(data)
+                            _sale_cart.item = data
+                            set_sale_cart(_sale_cart)
                         })
-                        console.log("Teste")
+                        // console.log("Teste")
                     }}
                     setClient={(client)=>{
                         set_client(client)

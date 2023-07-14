@@ -15,16 +15,26 @@ import { Toast } from 'primereact/toast';
 import { useAuth } from "../api/auth"
 import { Dropdown } from 'primereact/dropdown';
 import { useRouter } from 'next/router'
-import { add_data, get_data, set_data, del_data} from '../api/firebase';
-import { uid, copyToClipBoard, syntaxHighlight, createId, scrollToTop } from '../utils/util';
+import { add_data, get_data, set_data, del_data, get_all_data} from '../api/firebase';
+import { uid, copyToClipBoard, createId, scrollToTop } from '../utils/util';
 import { Tree } from 'primereact/tree';
 import { ToggleButton } from 'primereact/togglebutton';
 import { Editor } from 'primereact/editor';
 import 'primeflex/primeflex.css';
 import { Dialog } from 'primereact/dialog';
 // import Localbase from "./utils/localbase"
+import hljs from 'highlight.js/lib/core';
 
+// import the languages you need
+// import javascript from 'highlight.js/lib/languages/javascript';
+import json from 'highlight.js/lib/languages/json';
 
+// import the styles you need // androidstudio | agate | rainbow | atom-one-dark |
+import 'highlight.js/styles/rainbow.css';
+
+// register the languages
+// hljs.registerLanguage('javascript', javascript);
+hljs.registerLanguage('json', json);
 
 export default function Home() {
   // let db_localbase = new Localbase('sql_to_rest')
@@ -60,6 +70,7 @@ export default function Home() {
   const [editLast, setEditLast] = useState(false)
   const [runQuery, setRunQuery] = useState(false)
   const [activeTabIndex, setActiveTabIndex] = useState(0);
+  const [activeViewTabIndex, setActiveViewTabIndex] = useState(0);
   const [selectedItems, setSelectedItems] = useState([]);
   const [selectItem, setSelectItem] = useState(false);
   const [loadingItems, setLoadingItems] = useState(false);
@@ -70,7 +81,7 @@ export default function Home() {
   const [linkToAPI, setLinkToAPI] = useState(false);
   const [reloadFiles, setReloadFiles] = useState(false);
   const [fileSaved, setFileSaved] = useState(true);
-  
+  const codeRef = useRef(null);
 
   const [userStorage, setUserStorage] = useState([
     {
@@ -137,6 +148,7 @@ export default function Home() {
   ])
 
   const statuses = [
+    { label: 'Null', value: 'NULL' },
     { label: 'Booleno', value: 'BOOL' },
     { label: 'Caractere', value: 'CHAR' },
     { label: 'String', value: 'STRING' },
@@ -153,7 +165,7 @@ export default function Home() {
     var _queryFiles = [...queryFiles];
     // console.log(_menuOptions[0].items[1].items)
 
-    get_data("query").then((data)=>{
+    get_all_data("query").then((data)=>{
       _userStorage[0].children = []
       data.forEach((doc) => {
         const file = doc.data()
@@ -236,6 +248,7 @@ export default function Home() {
     })
   },[reloadFiles])
 
+  
   useEffect(()=>{
     if(editLast){
       setActiveRowIndex(keyVars.length-1)
@@ -256,6 +269,28 @@ export default function Home() {
       setCanDelete(false)
     }
   },[selectedKeys])
+
+  useEffect(() => {
+    if (codeRef.current) {
+      // console.log(codeRef.current)
+      hljs.highlightElement(codeRef.current);
+    }
+    if(queryData && menuOptions.length == 2){
+      var _menuOptions = [...menuOptions,{
+        label: 'Gerar link para API',
+        icon: 'pi pi-fw pi-link',
+        command:(()=>{
+          setLinkToAPI(true)
+        })
+      }]
+      setMenuOptions(_menuOptions)
+    }
+  }, [queryData, activeViewTabIndex]);
+
+  // const beautifiedCode = beautify_js(JSON.stringify(code), {
+  //   indent_size: 4,
+  //   space_in_empty_paren: true,
+  // });
 
   // useEffect(()=>{
   //   // console.log()
@@ -527,23 +562,9 @@ export default function Home() {
           </div>
         }
 
-          <div 
-            className="flex-grow-1 md:flex-1 flex align-items-center justify-content-center border-round m-2"
-            style={{
-              maxWidth:"100%",
-              width:"100%",
-              minWidth:"auto"
-            }}>
-          <div
-            style={{
-              backgroundColor:"var(--glass)",
-              width:"100%",
-              height:"100%",
-              borderRadius:"5px",
-              backdropFilter: "blur(30px)"
-            }}
-          >
-            <div className='mb-4'>
+          
+          <div className='bg m-0 p-0 col-8 overflow-scroll scrollbar-none h-screen'>
+            <div className='mb-0 sticky top-0 z-3'>
               <Menubar
                 model={menuOptions}
                 end={
@@ -560,8 +581,8 @@ export default function Home() {
                 }
               />
             </div>
-            <div className="grid">
-              <div className={`col-12 pl-4 pr-4`}>
+            <div className='w-auto h-auto max-h-screen overflow-scroll flex-wrap flex justify-content-center p-3'>
+              <div className='w-full'>
               <TabView
                 activeIndex={activeTabIndex}
                 onTabChange={(e)=>{
@@ -579,32 +600,30 @@ export default function Home() {
                 <TabPanel header="Script SQL">
                 <Editor
                   headerTemplate={
-                    <div>
-                      <InputText
-                        id="sql_text_query"
-                        // spellcheck={false}
-                        value={fileName}
-                        placeholder='Nome_do_arquivo'
-                        style={{
-                          position:"absolute",
-                          right:"38px",
-                          width:"calc(100% - 76px)",
-                          textAlign:"right",
-                          color:"var(--info)",
-                          backgroundColor:"rgba(0,0,0,0)",
-                          border:"0px"
-                        }}
-                        onChange={(e) => setFileName(e.target.value)}
-                      />
+                    <div className='w-full h-full flex justify-content-between'>
+                      <div className=' w-full'>
+                        <i className='pi pi-file p-2'/>
+                        <InputText
+                          id="sql_text_query"
+                          // spellcheck={false}
+                          value={fileName}
+                          placeholder='Nome_do_arquivo'
+                          style={{
+                            // position:"absolute",
+                            // right:"38px",
+                            width:"calc(100% - 100px)",
+                            // textAlign:"right",
+                            color:"var(--info)",
+                            backgroundColor:"rgba(0,0,0,0)",
+                            border:"0px"
+                          }}
+                          // className='w-full'
+                          onChange={(e) => setFileName(e.target.value)}
+                        />
+                      </div>
                       <Button
-                        style={{
-                          width:"auto",
-                          height:"40px",
-                          color:"var(--text)",
-                          // zIndex:1
-                        }}
                         label='Salvar'
-                        className='p-button-text'
+                        className='p-button-text w-2 text-white h-auto'
                         icon={selectedFile === '' || fileSaved === true?'pi pi-save':'pi pi-cloud-upload'}
                         onClick={()=>{
                           if(selectedFile !== ''){
@@ -671,7 +690,7 @@ export default function Home() {
                   /> */}
                 </TabPanel>
                 <TabPanel header="Variáveis">
-                  <div className='grid mb-2'>
+                  <div className='mb-2 flex w-full'>
                     {canDelete && <div className='col-6'>
                       <Button
                         icon="pi pi-trash"
@@ -713,13 +732,13 @@ export default function Home() {
                     </div>
                   </div>
                   <DataTable
-                    
+                    className=''
                     editMode="row"
-                    showGridlines
-                    stripedRows
-                    resizableColumns
-                    columnResizeMode="fit"
-                    size="small"
+                    // showGridlines
+                    // stripedRows
+                    // resizableColumns
+                    // columnResizeMode="fit"
+                    // size="small"
                     value={keyVars}
                     onRowEditComplete={onRowEditComplete}
                     selectionMode="checkbox"
@@ -729,17 +748,21 @@ export default function Home() {
                     emptyMessage="Adicione uma variável"
                     selection={selectedKeys}
                     onSelectionChange={e => setSelectedKeys(e.value)}
-                    dataKey="key"
-                    responsiveLayout="scroll">
-                      <Column selectionMode="multiple" headerStyle={{width: '3em'}}></Column>
+                    dataKey="key">
+                      <Column selectionMode="multiple" className='p-2 w-3rem' align='center'></Column>
                       {keyVars && keyVars[0] && Object.keys(keyVars?.[0]).map((col,i) => {
                         return <Column
+                          className='col-2 w-full p-2'
                           sortable
-                          key={col}
+                          key={col+'_'+i}
                           field={col}
                           header={col}
                           editor={(options) => {
-                            if(options.field == "type") return(statusEditor(options))
+                            // if(keyVars[i].value == "Null")
+                            console.log(keyVars?.[0][col], col)
+                            if(options.field == "type"){
+                              return(statusEditor(options))
+                            }
                             return(textEditor(options))
                           }}
                         />;
@@ -757,13 +780,13 @@ export default function Home() {
                 
               </div>
               
-              {selectedDB.name != '' && <div className={`col-12 pl-4 pr-4 mb-1`}>
+              {selectedDB.name != '' && <div className='flex w-full'>
                 <Button
                   iconPos="right"
                   icon="pi pi-send"
                   loading={runQuery}
+                  className='col'
                   style={{
-                    width:"100%",
                     background:"var(--primary)",
                     borderColor:"var(--primary-b)",
                     color:"var(--text)"
@@ -781,24 +804,48 @@ export default function Home() {
                       setQueryData(data)
                       setOutSQL(JSON.stringify(data))
                       setRunQuery(false)
+                    }).catch(error=>{
+                      setRunQuery(false)
+                      console.error(error)
                     })
                   }}
                 />
+                {runQuery && <Button
+                  iconPos="right"
+                  icon="pi pi-times"
+                  className="col-fixed shadow-none"
+                  style={{
+                    width:'100px',
+                    background:"var(--orange-700)",
+                    borderColor:"var(--orange-800)",
+                    color:"var(--text)"
+                  }}
+                  // label={runQuery?'Carregando...':'Executar'}
+                  onClick={()=>{
+                    setRunQuery(false)
+                  }}
+                />}
               </div>}
               
-              {queryData && <div className="col-12 pl-4 pr-4 mb-1">
-                <TabView>
+              {queryData && <div className='scrollbar-none overflow-x-scroll w-full'>
+                <TabView
+                  className='h-min max-h-screen w-full'
+                  activeIndex={activeViewTabIndex}
+                  onTabChange={(e)=>{ setActiveViewTabIndex(e.index)}
+                  }
+                >
                   <TabPanel header="Tabela">
                       <DataTable
-                        
-                        stripedRows
+                        // className=' w-full'
+                        // stripedRows
                         resizableColumns
-                        columnResizeMode="fit"
+                        // columnResizeMode="expand"
                         showGridlines
-                        size="small"
+                        // size="small"
+                        // scrollable
+                        // scrollHeight="400px"
                         value={queryData}
                         emptyMessage="Nenhum resultado encontrado..."
-                        responsiveLayout="scroll"
                         paginator={queryData.length > 10?true:false}
                         paginatorTemplate={queryData.length > 10?"CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown":null}
                         currentPageReportTemplate={queryData.length > 10?"Exibindo {first} à {last} de {totalRecords} registros":null}
@@ -811,7 +858,13 @@ export default function Home() {
                       </DataTable>
                   </TabPanel>
                   <TabPanel header="JSON">
-                    <pre id="json">{JSON.stringify(queryData, undefined, 2)}</pre>
+                    {/* <pre id="json">{JSON.stringify(queryData, undefined, 2)}</pre> */}
+                    <pre className='relative pointer-events-auto hljs z-2'>
+                        <code ref={codeRef} className={'language-json'}>
+                          {JSON.stringify(queryData, undefined, 2)}
+                        </code>
+                    </pre>
+                    
                   </TabPanel>
                   <TabPanel header="Texto">
                     <InputTextarea
@@ -829,17 +882,7 @@ export default function Home() {
               </div>}
             </div>
             <div className='mr-3 ml-3'>
-            {queryData && <><Button
-              className='mb-2'
-              style={{
-                width:"100%",
-                fontWeight:"bold"
-              }}
-              icon="pi pi-link"
-              iconPos='right'
-              label='Gerar link para API'
-              onClick={()=> setLinkToAPI(true)}
-            />
+            {queryData && <>
             <Dialog
               blockScroll={true}
               onShow={()=>{scrollToTop()}}
@@ -901,73 +944,64 @@ export default function Home() {
                 />
 
             </Dialog></>}
+              </div>
             </div>
-          </div>
-          </div>
-          
-            <div
-              style={{
-                backgroundColor:"var(--glass)",
-                backdropFilter: "blur(30px)",
-              }}
-              className="flex-1 border-round m-2"
-            >
-            
-            <div 
-              style={{
-                width:"100%",
-                height:"100%"
-              }}>
+            <div className='p-0 bg col sm:col-4 md:col-4 lg:col-4 h-screen overflow-y-auto'>
               {/* <Toolbar className='pl-3 pr-1 pt-2 pb-2'
               left={<div style={{fontWeight:"normal", color:"var(--info)"}}>{currentUser.email}</div>}
               right={<Button icon="pi pi-user-edit" className="p-button-rounded p-button-secondary p-button-text" />}/> */}
-              <ToggleButton
-                checked={selectItem}
-                onChange={(e) => setSelectItem(e.value)}
-                onLabel="Cancelar"
-                offLabel="Selecionar"
-                onIcon="pi pi-bars"
-                offIcon="pi pi-list"
-                style={{width: selectedFiles.length > 0?'50%':'100%', pading:"0px"}}
-                aria-label="Confirmation"
-              />
-              
-              {selectedFiles.length > 0 &&
-              <Button
-                className='p-button-secondary'
-                label={selectedFiles.length>1?`Excluir ${selectedFiles.length} arquivos`:'Excluir arquivo'}
-                style={{width: '50%', pading:"0px"}}
-                onClick={(event)=>{
-                  
-                  Swal.fire({
-                    title: 'Tem certeza?',
-                    text: "Você não poderá desfazer essa ação!",
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: 'var(--teal-700)',
-                    cancelButtonColor: 'var(--orange-700)',
-                    confirmButtonText: 'Sim, deletar!'
-                  }).then((result) => {
-                    if (result.isConfirmed) {
-                      Swal.fire(
-                        'Excluído!',
-                        `Os arquivos foram excluído.`,
-                        'success'
-                      )
-                      selectedFiles.map((file_uid)=>{
-                        del_data("query",file_uid).then(()=>{
-                          setReloadFiles(true)
-                        })
-                      })
-                      setSelectedFiles([])
-                      setSelectedItems([])
-                      setSelectItem(false)
-                    }
-                  })
+              <div className='flex sticky top-0 z-2 h-3rem'>
 
-                  
-                }}
-              />}
+                <ToggleButton
+                  className='shadow-none'
+                  checked={selectItem}
+                  onChange={(e) => setSelectItem(e.value)}
+                  onLabel="Cancelar"
+                  offLabel="Selecionar"
+                  onIcon="pi pi-times"
+                  offIcon="pi pi-list"
+                  // style={{width: selectedFiles.length > 0?'50%':'100%', pading:"0px"}}
+                  aria-label="Confirmation"
+                />
+                
+                {selectedFiles.length > 0 && selectItem &&
+                <Button
+                  icon='pi pi-trash'
+                  className='p-button-secondary bg-gray-500 hover:bg-red-500 white-space-nowrap shadow-none'
+                  label={selectedFiles.length>1?`${selectedFiles.length} arquivos`:'Arquivo'}
+                  style={{width: '100%', pading:"0px"}}
+                  onClick={(event)=>{
+                    
+                    Swal.fire({
+                      title: 'Tem certeza?',
+                      text: "Você não poderá desfazer essa ação!",
+                      icon: 'warning',
+                      showCancelButton: true,
+                      confirmButtonColor: 'var(--teal-700)',
+                      cancelButtonColor: 'var(--orange-700)',
+                      confirmButtonText: 'Sim, deletar!'
+                    }).then((result) => {
+                      if (result.isConfirmed) {
+                        Swal.fire(
+                          'Excluído!',
+                          `Os arquivos foram excluído.`,
+                          'success'
+                        )
+                        selectedFiles.map((file_uid)=>{
+                          del_data("query",file_uid).then(()=>{
+                            setReloadFiles(true)
+                          })
+                        })
+                        setSelectedFiles([])
+                        setSelectedItems([])
+                        setSelectItem(false)
+                      }
+                    })
+
+                    
+                  }}
+                />}
+              </div>
               
               <Tree
                 filter
@@ -989,6 +1023,7 @@ export default function Home() {
                 }}
                 onNodeDoubleClick={(event) =>{
                   if(event.node.type == 'file'){
+                    setQueryData(null)
                     const file = event.node.data
                     console.log(file.uid)
                     setSQL(file)
@@ -1089,10 +1124,12 @@ export default function Home() {
                   setSelectedItems(userStorageSelect)
                 }} 
               />
-              </div>
-              
+            </div>
           </div>
-        </div>
+          
+              
+          
+        
       </div>
     </ObjectComponent>
   )
