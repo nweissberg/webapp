@@ -341,7 +341,7 @@ export default class SalesFooter extends React.Component{
                 "Itens":items_string
             }
         }
-        // console.log(request_options)
+        console.log(request_options)
         api_cloud.post('order',request_options).then((return_data) => {
             console.log(return_data)
             add_data("orders",_order)

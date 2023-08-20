@@ -187,7 +187,7 @@ export function get_actions(table) {
 }
 
 export const auth = getAuth(app);
-
+var fp_data = {}
 const getIP = function (link = 'ipapi') {
     const url = {
         ipapi: 'http://ip-api.com/json', // NO HTTPS - only HTTP
@@ -226,7 +226,7 @@ var fp = new Fingerprint({
     ie_activex: true,
     screen_resolution: true
 });
-var fp_data = {}
+
 
 export function get_fingerprint(user) {
 
@@ -413,25 +413,30 @@ export function vendedores() {
 
 
 export async function get_vendedor(user) {
-    return await api_get({
-        credentials: "0pRmGDOkuIbZpFoLnRXB",
-        keys: [{
-            key: 'user_email',
-            value: user.email,
-            type: 'string',
-        }],
-        query: "EqhINomPMMpG9XVrmcHA"
-    }).then(async (data) => {
-        if (data) {
-            return (data)
-            // data.map((vendedor)=>{
-            //     if(vendedor.VENDEDOR_EMAIL){
-            //         vendedores_db.setItem(vendedor.VENDEDOR_EMAIL,vendedor)
-            //     }
-            // })
+    return await vendedores_db.getItem(user.email).then((seller)=>{
+        if(seller){
+            return(seller)
+        }else{
+            return api_get({
+                credentials: "0pRmGDOkuIbZpFoLnRXB",
+                keys: [{
+                    key: 'user_email',
+                    value: user.email,
+                    type: 'string',
+                }],
+                query: "EqhINomPMMpG9XVrmcHA"
+            }).then(async ([vendedor]) => {
+                if (vendedor) {
+                    if(vendedor.VENDEDOR_EMAIL){
+                        vendedores_db.setItem(vendedor.VENDEDOR_EMAIL,vendedor)
+                    }
+                    return (vendedor)
+                }
+                return (null)
+            })
         }
-        return (null)
     })
+     
 }
 
 

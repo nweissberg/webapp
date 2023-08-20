@@ -304,7 +304,7 @@ function ClientPage(props){
                 }}
             />}
             
-            {(load_client && props.router.query.id != load_client?.id || loading) && <div
+            {(load_client && props.router.query.id != load_client?.id && loading) && <div
                 className="flex fixed z-2 top-0 left-0 w-screen min-h-max h-screen bg-glass-b "
                 style={{backdropFilter:"blur(5px)"}}>
                 <div className="center z-3 absolute w-max max-w-full p-3">

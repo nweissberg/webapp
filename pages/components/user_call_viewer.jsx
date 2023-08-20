@@ -29,13 +29,7 @@ export default class UserCalls extends React.Component{
     }
 
 	get_calls(){
-		query_data('calls',{
-			"users": {
-				"mode":"or",
-				"user_uid": ['==', this.props.user.uid],
-				"help_user.uid": ['==', this.props.user.uid]
-			}
-		}).then(data => {
+		query_data('calls',this.props.query).then(data => {
 			var promises = []
 			var _docs = []
 			data.forEach((doc)=>{
@@ -62,33 +56,17 @@ export default class UserCalls extends React.Component{
 			<div className="align-items-start flex h-auto text-white gap-2 justify-content-start w-full mb-8">
 			{this.state.client_calls.map((call,i)=>{
 				return(<div key={'call_'+i}
-					style={{width:'100%', maxWidth:"33vw"}}
+					// style={{width:'100%', maxWidth:"33vw"}}
+					style={{minWidth:"max(min(100%, 400px), 33vw)"}}
 					className="flex flex-wrap p-3 borde r-2 border-blue-700 bg-glass-b border-round-md h-full">
 					<div className=" w-full h-full align-content-between">
-						{/* <Link
-							href={{
-								pathname: '/client',
-								query:{p:"chamado", id:call.client.id}
-							}}
-							// as={"/profile#"+this.props.uid}
-							prefetch={true}
-							passHref
-							legacyBehavior
-						>
-							<Button
-								iconPos="right"
-								icon='pi pi-eye text-2xl icon-right'
-								label={call.client.name}
-								className='w-full p-button-text text-2xl text-blue-200 shadow-none '
-							/>
-						</Link> */}
+						
 						<ClientIcon client={call.client}/>
 						<UserIcon
 							currentUser={this.props.currentUser}
 							uid={call.user_uid}
 							size="50"
 							inline
-							// role
 							className='my-4'
 						/>
 						<div className="flex justify-content-between align-items-end col-12">
@@ -122,8 +100,8 @@ export default class UserCalls extends React.Component{
 							</span>
 						</div>
 						
-						{call.help_user.uid != this.props.currentUser.uid &&
-							<label className="col-12 line-height-4 text-justify">Foi solicitada a ajuda de <span className="font-bold ">{call.help_user.name}</span>: {call.expandir[1]?call.help_description:shorten(call.help_description, 30, false)}
+						{call.help_description && call.help_user?.uid != this.props.currentUser.uid &&
+							<label className="col-12 line-height-4 text-justify">Foi solicitada a ajuda de <span className="font-bold ">{call.help_user?.name}</span>: {call.expandir[1]?call.help_description:shorten(call.help_description, 30, false)}
 							{call.help_description.split(' ').length > 30 &&
 							<Button label={call.expandir[1]?'Ler Menos':'Ler Mais'}
 								icon={call.expandir[1]?'pi pi-minus':'pi pi-plus'}
@@ -135,16 +113,16 @@ export default class UserCalls extends React.Component{
 								}}
 							/>}
 							</label>}
-						{call.help_user.uid == this.props.currentUser.uid && <label className="col-12 line-height-4 text-justify"><span className="font-bold"><span className="text-purple-300">Você</span> foi solicitado para ajudar:</span> {call.expandir[1]?call.help_description:shorten(call.help_description, 30, false)}</label>}
-						<UserIcon
+						{call.help_user?.uid == this.props.currentUser.uid && <label className="col-12 line-height-4 text-justify"><span className="font-bold"><span className="text-purple-300">Você</span> foi solicitado para ajudar:</span> {call.expandir[1]?call.help_description:shorten(call.help_description, 30, false)}</label>}
+						{call.help_user && <UserIcon
 							currentUser={this.props.currentUser}
-							uid={call.help_user.uid}
+							uid={call.help_user?.uid}
 							size="50"
 							inline
 							// role
-						/>
+						/>}
 					</div>
-					{(call.help_user.uid == this.props.currentUser.uid || call.user_uid == this.props.currentUser.uid) && <div className='bottom-0'>
+					{(call.help_user?.uid == this.props.currentUser.uid || call.user_uid == this.props.currentUser.uid) && <div className='bottom-0'>
 						<Button label='Retornar'
 							className={this.footer_button}
 							icon='pi pi-phone'

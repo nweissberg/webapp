@@ -27,6 +27,7 @@ import DateRangePicker from "../../components/date_interval_filter";
 import UndoableEditor from "../../../contexts/UndoableEditor";
 import { add_data, get_data, query_data } from "../../api/firebase";
 import SalesPage from "../../sales";
+import UserCalls from "../../components/user_call_viewer";
 
 
 
@@ -363,6 +364,14 @@ class ClientDashboard extends React.Component{
 						</div>
 					</div>
 					break;
+				case 'userCalls':
+					ret_component = <UserCalls
+						clients={this.props.clients}
+						user={this.props.user}
+						currentUser={this.props.user}
+						query={{"client.id": ['==', this.state.client?.id]}}
+					/>
+					break;
 				default:
 					break;
 				
@@ -573,10 +582,9 @@ class ClientDashboard extends React.Component{
 							{this.widgets('vendedor')}
 						</div>
 						<div className=" p-2 flex flex-wrap md:col-12 lg:col-6 flex-grow-1">
-							{/* {this.widgets('clientLocation')} */}
 							{this.widgets('callDialog')}
 						</div>
-						{this.state.client_calls.length>0 && <></>}
+						{this.widgets('userCalls')}
 					</div>
 				</div>)
 			break;

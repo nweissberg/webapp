@@ -22,7 +22,7 @@ export default class ClientIcon extends React.Component{
                 client = this.props.client
             }else if(this.props.client_id) await clients_db.getItem(this.props.client_id.toString())
 			.then((client_data)=>{
-                console.log(client_data)
+                // console.log(client_data)
                 client = client_data
             })
 			this.setState({client:client})
@@ -48,7 +48,7 @@ export default class ClientIcon extends React.Component{
 					iconPos="right"
 					icon='pi pi-building text-lg icon-right'
 					label={this.state.client.name || this.state.client.fantasia}
-					className='sm:icon-only w-full p-button-text p-button-glass-dark border-none shadow-none '
+					className='w-full p-button-text p-button-glass-dark border-none shadow-none '
                     onClick={this.props.onClick}
 				/>
             </div>)
@@ -68,7 +68,7 @@ export default class ClientIcon extends React.Component{
 					iconPos="right"
 					icon='pi pi-building text-lg icon-right'
 					label={this.state.client.name || this.state.client.fantasia}
-					className='sm:icon-only w-full p-button-text p-button-glass-dark border-none shadow-none '
+					className='w-full p-button-text p-button-glass-dark border-none shadow-none '
 				/>
 			</Link>
             
