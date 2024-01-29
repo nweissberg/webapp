@@ -170,7 +170,7 @@ const ClientSearch = (props) => {
     }
     return(
         <div className="flex justify-content-center align-items-center p-2 w-auto">
-            <span className="flex flex-grow-1 w-auto h-full p-input-icon-left p-float-label">
+            <span className="flex flex-grow-1 w-auto h-full p-input-icon-left p-float-label search-field">
                 <i className="pi pi-search text-white p-0" />
                 <InputText
                     style={{minWidth:"75vw"}}

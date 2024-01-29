@@ -17,6 +17,7 @@ import PrimeReact, { locale, addLocale } from 'primereact/api';
 import Head from 'next/head'
 import ResponsiveProvider from './components/responsive_wrapper';
 import { print } from './utils/util';
+import ErrorPopup from './components/error_popup';
 
 addLocale('pt', {
   firstDayOfWeek: 0,
@@ -112,6 +113,7 @@ export default function MyApp({ Component, pageProps }) {
       <div className='background-container'></div>
     </div>
       <div>
+       {/* <ErrorPopup /> */}
         <ProductsProvider>
           <SalesProvider>
             <ResponsiveProvider>

@@ -80,14 +80,6 @@ export default withRouter(class ObjectView extends React.Component {
 				})
 			},
 			{
-				key:"menu_sales",
-				label:'Vendas',
-				icon:'pi pi-fw pi-shopping-cart',
-				command:(()=>{
-					this.change_room('/sales');
-				})
-			},
-			{
 				key:"menu_admin",
 				label:'Administração',
 				icon:'pi pi-fw pi-briefcase',
@@ -95,14 +87,6 @@ export default withRouter(class ObjectView extends React.Component {
 				  	this.change_room('/admin');
 				})
 			},
-			// {
-			// 	key:"menu_clients",
-			// 	label:'Clientes',
-			// 	icon:'pi pi-fw pi-building',
-			// 	command:(()=>{
-			// 		this.change_room('/client');
-			// 	})
-			// },
 			{
 				key:"menu_restapi",
 				label:'Database',

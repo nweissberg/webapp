@@ -22,7 +22,7 @@ import {
     serverTimestamp,
     Timestamp
 } from "firebase/firestore";
-import { api_get } from "./connect";
+import { api_get, get_data_api } from "./connect";
 import { print } from "../utils/util";
 
 var roles_db = localForage.createInstance({
@@ -52,6 +52,10 @@ const app = initializeApp({
 // Initialize Cloud Firestore and get a reference to the service
 const fb_db = getFirestore(app);
 const fb_rtdb = getDatabase(app);
+
+export const get_uid = () => {
+    return (uid)
+}
 
 async function requestPermission() {
     print('Requesting permission...');
@@ -392,50 +396,45 @@ export function readUser(uid) {
     })
 }
 
-export function vendedores() {
-    api_get({
-        credentials: "0pRmGDOkuIbZpFoLnRXB",
-        keys: [],
-        query: "8Ha8PdrbwIaOEumkOypR"
-    }).then(async (data) => {
-        if (data) {
-            // console.log(data)
-            data.map((vendedor) => {
-                if (vendedor.VENDEDOR_EMAIL) {
-                    vendedores_db.setItem(vendedor.VENDEDOR_EMAIL, vendedor)
+export async function vendedores(user_email,empresa_id) {
+    return get_data_api({
+        query: "EqhINomPMMpG9XVrmcHA",
+        keys: [
+            { key: 'user_email', type: user_email?'STRING':'NULL', value: user_email },
+            { key: 'empresa_id', type: empresa_id?'INT':'NULL', value: empresa_id },
+        ]
+    }).then(async (vendedor_data) => {
+        if (vendedor_data) {
+            if(user_email){
+                let vendedor = vendedor_data[0]
+                if(!vendedor) return null
+                if(vendedor.VENDEDOR_EMAIL){
+                    vendedores_db.setItem(vendedor.VENDEDOR_EMAIL,vendedor)
                 }
-            })
+                return (vendedor)
+            }else{
+                return(vendedor_data)
+            }
         }
+        return (null)
     })
 }
 
 
 
 
-export async function get_vendedor(user) {
-    return await vendedores_db.getItem(user.email).then((seller)=>{
-        if(seller){
-            return(seller)
-        }else{
-            return api_get({
-                credentials: "0pRmGDOkuIbZpFoLnRXB",
-                keys: [{
-                    key: 'user_email',
-                    value: user.email,
-                    type: 'string',
-                }],
-                query: "EqhINomPMMpG9XVrmcHA"
-            }).then(async ([vendedor]) => {
-                if (vendedor) {
-                    if(vendedor.VENDEDOR_EMAIL){
-                        vendedores_db.setItem(vendedor.VENDEDOR_EMAIL,vendedor)
-                    }
-                    return (vendedor)
-                }
-                return (null)
-            })
-        }
-    })
+export async function get_vendedor(user_email=null, empresa_id=null) {
+    if(user_email){
+        return await vendedores_db.getItem(user_email).then((seller)=>{
+            if(seller){
+                return(seller)
+            }else{
+                return vendedores(user_email,empresa_id)
+            }
+        })
+    }else{
+        return await vendedores(user_email,empresa_id)
+    }
      
 }
 
@@ -464,7 +463,7 @@ export function readUsers() {
 onAuthStateChanged(auth, (user) => {
     // console.log(user)
     if (user) {
-        get_vendedor(user).then(vendedor => {
+        get_vendedor(user.email).then(vendedor => {
             print(vendedor)
         })
         // console.log(user)

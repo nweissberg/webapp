@@ -2,10 +2,7 @@ import React from "react";
 import { Button } from 'primereact/button';
 import { InputText } from 'primereact/inputtext';
 import SaleInfo from "./sale_info";
-import BarcodeScanner from "./barcode_scanner";
-import { print, scrollToBottom, scrollToTop, similarText } from "../../utils/util";
 import HeaderTitle from "../../components/title";
-// import ClientIcon from "../../components/client_icon";
 
 export default class SalesHeader extends React.Component{
     constructor(props){
@@ -22,9 +19,7 @@ export default class SalesHeader extends React.Component{
     componentDidMount(){
         this.props.onLoad?.(this)
     }
-    // componentDidUpdate(){
-    //     print(this.props.client)
-    // }
+
     render(){
         return(
             <div className="sticky top-0 z-3 ">
@@ -72,7 +67,7 @@ export default class SalesHeader extends React.Component{
                     }
                     {this.props.items.length != 0 && this.props.group.id >= 0 &&
                         <div className="flex w-screen justify-content-between gap-3">
-                            <span className="flex w-full h-full p-input-icon-left p-float-label">
+                            <span className="flex w-full h-full p-input-icon-left p-float-label search-field">
                                 <i className="pi pi-search text-white pl-2" />
                                 <InputText
                                     value={this.state.search}

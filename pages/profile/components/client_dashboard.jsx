@@ -28,6 +28,7 @@ import UndoableEditor from "../../../contexts/UndoableEditor";
 import { add_data, get_data, query_data } from "../../api/firebase";
 import SalesPage from "../../sales";
 import UserCalls from "../../components/user_call_viewer";
+import ClientDashboardIframe from "../../client/components/dashboard_iframe";
 
 
 
@@ -595,9 +596,9 @@ class ClientDashboard extends React.Component{
 			break;
 			
 			case 'dashboard':
-				return(<div className="grid w-full m-0 p-0 align-items-center">
-					
-					<ScrollWrapper speed={100}
+				return(<div>
+					<ClientDashboardIframe clientId={this.props.client.id}/>
+					{/* <ScrollWrapper speed={100}
 						className="md:flex-order-0 sm:flex-order-3 flex h-20rem overflow-scroll horizontal-scrollbar sm:col-12 md:col-6 lg:col-6 xl:col-4 flex-grow-1">
 						{this.widgets('clientProducts','_dashboard')}
 					</ScrollWrapper>
@@ -610,7 +611,7 @@ class ClientDashboard extends React.Component{
 					</ScrollWrapper>
 					<div className="md:flex-order-3 sm:flex-order-1 h-auto sm:col-12 md:col-6 lg:col-6 xl:col-12 max-w-full flex-grow-1">
 						{this.widgets('clientOrders')}
-					</div>
+					</div> */}
 				</div>)
 			break;
 

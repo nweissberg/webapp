@@ -1,7 +1,7 @@
 import React, { useContext, useState, useEffect } from "react";
 import localForage from "localforage";
 import { api_get } from "../pages/api/connect";
-import { alphabetically, normalize, print, time_ago } from "../pages/utils/util";
+import { alphabetically, normalize, print } from "../pages/utils/util";
 import { readRealtimeData, writeRealtimeData } from "../pages/api/firebase";
 import { LZString } from "../pages/utils/LZString";
 
@@ -267,12 +267,13 @@ export default function ProductsProvider({children}){
                     type: 'string',
                 }],
                 query: 'zgzAjRqN1XHvvV3QXiwE',
-            }).then(([image_data]) => {
-                // var produto = {...item}
+            }).then((image_data) => {
+                if(!image_data)return rej(image_data)
+                var produto = [...image_data]
                 
-                if(image_data && image_data.photo !== null) {
-                    // console.log(produto,image_data);
-                    var img_buffer = new Buffer.from(image_data.photo)
+                if(produto && produto.photo) {
+                    // console.log(produto,produto.photo);
+                    var img_buffer = new Buffer.from(produto.photo)
                     var isUnique = true
                     var photo_uid = ""
                     for(var key in photos){
@@ -294,7 +295,7 @@ export default function ProductsProvider({children}){
                     }
                     produto.photo_uid = photo_uid
                 }
-                product_db.setItem(produto.PRODUTO_ID.toString(), produto)
+                if(produto.PRODUTO_ID) product_db.setItem(produto.PRODUTO_ID?.toString(), produto)
                 callback?.(produto)
                 res(produto)
                 // setGenerated(true);
@@ -311,11 +312,11 @@ export default function ProductsProvider({children}){
                 type: 'string',
             }],
             query: 'vgYSqaLv5CGaI6LJjAJr',
-        }).then(async ([product_data]) => {
+        }).then(async (product_data) => {
             // var produto = {...item}
-            
-            print(product_data);
-            await get_photo(product_data)
+            if(!product_data) return(null)
+            print(product_data[0]);
+            await get_photo(product_data[0])
             .then((produto)=>{    
                 return(produto)
             })

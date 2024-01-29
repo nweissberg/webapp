@@ -910,7 +910,7 @@ body::-webkit-scrollbar {
   }
 }
 
-.p-float-label > input:focus ~ label {
+.p-float-label.search-field > input:focus ~ label {
   color: var(--transparent) !important;
   font-size: 0px !important;
   top: 50% !important;
@@ -921,12 +921,12 @@ body::-webkit-scrollbar {
   border-radius: 0 0 10px 10px;
 }
 
-.p-float-label > input:focus ~ label > span {
+.p-float-label.search-field > input:focus ~ label > span {
   color: var(--text);
   font-size: 17px !important;
 }
 
-.p-float-label > input ~ label > span {
+.p-float-label.search-field > input ~ label > span {
   font-weight: bold;
   color: var(--info);
 }
@@ -1536,4 +1536,11 @@ iframe {
 
 .p-togglebutton{
   backdrop-filter: blur(3px);
+}
+.hover\:white-space-normal:hover{
+  white-space: normal !important;
+}
+.hover\:opacity-100:hover > *{
+  transition: opacity 300ms;
+  opacity: 100 !important;
 }

@@ -25,7 +25,7 @@ export default function SettingsPage(props){
     // }
 
     return (
-        <div className="card">
+        <div className="w-full">
             <Accordion
                 className="accordion-custom"
                 // activeIndex={activeIndex}
@@ -34,10 +34,10 @@ export default function SettingsPage(props){
                     return(
                         <AccordionTab key={index} header={
                             <div className='flex gap-2'>
-                                <i className={tab.icon}></i>
-                                <span>{tab.header}</span>
+                                <i className={tab?.icon}></i>
+                                <span>{tab?.header}</span>
                             </div>
-                        }>{tab.body}</AccordionTab>
+                        }>{tab?.body}</AccordionTab>
                     )
                 })}
             </Accordion>

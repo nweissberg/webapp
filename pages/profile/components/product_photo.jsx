@@ -50,10 +50,8 @@ const ProductIcon = (props) => {
         });
     }
     useEffect(() => {
-        // console.log("mount")
         getProductPhoto()
         return(()=>{
-            // console.log("Unmount")
             setGenerated(false)
             setItem(null)
         })

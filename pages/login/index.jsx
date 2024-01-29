@@ -4,7 +4,6 @@ import ObjectComponent from "../components/object"
 import { Form, Card, Alert } from 'react-bootstrap'
 import "bootstrap/dist/css/bootstrap.min.css"
 import { useAuth } from "../api/auth"
-import { Container } from 'react-bootstrap';
 import { useRouter } from 'next/router'
 import { Button } from "primereact/button";
 

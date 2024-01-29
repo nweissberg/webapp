@@ -2,7 +2,7 @@ import React, { useRef, useState, useEffect } from "react"
 import ObjectComponent from "../components/object";
 import { useAuth } from "../api/auth"
 import { Button } from "primereact/button";
-import { auth, get_data, readUsers , readRealtimeData, writeRealtimeData, readUser, query_data, get_vendedor } from '../api/firebase';
+import { auth, get_data, readUsers , readRealtimeData, writeRealtimeData, readUser, query_data, get_vendedor, get_all_data } from '../api/firebase';
 import { signOut } from "firebase/auth";
 import { useRouter } from 'next/router'
 import { ProgressBar } from "primereact/progressbar";
@@ -24,6 +24,8 @@ import { Inplace, InplaceDisplay, InplaceContent } from 'primereact/inplace';
 import UserCalls from "../components/user_call_viewer";
 import { get_data_api } from "../api/connect";
 import OrderSatusDatatable from "./components/order_satus_datatable";
+import IframeExternalURL from "../admin/components/external_iframe";
+import SettingsPage from "../admin/components/settings";
 
 
 const produtos_db = localForage.createInstance({
@@ -45,6 +47,7 @@ export default function ProfilePage(){
     const toast = useRef(null);
     const { currentUser, updateUser } = useAuth()
     const [user_profile, set_user_profile] = useState("")
+    const [user_dashboard, set_user_dashboard] = useState(null)
     const router = useRouter()
     const [tab_index, set_tab_index] = useState(0)
     const [dates, set_dates] = useState([])
@@ -61,7 +64,7 @@ export default function ProfilePage(){
     const [ all_users, set_all_users ] = useState([])
     const overlay_panel = useRef(null);
     const [user_position, set_user_position] = useState(null)
-
+    const [ external_urls, set_external_urls ] = useState([])
     const { asPath } = useRouter();
     
     const { check_rule, get_clients, clients, load_products_client } = useProducts()
@@ -76,7 +79,7 @@ export default function ProfilePage(){
             set_find_user(user)
             switch (path[1]) {
                 case "orders":
-                    set_tab_index(tab_index => 2.2)
+                    set_tab_index(tab_index => 2.3)
                     load_user_orders(user)
                     break;
             
@@ -131,7 +134,7 @@ export default function ProfilePage(){
             })
 
         }
-        
+        loadIframeURLs()
     },[currentUser,selected_user,find_user])
     
     async function load_user_orders(user_uid){
@@ -269,17 +272,42 @@ export default function ProfilePage(){
         )
     }
 
+    function loadIframeURLs(){
+        var _external_urls = []
+		get_all_data("external_url").then((folder_data)=>{
+			if(folder_data){
+				folder_data.forEach((file_data)=>{
+					_external_urls.push(file_data.data())
+                })
+				set_external_urls(_external_urls)
+			}
+			// console.log(_external_urls)
+		})
+    }
+    
     useEffect(()=>{
         if(currentUser === null){
             router.push('/login')
             return
         }
-        if(selected_user == null)return
+        if(selected_user == null || external_urls == null)return
         roles_db.getItem(selected_user.role.toString())
-        .then((user_role)=>{set_user_profile(user_role[selected_user.photo[0]])})
+        .then((user_role)=>{
+            // let _user_dashboard = 
+            set_user_dashboard(user_role.dashboard.map((dash_uid)=>{
+                const frame_data = external_urls.find((iframes)=>iframes.uid == dash_uid)
+                if(frame_data) return({
+                    icon:"pi pi-clock",
+                    header:frame_data.dashboard_name,
+                    body:<IframeExternalURL data={frame_data}/>
+                })
+            }))
+            // console.log(_user_dashboard)
+            set_user_profile(user_role[selected_user.photo[0]])
+        })
 
         
-    },[selected_user])
+    },[selected_user,external_urls])
 
     // useEffect(()=>{
     //     console.log(drafts)
@@ -516,7 +544,7 @@ export default function ProfilePage(){
                                             onClick={(event)=>{
                                                 signOut(auth).then(() => {
                                                     this.menu.toggle(event)
-                                                    router.push('/login')
+                                                    router.reload()
                                                   }).catch((error) => {
                                                     // An error happened.
                                                   });
@@ -549,7 +577,7 @@ export default function ProfilePage(){
                                 <Button className="p-button-lg"
                                     icon="pi pi-chart-line"
                                     iconPos="right"
-                                    label="Dashboard"
+                                    label="Areas"
                                     style={Math.floor(tab_index)==0?button_style:button_style_b}
                                     onClick={(event)=>{
                                         set_tab_index(tab_index => 0)
@@ -566,7 +594,7 @@ export default function ProfilePage(){
                                     style={Math.floor(tab_index)==1?button_style:button_style_b}
                                     onClick={(event)=>{
                                         get_clients(selected_user)
-                                        set_tab_index(tab_index => 1.2)
+                                        set_tab_index(tab_index => 1.1)
                                         scrollToBottom()
                                     }}
                                 />
@@ -579,9 +607,9 @@ export default function ProfilePage(){
                                     label="Pedidos"
                                     style={Math.floor(tab_index)==2?button_style:button_style_b}
                                     onClick={async (event)=>{
-                                        set_loading_data(true)
-                                        set_tab_index(tab_index => 2.2)
-                                        await load_user_orders(selected_user.uid)
+                                        // set_loading_data(true)
+                                        set_tab_index(tab_index => 2.3)
+                                        // await load_user_orders(selected_user.uid)
                                         scrollToBottom()
                                     }}
                                 />
@@ -596,9 +624,12 @@ export default function ProfilePage(){
                     minHeight:"55vh"
                 }}>
                     
-                    <div className="flex justify-content-center flex-wrap gap-3 p-3">
-                        {tab_index == 0 && isActiveUser && <iframe src="https://share.stimulsoft.com/fda26"></iframe>}
-
+                    <div className="flex justify-content-center flex-wrap gap-3">
+                        {/* {tab_index == 0 && user_dashboard && isActiveUser && user_dashboard.map((iframe_data)=>{
+                            return(<IframeExternalURL data={iframe_data} />)
+                        })} */}
+                        {tab_index == 0 && user_dashboard && isActiveUser && <SettingsPage tabs={user_dashboard}/>}
+                        {/* {tab_index == 0 && isActiveUser && <iframe width="1024" height="600" src="https://lookerstudio.google.com/embed/reporting/7eb8f5de-e937-4ffc-8a21-e61b741fc07b/page/Qw8WD"></iframe>} */}
                         {Math.floor(tab_index) == 1 && <>
                             <div className="flex flex-wrap gap-3" style={{width:"100%"}}>
                                 <div className="flex-grow-1">
@@ -744,7 +775,7 @@ export default function ProfilePage(){
 
                         </>}
                         {Math.floor(tab_index) == 2 && <>
-                            {isActiveUser && <div className="flex-grow-1">
+                            {/* {isActiveUser && <div className="flex-grow-1">
                                 <Button className="p-button-lg"
                                     icon="pi pi-file-edit"
                                     iconPos="right"
@@ -829,7 +860,7 @@ export default function ProfilePage(){
                                         })
                                     }}
                                 />
-                            </div>}
+                            </div>} */}
 
                         </>}
                     </div>

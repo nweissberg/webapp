@@ -244,12 +244,13 @@ export default class SalesFooter extends React.Component{
     }
 
     accept(event) {
-        console.log(("Saving...",this.state.save_name))
+        console.log(("Saving...",this.state.save_name, this.props.client))
         
         // this.setState({save_visible:false})
         var _sale_cart = {...this.props.sale_cart}
         _sale_cart.name = this.state.save_name
-        _sale_cart.client = {fantasia:this.props.client.fantasia, id:this.props.client.id}
+        _sale_cart.client = null
+        if(this.props.client) _sale_cart.client = {fantasia:this.props.client.fantasia, id:this.props.client.id}
 
         // console.log(_sale_cart)
         pedidos_db.getItem(this.props.user.uid).then((data)=>{

@@ -1,10 +1,9 @@
-import React, { useRef, useState, useEffect } from "react"
+import React, { useEffect } from "react"
 import ObjectComponent from "./components/object";
 import { useAuth } from "./api/auth"
 import { useRouter } from 'next/router'
 import { get_data_api } from "./api/connect";
 import localForage from "localforage";
-import Link from 'next/link'
 import { ProgressBar } from "primereact/progressbar";
 
 export async function getServerSideProps({ res }) {
@@ -25,9 +24,10 @@ export async function getServerSideProps({ res }) {
         return all_groups
     })
     
+    
     return {
         props: {
-            groups
+            groups,
         },
     }
 }
@@ -36,12 +36,25 @@ const groups_db = localForage.createInstance({
     name:"pilarpapeis_db",
     storeName:'grupos'
 });
+// const vendedores_db = localForage.createInstance({
+//     name:"pilarpapeis_db",
+//     storeName:'vendedores'
+// });
 
 export default function Home(props){
     const router = useRouter()
     // const { asPath } = useRouter();
     const { currentUser } = useAuth()
   
+    // useEffect(()=>{
+    //     return ()=> {
+    //         // console.log(props.user_list)
+    //         props.user_list.forEach(async(vendedor)=>{
+    //             // console.log(vendedor)
+    //             if(vendedor.VENDEDOR_EMAIL) await vendedores_db.setItem(vendedor.VENDEDOR_EMAIL.toString(),vendedor)
+    //         })
+    //     }
+    // },[props.user_list])
 
     useEffect(()=>{
         return ()=> {

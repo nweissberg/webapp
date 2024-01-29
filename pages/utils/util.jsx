@@ -588,6 +588,7 @@ export function time_until(date, value = false) {
   
 export function alphabetically(a, b, key) {
 	// Use toUpperCase() to ignore character casing
+	if(!a[key] || !b[key])return
 	const nameA = a[key].toUpperCase();
 	const nameB = b[key].toUpperCase();
   
@@ -696,7 +697,7 @@ export function deepClone(obj){
 }
 
 // open a yaml file an parse its data to json object using fetch and promises
-async function loadYaml(path) {
+export async function loadYaml(path) {
 	const response = await fetch(path);
 	const data = await response.text();
 	return yaml.load(data);

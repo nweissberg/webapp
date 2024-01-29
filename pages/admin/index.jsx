@@ -1,10 +1,10 @@
 import React, { useRef, useState, useEffect } from "react"
 import ObjectComponent from "../components/object";
 import { useAuth } from "../api/auth"
-import { get_user_orders, readRealtimeData, readUsers, writeRealtimeData } from "../api/firebase";
+import { get_all_data, get_user_orders, readRealtimeData, readUsers, writeRealtimeData } from "../api/firebase";
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
-import { deepEqual, moneyMask, scrollToTop, time_ago } from "../utils/util";
+import { deepEqual, moneyMask, scrollToTop, sqlDateToString, time_ago } from "../utils/util";
 import { TabMenu } from 'primereact/tabmenu';
 import { useProducts } from "../../contexts/products_context";
 import { Button } from "primereact/button"
@@ -29,6 +29,9 @@ import ActionsPage from "./components/actions";
 import UserIcon from "../components/user_icon";
 import { useSales } from "../contexts/context_sales";
 import CronActionsPage from "./components/cron_actions";
+import { InputTextarea } from 'primereact/inputtextarea';
+import { FileUpload } from 'primereact/fileupload';
+import IframeExternalURL from "./components/external_iframe";
 
 var vendedores_db = localForage.createInstance({
     name:"pilarpapeis_db",
@@ -39,32 +42,34 @@ export default function AdminPage(){
     const [ users, set_users ] = useState([])
     const [ all_users, set_all_users ] = useState([])
     const { currentUser } = useAuth()
+    const [rp_user, set_rp_user] = useState(null);
     const [ activeIndex, setActiveIndex ] = useState(0)
 
     const [ selected_profiles, set_selected_profiles ] = useState([])
     const [ saved_profiles, set_saved_profiles ] = useState([])
     const [ changed_profiles, set_changed_profiles ] = useState(false)
-
+    const [ new_iframe, set_new_iframe ] = useState(false)
     const [parents, set_parents] = useState([]);
     const [selected_parents, set_selected_parents] = useState(null);
     const [filtered_parents, set_filtered_parents] = useState(null);
-    
+    const [external_urls, set_external_urls] = useState([])
     const [selected_user, set_selected_user] = useState(null);
     const [display_hierarchy, set_display_hierarchy] = useState(false);
     const [display_orders, set_display_orders] = useState(false);
     const [orders, set_orders] = useState([])
     const [loading_data, set_loading_data] = useState(false)
-
+    
     const [globalFilterValue1, setGlobalFilterValue1] = useState('');
     const [filters1, setFilters1] = useState(null);
     
     const [blockly_workspace, set_blockly_workspace] = useState(null);
+    const [iframe_data, set_iframe_data] = useState(null);
     
     const {test_context,actions} = useSales()
-
+    
     const router = useRouter()
     const { asPath } = useRouter();
-        
+    
     const {
         groups,
         profiles,
@@ -114,6 +119,28 @@ export default function AdminPage(){
             setActiveIndex(items.findIndex(i=>i.hash == hash))
         }
     },[asPath])
+
+    function loadIframeURLs(){
+        var _external_urls = []
+		get_all_data("external_url").then((folder_data)=>{
+			if(folder_data){
+				folder_data.forEach((file_data)=>{
+					_external_urls.push(file_data.data())
+                })
+				set_external_urls(_external_urls)
+			}
+			console.log(_external_urls)
+		})
+    }
+    useEffect(()=>{
+        loadIframeURLs()
+        // console.log(currentUser)
+        vendedores_db.getItem(currentUser.email).then((seller)=>{
+            if(seller){
+                set_rp_user(seller)
+            }
+        })
+    },[currentUser])
 
     useEffect(()=>{
         // console.log(users)
@@ -312,7 +339,7 @@ export default function AdminPage(){
             // load_groups()
         })
     },[currentUser])
-    
+
     return(
         <ObjectComponent
             user={currentUser}
@@ -450,7 +477,7 @@ export default function AdminPage(){
                             editor={(options) => userProfileEditor(options)}
                             body={(row_data)=>{
                                 if(!profiles)return(<></>)
-                                return(profiles[row_data.role][row_data.photo[0]])
+                                return(profiles[row_data.role]?.[row_data.photo[0]])
                             }}
                         ></Column>
                         <Column
@@ -505,7 +532,7 @@ export default function AdminPage(){
                                 header:"Perfis",
                                 body:<DataTable
                                     value={profiles.filter(profile=>currentUser.role!=profile.id-1 && currentUser.role < profile.id-1 || profile.id == 1)}
-                                    selectionMode="checkbox"
+                                    // selectionMode="checkbox"
                                     selection={selected_profiles}
                                     onSelectionChange={e => set_selected_profiles(e.value)}
                                     dataKey="id"
@@ -514,18 +541,18 @@ export default function AdminPage(){
                                     //     minWidth:"100%",
                                     //     maxWidth:"800px"
                                     // }}
-                                    size="small"
+                                    // size="large"
                                     responsiveLayout="stack"
                                     breakpoint="600px"
                                     // scrollable
                                     // scrollHeight="90vh"
                                     footer={()=>{
                                         return(<div className="flex justify-content-between flex-wrap">
-                                            <Button
+                                            {/* <Button
                                                 // className="p-button-outlined"
                                                 label="Criar Perfil"
                                                 icon="pi pi-id-card"
-                                            />
+                                            /> */}
                                             <Button
                                                 className="p-button-success "
                                                 disabled={!changed_profiles}
@@ -541,17 +568,54 @@ export default function AdminPage(){
                                         </div>)
                                     }}
                                 >
-                                    <Column selectionMode="multiple" headerStyle={{width: '3em'}}></Column>
+                                    {/* <Column selectionMode="multiple" headerStyle={{width: '3em'}}></Column> */}
                                     <Column field="icon" body={(row_data)=>{
-                                        return(
-                                            <Button
-                                                className="p-button-secondary p-button-text p-button-rounded p-button-lg"
-                                                icon={'pi pi-'+row_data.icon}
-                                            />)
+                                        return(<div className="flex flex-wrap w-11rem">
+                                            <div className="flex align-items-center w-auto h-full">
+                                                <label className="text-purple-300 font-bold uppercase">{row_data.name}</label>
+                                                <Button className="text-purple-100 p-button-text shadow-none p-button-rounded p-button-lg" icon={'pi pi-'+row_data.icon}/>
+                                            </div>
+                                            <div className="w-full p-2">
+                                                <div className="flex flex-wrap align-items-center">
+                                                    <i className="text-pink-300 pi pi-caret-down mr-2"/>
+                                                    <label>{row_data.f}</label>
+                                                </div>
+                                                <div className="flex flex-wrap align-items-center">
+                                                    <i className="text-blue-300 pi pi-caret-up mr-2"/>
+                                                    <label>{row_data.m}</label>
+                                                </div>
+                                            </div>
+                                        </div>)
                                     }}></Column>
-                                    <Column field="name" header="Perfil"></Column>
-                                    <Column field="f" header="Nome Feminino"></Column>
-                                    <Column field="m" header="Nome Masculino"></Column>
+                                    <Column field="dashboard" header="Dashboard" body={(row_data)=>{
+                                        
+                                        return(<MultiSelect
+                                            filter
+                                            selectAll
+                                            value={row_data.dashboard?row_data.dashboard:[]}
+                                            options={external_urls}
+                                            scrollHeight={window.innerHeight>300?300:window.innerHeight}
+                                            optionLabel="dashboard_name"
+                                            optionValue="uid"
+                                            placeholder="Nenhuma"
+                                            maxSelectedLabels={1}
+                                            panelHeaderTemplate={()=>{}}
+                                            // selectedItemsLabel={row_data.rules && row_data.rules.length == Object.values(rules).length? "Pode tudo" :"{0} Ativos"}
+                                            style={{width:"100%"}} 
+                                            // selectedItemTemplate={this.selectedItemTemplate}
+                                            // onChange={this.props.onChangeGroups}
+                                            onChange={(event)=>{
+                                                const set_dashboard = (value)=>{
+                                                    var _row_data = {...row_data}
+                                                    _row_data.dashboard = value
+                                                    update_profiles(_row_data)
+                                                }
+                                                set_dashboard(event.value)
+                                            }}
+                                        />)
+                                    }}></Column>
+                                    {/* <Column field="f" header="Nome Feminino"></Column>
+                                    <Column field="m" header="Nome Masculino"></Column> */}
                                     <Column field="sla" header="Tempo SLA" body={(row_data)=>{
                                         const set_sla = (value)=>{
                                             var _row_data = {...row_data}
@@ -575,7 +639,7 @@ export default function AdminPage(){
                                         return(<div className="flex-grow-1">
                                             <InputNumber
                                                 suffix=" %"
-                                                style={{width:"100%"}}
+                                                // style={{width:"100%"}}
                                                 value={row_data.discount}
                                                 onChange={(e) => set_discount(e.value)} />
                                             <Slider value={row_data.discount} onChange={(e) => set_discount(e.value)} />
@@ -665,68 +729,43 @@ export default function AdminPage(){
                                 </DataTable>
                             },
                             {
-                                icon:"pi pi-th-large",
-                                header:"Segmentos",
-                                body:<DataTable
-                                style={{
-                                    width:"80vw",
-                                    minWidth:"100%",
-                                    maxWidth:"800px"
-                                }}
-                                size="small"
-                                value={groups}
-                                responsiveLayout="scroll"
-                                // scrollable
-                                scrollHeight="90vh"
-                            
-                            >
-                                <Column width="8rem" field="updated" header="Atualizado" body={(row_data)=>{
-                                    return(<h6 style={{color:"var(--text-c)"}}>
-                                        {time_ago(row_data.updated)}
-                                    </h6>)
-                                }}/>
-                                <Column field="nome" header="Nome"></Column>
-                                <Column field="filtros" header="Filtros" body={(row_data)=>{
-                                    return(<MultiSelect
-                                        filter
-                                        selectAll
-                                        value={row_data.filtros?row_data.filtros:[]}
-                                        options={[
-                                            {
-                                                nome:"Marcas",
-                                                type:"multi_dropdown",
-                                                options:[
-                                                    {nome:"PILAR", value:1}
-                                                ]
-                                            },
-                                            {
-                                                nome:"Gramatura",
-                                                type:"range_conditions",
-                                                suffix:"g/m²"
-                                            },
-                                            {
-                                                nome:"Largura",
-                                                type:"range_conditions",
-                                                suffix:"cm"
-                                            },
-                                            {
-                                                nome:"Comprimento",
-                                                type:"range_conditions",
-                                                suffix:"cm"
-                                            }
-                                        ]}
-                                        scrollHeight={window.innerHeight>300?300:window.innerHeight}
-                                        optionLabel="nome"
-                                        optionValue="id"
-                                        placeholder="Selecione..."
-                                        maxSelectedLabels={3}
-                                        panelHeaderTemplate={()=>{}}
-                                        selectedItemsLabel="{0} Segmentos"
-                                        // selectedItemTemplate={this.selectedItemTemplate}
-                                        // onChange={this.props.onChangeGroups}
-                                    />)
-                                }}></Column>
-                            </DataTable>
+                                icon:"pi pi-paperclip",
+                                header:"URL externa",
+                                body:<div>
+                                    <DataTable
+                                        // className="p-datatable-sm"
+                                        value={external_urls}
+                                    >
+                                        <Column header="Imagem" field="dashboard_image" body={(row_data)=>{
+                                            return(<Button className="hover:opacity-100 p-0 max-w-10rem max-h-10rem border-round-lg border-none overflow-hidden justify-content-center" onClick={(e)=>{
+                                                // console.log(row_data)
+                                                set_iframe_data(row_data)
+                                                set_new_iframe(false)
+                                            }}>
+                                                <i className="opacity-0 absolute pi pi-eye text-3xl text-blue-500 bg-glass-b p-3 border-circle" />
+                                                <img className="w-full" src={row_data.selected_image}/>
+                                            </Button>)
+                                        }}/>
+                                        <Column header="Nome" field="dashboard_name"/>
+                                        <Column header="Criador" field="dashboard_image" body={(row_data)=>{
+                                            return(<UserIcon uid={row_data.user_uid} inline/>)
+                                        }}/>
+                                        <Column header="Data" field="dashboard_image" body={(row_data)=>{
+                                            return(<div>
+                                                <div>{sqlDateToString(row_data.enviado?.toDate())}</div>
+                                                <div>{time_ago(row_data.enviado.toDate())}</div>
+                                            </div>)
+                                        }}/>
+                                    </DataTable>
+                                    <IframeExternalURL
+                                        editable
+                                        data={iframe_data}
+                                        edit={new_iframe}
+                                        onSave={(e)=>{
+                                            loadIframeURLs()
+                                        }}
+                                    />
+                                </div>
                             }
                         ]}/>
                     </div>
