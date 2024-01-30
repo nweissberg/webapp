@@ -2,30 +2,26 @@ import React, { useRef, useState, useEffect } from "react"
 import ObjectComponent from "../components/object";
 import { useAuth } from "../api/auth"
 import { Button } from "primereact/button";
-import { auth, get_data, readUsers , readRealtimeData, writeRealtimeData, readUser, query_data, get_vendedor, get_all_data } from '../api/firebase';
+import { auth, get_data, readUsers , readUser, get_all_data } from '../api/firebase';
 import { signOut } from "firebase/auth";
 import { useRouter } from 'next/router'
 import { ProgressBar } from "primereact/progressbar";
-import { copyToClipBoard, deepEqual, format_mask, scrollToBottom, scrollToTop, swap_array, time_ago } from "../utils/util";
-import { DataTable } from "primereact/datatable";
-import { Column } from 'primereact/column';
+import { copyToClipBoard, scrollToBottom, scrollToTop, time_ago } from "../utils/util";
 import localForage from "localforage";
 import Swal from 'sweetalert2';
 import { Toast } from 'primereact/toast';
 import FlipCard from "../components/flip_card";
 import ProfileInfo from "./components/profile_info";
-import { FilterMatchMode, FilterOperator } from 'primereact/api';
 import { useProducts } from "../../contexts/products_context";
 import OrderCarousel from "./components/orders_carousel";
 import { useSales } from "../contexts/context_sales";
 import UserSearch from "./components/user_search";
-import ClientsDatatable from "./components/clients_datatable";
 import { Inplace, InplaceDisplay, InplaceContent } from 'primereact/inplace';
 import UserCalls from "../components/user_call_viewer";
-import { get_data_api } from "../api/connect";
 import OrderSatusDatatable from "./components/order_satus_datatable";
 import IframeExternalURL from "../admin/components/external_iframe";
 import SettingsPage from "../admin/components/settings";
+import Clients_datatable from "../client/components/clients_datatable";
 
 
 const produtos_db = localForage.createInstance({
@@ -676,7 +672,7 @@ export default function ProfilePage(){
                             </div>
                             {tab_index == 1.1 && <div className="flex w-full">
                                 
-                                <ClientsDatatable
+                                <Clients_datatable
                                     clients={clients}
                                     all_users={all_users}
                                     selected_user={selected_user}

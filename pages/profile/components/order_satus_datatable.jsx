@@ -1,23 +1,15 @@
 import React from "react";
-import { DataTable } from "primereact/datatable";
-import { Column } from 'primereact/column';
-import ClientDashboard from "./client_dashboard";
-import ChannelIcons from "./channel_icons";
-import { Tooltip } from 'primereact/tooltip';
 import { format_mask, moneyMask, normalize, sqlDateToString, time_ago, var_set } from "../../utils/util";
 import { MultiSelect } from 'primereact/multiselect';
 import { Button } from "primereact/button";
-import { FilterMatchMode } from 'primereact/api';
 import { ConfirmPopup } from 'primereact/confirmpopup';
 import { ProgressBar } from "primereact/progressbar";
 import { withRouter } from "next/router";
 import { get_vendedor } from "../../api/firebase";
 import { get_data_api } from "../../api/connect";
-import { ToggleButton } from "primereact/togglebutton";
 import { InputText } from "primereact/inputtext";
 import DateRangeMenu from "../../components/dateRangeMenu";
 import localForage from "localforage";
-import ScrollWrapper from "../../components/scroll_wrapper";
 import ProductIcon from "./product_photo";
 
 const vendedores_db = localForage.createInstance({

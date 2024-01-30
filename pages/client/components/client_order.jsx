@@ -1,12 +1,9 @@
 import React, { Component } from 'react';
 import { Button } from 'primereact/button';
-import { DataTable } from 'primereact/datatable';
-import { Column } from 'primereact/column';
 import { capitalize, dateMask, moneyMask, shorten, time_ago } from '../../utils/util';
-import OrderTimeline from '../../order/components/order_timeline';
-import ProductIcon from './product_photo';
 import { Skeleton } from 'primereact/skeleton';
 import InViewWrapper from '../../components/in_view_wrapper';
+import ProductIcon from '../../profile/components/product_photo';
 
 export default class ClientOrderCard extends Component {
     constructor(props) {

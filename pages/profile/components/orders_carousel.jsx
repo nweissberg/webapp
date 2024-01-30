@@ -1,9 +1,7 @@
 import { Button } from 'primereact/button';
 import React, { Component, createRef } from 'react';
-import ScrollWrapper from '../../components/scroll_wrapper';
-import ClientOrderCard from './client_order';
 import OrderCard from './order_card';
-import InViewWrapper from '../../components/in_view_wrapper';
+import ClientOrderCard from '../../client/components/client_order';
 
 export default class OrderCarousel extends Component {
     constructor(props) {

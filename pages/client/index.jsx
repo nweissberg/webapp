@@ -1,27 +1,19 @@
-import React, { useContext, useState, useEffect } from "react"
+import React, { useState, useEffect } from "react"
 import ObjectComponent from "../components/object";
-import { AuthProvider, useAuth } from "../api/auth"
-import ClientDashboard from "../profile/components/client_dashboard";
+import { useAuth } from "../api/auth"
+import ClientDashboard from "../client/components/client_dashboard";
 import localForage from "localforage";
-import { ProgressSpinner } from "primereact/progressspinner";
 import ClientSearch from "./components/client_search";
 import ScrollWrapper from "../components/scroll_wrapper";
 import { useProducts } from "../../contexts/products_context";
 import { readUsers } from "../api/firebase";
-import { print, shorten, sum_array, var_get } from "../utils/util";
+import { print, var_get } from "../utils/util";
 import { ProgressBar } from "primereact/progressbar";
 import { Button } from "primereact/button";
-import ProductSidebar from "../sales/components/product_sidebar";
-import { ResponsiveContext, useResponsive } from "../components/responsive_wrapper";
+import { useResponsive } from "../components/responsive_wrapper";
 import ClientSearchTable from "../sales/components/client_search_table";
 import { withRouter } from 'next/router'
 import { get_data_api } from "../api/connect";
-
-const clientes_db = localForage.createInstance({
-    name:"pilarpapeis_db",
-    storeName:'clientes'
-});
-
 
 export async function getServerSideProps( context ) {
     const { query, res } = context
@@ -38,59 +30,9 @@ export async function getServerSideProps( context ) {
         }
         return reply
     })
-    const pedidos_cliente = await get_data_api({
-        query:"xqVL0s5dN84T6fgfUjep",
-        keys:[{ key: "CLIENTE_ID", value: query.id, type: "STRING" },
-            { key:"EMPRESA_ID", value: "1", type: "STRING" }],
-    }).then(async(pedidos)=>{
-        if(pedidos == null || pedidos.length == 0){
-            return null
-        }else{
-
-            pedidos = await pedidos.map(async(pedido)=>{
-                var _pedido = pedido
-                _pedido.cart = await get_data_api({
-                    query:"0tPRw4nOqYil3P9lm38T",
-                    keys:[
-                        { key: "EMPRESA_ID", value: '1', type: "STRING"},
-                        { key: "CLIENTE_ID", value: query.id, type: "STRING"},
-                        { key: "NFE", value: pedido.documento, type: "STRING"}
-                    ]
-                }).then((order_data)=>{
-                    // console.log(order_data)
-                    if(order_data && order_data.length>0){
-                        const cart = order_data.map((item)=>{
-                            return({
-                                nome:item.nome_produto,
-                                id:item.produto_id,
-                                quantidade:item.quantidade,
-                                value:item.valor_unitario
-                            })
-                        })
-                        _pedido.total = sum_array(cart.map((product)=>{
-                            return(product.value * product.quantidade || 0)
-                        }))
-                        // console.log("TESTE -> ",pedido.documento, pedido.data_emissao)
-                        _pedido.date = pedido.data_emissao
-                        _pedido.id = pedido.documento
-                        return cart
-                    }else{
-                        return []
-                    }
-                })
-                return _pedido
-            })
-            await Promise.all(pedidos).then((_pedidos)=>{
-                pedidos = _pedidos
-            })
-            return pedidos
-        }
-
-    })
-    console.log(pedidos_cliente)
     return { props: {
         client_credit,
-        pedidos_cliente
+        // pedidos_cliente
     }}
 }
 
@@ -98,7 +40,6 @@ function ClientPage(props){
     const [ client, set_client ] = useState(null)
     const [ load_client, set_load_client ] = useState(null)
     const [ clients_list, set_clients_list ] = useState([])
-    // const { asPath } = useRouter();
     const { currentUser } = useAuth()
     const [ loading, set_loading ] = useState(true)
     const [ client_id, set_client_id ] = useState(true)
@@ -106,7 +47,7 @@ function ClientPage(props){
     const [ filtered, set_filtered ] = useState([])
     const [ show_search, set_show_search ] = useState(false)
     const [ all_users, set_all_users ] = useState(null)
-    // const [ is_mobile, set_is_mobile ] = useState(false)
+
     const { 
         check_rule,
         clients,
@@ -125,10 +66,6 @@ function ClientPage(props){
         // set_loading(false)
     },[])
 
-    useEffect(()=>{
-        print(isMobile)
-        // set_is_mobile(isMobile)
-    },[isMobile])
 
     useEffect(()=>{
         if(clients.length == 0) get_clients(currentUser)
@@ -232,7 +169,7 @@ function ClientPage(props){
         >
             <div>
                 <div className="sticky top-0 z-1">
-                    {clients_header()}
+                    <clients_header />
                 </div>
                 
                 { !(!show_search || loading == 'client' || loading != false ) && <ClientSearchTable 

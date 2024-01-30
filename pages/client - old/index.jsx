@@ -1,7 +1,7 @@
 import React, { useContext, useState, useEffect } from "react"
 import ObjectComponent from "../components/object";
 import { useAuth } from "../api/auth"
-import ClientDashboard from "../profile/components/client_dashboard";
+import ClientDashboard from "../client/components/client_dashboard";
 import { useRouter } from 'next/router'
 import localForage from "localforage";
 import { ProgressSpinner } from "primereact/progressspinner";

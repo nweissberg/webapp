@@ -1,34 +1,24 @@
 import { Button } from "primereact/button";
 import { Skeleton } from "primereact/skeleton";
 import React from "react";
-import { api_call, api_get, get_data_api } from "../../api/connect";
-import { capitalize, moneyMask, print, scrollToBottom, scrollToTop, shorten, sum_array, time_ago, time_until, var_get, var_set } from "../../utils/util";
+import { moneyMask, shorten, sum_array } from "../../utils/util";
 import { Sidebar } from "primereact/sidebar";
-// import GoogleMap from "../../components/maps";
 import PieChart from "../../components/chart_pie";
 import BarChart from "../../components/chart_bar";
-import CallDialog from "./call_dialog";
-import ProductIcon from "./product_photo";
-import { ProgressSpinner } from "primereact/progressspinner";
-import ClientSearch from "../../client/components/client_search";
-import { Inplace, InplaceDisplay, InplaceContent } from 'primereact/inplace';
-import ReorderDatatable from "../../components/reorder_datatable";
 import { withRouter } from "next/router";
-import Clients_datatable from "./clients_datatable";
 import { ProgressBar } from "primereact/progressbar";
 import LineChart from "../../components/chart_line";
-// import { TabView, TabPanel } from 'primereact/tabview';
 import ProductSidebar from "../../sales/components/product_sidebar";
-import OrderCarousel from "./orders_carousel";
 import GroupIcons from "../../components/groups_icons";
 import ProductsViewer from "../../components/products_viewer";
-import ScrollWrapper from "../../components/scroll_wrapper";
-import DateRangePicker from "../../components/date_interval_filter";
 import UndoableEditor from "../../../contexts/UndoableEditor";
-import { add_data, get_data, query_data } from "../../api/firebase";
+import { add_data, query_data } from "../../api/firebase";
 import SalesPage from "../../sales";
 import UserCalls from "../../components/user_call_viewer";
 import ClientDashboardIframe from "../../client/components/dashboard_iframe";
+import CallDialog from "../../profile/components/call_dialog";
+import ProductIcon from "../../profile/components/product_photo";
+import OrderCarousel from "../../profile/components/orders_carousel";
 
 
 
@@ -723,7 +713,7 @@ class ClientDashboard extends React.Component{
 			// console.log(this.props.isMobile)
 			return(<div className=" m-0 p-0">
 				{(!this.props.client && this.state.loading != false) && <ProgressBar mode='indeterminate' className="mt-0"/>}
-				{this.header()}
+				{/* {this.header()} */}
 				
 				{this.render_dashboard()}
 				

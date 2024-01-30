@@ -1,9 +1,6 @@
 import React from "react";
 import { DataTable } from "primereact/datatable";
 import { Column } from 'primereact/column';
-import ClientDashboard from "./client_dashboard";
-import ChannelIcons from "./channel_icons";
-import { Tooltip } from 'primereact/tooltip';
 import { format_mask, var_set } from "../../utils/util";
 import { Button } from "primereact/button";
 import { FilterMatchMode } from 'primereact/api';
@@ -71,11 +68,6 @@ export default withRouter(class ClientsDatatable extends React.Component{
             }}
             onValueChange={ (data) => {this.testOnChange(data)} }
             
-            // onFilter={(e)=>{
-            //     var _clients_filters = {...clients_filters}
-            //     _clients_filters[e.sortField] = 
-            //     console.log(e,clients_filters)
-            // }}
             stateStorage="local"
             stateKey="dt-state-client-agenda"
             filterDelay={1000}
@@ -94,20 +86,6 @@ export default withRouter(class ClientsDatatable extends React.Component{
                                 this.props.router.push('client?p=chamado&id='+ rowData.id)
                             }}
                         />);
-                        return( 
-                            <ClientDashboard 
-                                clients={this.state.clients_filtered}
-                                client={rowData}
-                                all_users={this.props.all_users}
-                                user={this.props.selected_user}
-                                load_products_client={this.props.load_products_client}
-                                // parent={overlay_panel}
-                                // show={call_dialog}
-                                // onHide={(event)=>{
-                                //     set_call_dialog(false)
-                                // }}
-                            />
-                        )
                     }}
                 />
                 
