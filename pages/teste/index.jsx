@@ -64,12 +64,6 @@ export default function TestPage(props){
         // testFunc()
     },[])
 
-    // useEffect(()=>{
-    //     return ()=> {
-    //         console.log(testResponse)
-    //     }
-    // },[testResponse])
-
     return(<div className="flex bg w-view h-view justify-content-center align-items-center">
         <label className="flex w-auto max-w-30rem">
             {props.text}

@@ -11,14 +11,7 @@ import { useProducts } from "../../contexts/products_context";
 import { readUsers } from "../api/firebase";
 import { shorten, var_get } from "../utils/util";
 import { ProgressBar } from "primereact/progressbar";
-import { Button } from "primereact/button";
-import ProductSidebar from "../sales/components/product_sidebar";
-import { ResponsiveContext, useResponsive } from "../components/responsive_wrapper";
-
-const clientes_db = localForage.createInstance({
-    name:"pilarpapeis_db",
-    storeName:'clientes'
-});
+import { useResponsive } from "../components/responsive_wrapper";
 
 export default function ClientPage(){
     const [client, set_client] = useState(null)
@@ -73,7 +66,6 @@ export default function ClientPage(){
         })
         if(client_id){
             const client = clients.find(c=>c.id == client_id)
-            console.log(client)
             set_client(client)
         }
     },[clients, client_id])

@@ -35,7 +35,10 @@ export default class UserIcon extends React.Component{
         }
     }
     componentDidMount(){
-        this.getUser()
+        this.getUser().then(user=>{
+            console.log(user,document)
+         
+        })
     }
     componentDidUpdate(){
         this.getUser()
@@ -45,7 +48,7 @@ export default class UserIcon extends React.Component{
         if(this.state.user == null){
             return(<><Skeleton className={this.props.className } key={this.props.key +'_tmp'} width={size+"px"} height={size+"px"} borderRadius="50%"/></>)
         }
-        return(<div key={this.props.key +'_cursor'} className={(this.props.pointer?'shadow-3 ':" ") +this.props.className }
+        return(<div key={this.props.key +'_cursor'} id={this.props.key +'_cursor'} className={(this.props.pointer?'shadow-3 ':" ") +this.props.className +" relative" }
         style={this.props.pointer?{
             backgroundColor:"white",
             borderRadius:"2px 50% 50% 50%",
@@ -70,7 +73,11 @@ export default class UserIcon extends React.Component{
                 >
                     <Button
                         tooltip={this.props.profiles[this.state.user.role]?.name}
-                        tooltipOptions={{position:"top"}}
+                        tooltipOptions={{position:()=>{
+                            const element = document.getElementById(this.props.key +'_cursor')
+                            console.log(element?.offsetLeft<= document?.width/2)
+                            return("bottom")
+                        }}}
                         className="p-button-rounded"
                         icon={"pi pi-"+this.props.profiles[this.state.user.role].icon}
                         style={{

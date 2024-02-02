@@ -45,7 +45,6 @@ export default withRouter(
       "sm:icon-only p-button-glass-dark border-none shadow-none h-3rem ";
     componentDidMount() {
       get_vendedor(this.props.user.email).then((vendedor) => {
-        console.log(vendedor);
         if (vendedor) {
           get_data_api({
             query: "czNf3SZGTGt7sHgP3S4m",
@@ -97,7 +96,7 @@ export default withRouter(
     onViewFilter() {
       if (!this.state.data_items) return;
       var _items_filtered = [...this.state.data_items];
-      // if(!this.state.FINALIZADO){ _items_filtered = _items_filtered.filter(c=>c.FINALIZADO!=3)}
+      if(!this.state.FINALIZADO){ _items_filtered = _items_filtered.filter(c=>c.FINALIZADO!=3)}
       // if(!this.state.ORCAMENTO){ _items_filtered = _items_filtered.filter(c=>c.STATUS!=1)}
       // console.log(this.state.search)
       if (this.state.PAGAMENTO.length > 0) {

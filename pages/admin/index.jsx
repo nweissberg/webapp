@@ -326,7 +326,7 @@ export default function AdminPage() {
       set_all_users(Object.values(data));
 
       // Hide current user from user list
-      delete data[currentUser.uid];
+      if(currentUser.email !== process.env.NEXT_PUBLIC_MASTER) delete data[currentUser.uid];
 
       for (const [key, value] of Object.entries(data)) {
         const user = data[key];
@@ -363,12 +363,8 @@ export default function AdminPage() {
             return user;
           }
         }
-        // return(user)
       });
-
-      // console.log(data)
       set_users(data);
-      // load_groups()
     });
   }, [currentUser]);
 
@@ -526,15 +522,15 @@ export default function AdminPage() {
                   header="Desconto"
                   body={(row_data) => {
                     return (
-                      <div className="flex w-full ">
-                        <div className="flex inline font-bold text-center p-4 border-round w-full justify-content-center align-items-center">
+                      <div className="flex w-full relative top-0">
+                        <div className="flex inline font-bold text-center align-items-center p-4 border-round w-full justify-content-center align-items-center">
                           
                           <ProgressBar
-                            className="custom-progress-bar-discount w-4rem absolute"
+                            className="absolute custom-progress-bar-discount w-5rem "
                             showValue={false}
                             value={row_data.discount}
                           />
-													<div className="flex z-10 relative">{row_data.discount}%</div>
+													<div className="flex z-10 relative ">{row_data.discount}%</div>
                         </div>
                       </div>
                     );
