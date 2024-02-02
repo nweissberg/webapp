@@ -627,7 +627,6 @@ export default function Home() {
                         icon={selectedFile === '' || fileSaved === true?'pi pi-save':'pi pi-cloud-upload'}
                         onClick={()=>{
                           if(selectedFile !== ''){
-                            console.log(selectedFile,keyVars)
                             var _SQL = {...SQL}
                             _SQL.keys = [...keyVars]
                             if(!_SQL.uid || _SQL.uid == '') _SQL.uid = selectedFile
@@ -758,8 +757,6 @@ export default function Home() {
                           field={col}
                           header={col}
                           editor={(options) => {
-                            // if(keyVars[i].value == "Null")
-                            console.log(keyVars?.[0][col], col)
                             if(options.field == "type"){
                               return(statusEditor(options))
                             }
@@ -915,7 +912,6 @@ export default function Home() {
                   }}
                   onClick={()=>{
                     toast.current.show({ severity: 'info', summary: 'Ctrl+C', detail: "Copiada para área de transferência!" });
-                    console.log(SQL,bodySQL)
                     copyToClipBoard(`${process.env.NEXT_PUBLIC_DB_CLOUD_URL}api/query/${selectedDB.id}/${bodySQL.sql}`.replace(" ",""))
                   }}
                 />
@@ -1025,7 +1021,6 @@ export default function Home() {
                   if(event.node.type == 'file'){
                     setQueryData(null)
                     const file = event.node.data
-                    console.log(file.uid)
                     setSQL(file)
                     setFileName(file.name)
                     setSelectedFile(file.uid)
@@ -1045,9 +1040,7 @@ export default function Home() {
                 onExpand={(event) => {
                   // toast.current.show({ severity: 'success', summary: 'Node Expanded', detail: event.node.label });
                   let node = { ...event.node };
-                  console.log(node.children.length)
                   if (node.children.length == 0) {
-                    console.log(node.children)
                     var db_credentials = node.data
                     setLoadingItems(true);
                     

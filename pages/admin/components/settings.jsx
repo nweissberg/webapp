@@ -28,7 +28,8 @@ export default function SettingsPage(props){
         <div className="w-full">
             <Accordion
                 className="accordion-custom"
-                // activeIndex={activeIndex}
+                activeIndex={props.activeIndex && props.multiple?props.activeIndex:0}
+                multiple={props.multiple?props.multiple:false}
             >
                 {props.tabs.map((tab,index)=>{
                     return(
@@ -44,3 +45,4 @@ export default function SettingsPage(props){
         </div>
     )
 }
+

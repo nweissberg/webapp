@@ -14,6 +14,12 @@ import { useResponsive } from "../components/responsive_wrapper";
 import ClientSearchTable from "../sales/components/client_search_table";
 import { withRouter } from 'next/router'
 import { get_data_api } from "../api/connect";
+import UndoableEditor from "../../contexts/UndoableEditor";
+import CallDialog from "../profile/components/call_dialog";
+import UserCalls from "../components/user_call_viewer";
+import SettingsPage from "../admin/components/settings";
+import ClientCallDialog from "./components/client_call_dialog";
+import { TabPanel, TabView } from "primereact/tabview";
 
 export async function getServerSideProps( context ) {
     const { query, res } = context
@@ -222,24 +228,50 @@ function ClientPage(props){
                     set_client(null)
                 }}
             />}
-            {client && <ClientDashboard 
-                {...props}
-                // router={props.router}
-                fullScreen={true}
-                clients={clients_list}
-                client={client}
-                user={currentUser}
-                all_users={all_users}
-                load_products_client={load_products_client}
-                load_products_group={load_products_group}
-                check_rule={check_rule}
-                matrix={props.router.query.p}
-                groups={groups}
-                isMobile={isMobile}
-                onLoad={(value)=>{
-                    set_loading(value)
-                }}
-            />}
+            
+            {client && <div className="bg-glass-a">
+                <div className="flex flex-grow-1 text-left flex-wrap w-auto h-auto gap-2 align-items-center p-2 pt-4 w-full justify-content-center">
+                    <h4 className="white-space-normal text-white">{client?.fantasia}</h4>
+                    <h5 className=" text-overflow-ellipsis overflow-hidden hide_on_phone" style={{color:"var(--text-c)"}}>{client?.razao_social}</h5>
+                </div>
+                
+                <SettingsPage multiple={true} tabs={[{
+                    header:"Abrir Chamado",
+                    icon:"p-phone",
+                    body:<ClientCallDialog user={currentUser} all_users={all_users} client={client}/>
+                },
+                {
+                    header:"Chamados",
+                    icon:"p-users",
+                    body:<UserCalls
+                    clients={clients_list}
+                    user={currentUser}
+                    currentUser={currentUser}
+                    query={{"client.id": ['==', client?.id]}}
+                />
+                }]}/>
+                
+                    
+                {/* <ClientDashboard 
+                    {...props}
+                    // router={props.router}
+                    fullScreen={true}
+                    clients={clients_list}
+                    client={client}
+                    user={currentUser}
+                    all_users={all_users}
+                    load_products_client={load_products_client}
+                    load_products_group={load_products_group}
+                    check_rule={check_rule}
+                    matrix={props.router.query.p}
+                    groups={groups}
+                    isMobile={isMobile}
+                    onLoad={(value)=>{
+                        set_loading(value)
+                    }}
+                /> */}
+            </div>
+            }
             
             {(load_client && props.router.query.id != load_client?.id && loading) && <div
                 className="flex fixed z-2 top-0 left-0 w-screen min-h-max h-screen bg-glass-b "

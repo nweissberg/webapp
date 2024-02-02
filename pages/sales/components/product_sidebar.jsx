@@ -179,8 +179,6 @@ export default class ProductSidebar extends React.Component{
                         this.setState({inventory:null})
                         return(null)
                     }
-
-                    console.log(data)
                     var inventory_data = []
                     var _invetory = data.map(async(company)=>{
                         await companies_db.getItem(company.empresa_id.toString()).then((company_info)=>{

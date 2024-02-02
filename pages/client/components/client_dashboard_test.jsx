@@ -199,19 +199,6 @@ export default class ClientDashboard extends React.Component{
             }
         }
     }
-    // componentDidMount(){
-    //     if(this.props?.fullScreen){
-    //         this.load_client()
-    //     }
-    // }
-    
-    // componentDidUpdate(){
-    //     console.log("Component Update",this.state.client)
-    //     // if(!this.props.client || this.state.show_dashboard == false || this.state.loading) return
-    //     // if(this.props.client?.id != this.state.client?.id){
-    //     //     this.load_client(this.props.client)
-    //     // }
-    // }
 
     load_client(client){
         // console.log(this.props.client)

@@ -299,6 +299,8 @@ export default function ProductsProvider({children}){
                 callback?.(produto)
                 res(produto)
                 // setGenerated(true);
+            }).catch(e=>{
+                console.error(e)
             });
         })
         

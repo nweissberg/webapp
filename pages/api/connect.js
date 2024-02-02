@@ -1,4 +1,3 @@
-import { deepEqual } from '@firebase/util';
 import axios from 'axios';
 import { isDeepEqual, print } from '../utils/util';
 
@@ -36,7 +35,7 @@ api_cloud.interceptors.response.use(function(response){
 
 const api_call = ((path,body,cloud=true)=>{
   var isLoading = api_buffer.find((requested)=>isDeepEqual(body,requested))
-  print(api_buffer)
+  // print(api_buffer)
   return new Promise(function(res, rej) {
     if(isLoading) { return(null) }
 
@@ -45,7 +44,7 @@ const api_call = ((path,body,cloud=true)=>{
       api_cloud.post(path, body)
       .then((data) => {
         if(data){
-          print((Date.now(),'CLOUD'))
+          // print((Date.now(),'CLOUD'))
           api_buffer = api_buffer.filter((request)=>isDeepEqual(request,body) == false)
           res(data)
         }else{
@@ -56,7 +55,7 @@ const api_call = ((path,body,cloud=true)=>{
       api.post(path, body)
       .then((data) => {
         if(data){
-          print((Date.now(),'LOCAL'))
+          // print((Date.now(),'LOCAL'))
           api_buffer = api_buffer.filter((request)=>isDeepEqual(request,body) == false)
           res(data)
         }else{
@@ -69,11 +68,11 @@ const api_call = ((path,body,cloud=true)=>{
 
 var api_buffer = []
 const api_get = ((body, headers)=>{
-  print(api_buffer)
+  // print(api_buffer)
   
   var isLoading = api_buffer.find((requested)=>isDeepEqual(body,requested))
   
-  
+  //"{"credentials":"0pRmGDOkuIbZpFoLnRXB","keys":[{"key":"pid","value":15284,"type":"string"}],"query":"zgzAjRqN1XHvvV3QXiwE"}"
   return new Promise(function(res, rej) {
     if(isLoading) { res(null) }
     

@@ -56,7 +56,7 @@ export default class CallDialog extends React.Component{
                 command: (event) => {}
             },
             {
-                label: 'Canais de Comunicação ',
+                label: 'Origem do Contato ',
                 command: (event) => {}
             },
             {
@@ -299,7 +299,7 @@ export default class CallDialog extends React.Component{
         const footer_button = "flex w-auto p-4 h-full bg pt-1 pb-1 m-0 pl-2 pr-2 p-button-text shadow-none p-button-lg p-button-rounded "
         
         return(<div className="flex grid flex-wrap w-full h-full p-3">
-            <div style={{height:"70px"}} className="col-12 flex w-full flex-grow-1 justify-content-end">
+            <div style={{height:"70px"}} className="col-12 flex w-full flex-grow-1 justify-content-center">
                 
                     {this.state.selectedChannel != "" &&
                         this.contact_icon()

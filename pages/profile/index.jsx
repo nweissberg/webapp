@@ -492,11 +492,6 @@ export default function ProfilePage(){
                                             className="p-button-lg p-button-rounded m-2 flex-grow-1 p-button-success"
                                             icon="pi pi-user-plus"
                                             onClick={(event)=>{
-                                                // test_context("test_action",{Numero:81})
-                                                // test_context("send_order",{Telefone:"81",Mensagem:"'Teste de disparo pelo botão de editar o perfil'"})
-                                                // event.stopPropagation()
-                                                // scrollToTop()
-                                                // set_edit_profile(true)
                                             }}
                                         />}
 
@@ -508,11 +503,6 @@ export default function ProfilePage(){
                                             className="p-button-lg p-button-rounded m-2 flex-grow-1 p-button-help"
                                             icon="pi pi-comments"
                                             onClick={(event)=>{
-                                                // test_context("test_action",{Numero:81})
-                                                // test_context("send_order",{Telefone:"81",Mensagem:"'Teste de disparo pelo botão de editar o perfil'"})
-                                                // event.stopPropagation()
-                                                // scrollToTop()
-                                                // set_edit_profile(true)
                                             }}
                                         />}
                                         {isActiveUser && <Button
@@ -523,9 +513,6 @@ export default function ProfilePage(){
                                             className="p-button-lg p-button-rounded m-2 flex-grow-1"
                                             icon="pi pi-user-edit"
                                             onClick={(event)=>{
-                                                // test_context("test_action",{Numero:81})
-                                                // test_context("send_order",{Telefone:"81",Mensagem:"'Teste de disparo pelo botão de editar o perfil'"})
-                                                // event.stopPropagation()
                                                 scrollToTop()
                                                 set_edit_profile(true)
                                             }}
@@ -627,7 +614,7 @@ export default function ProfilePage(){
                         {tab_index == 0 && user_dashboard && isActiveUser && <SettingsPage tabs={user_dashboard}/>}
                         {/* {tab_index == 0 && isActiveUser && <iframe width="1024" height="600" src="https://lookerstudio.google.com/embed/reporting/7eb8f5de-e937-4ffc-8a21-e61b741fc07b/page/Qw8WD"></iframe>} */}
                         {Math.floor(tab_index) == 1 && <>
-                            <div className="flex flex-wrap gap-3" style={{width:"100%"}}>
+                            {/* <div className="flex flex-wrap gap-3" style={{width:"100%"}}>
                                 <div className="flex-grow-1">
                                     <Button className="p-button-lg"
                                         icon="pi pi-users"
@@ -669,9 +656,8 @@ export default function ProfilePage(){
                                         }}
                                     />
                                 </div>
-                            </div>
+                            </div> */}
                             {tab_index == 1.1 && <div className="flex w-full">
-                                
                                 <Clients_datatable
                                     clients={clients}
                                     all_users={all_users}

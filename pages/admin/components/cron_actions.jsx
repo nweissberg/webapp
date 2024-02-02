@@ -12,7 +12,51 @@ import { add_data, get_all_data, set_data } from "../../api/firebase";
 import Rule from "../../contexts/rule_icon";
 import { Chips } from 'primereact/chips';
 import { scrollToTop } from "../../utils/util";
-import { Timestamp, serverTimestamp } from "firebase/firestore"; 
+import { Timestamp } from "firebase/firestore"; 
+
+const new_action = {
+    name: "Sem Nome",
+    info: "",
+    script: "",
+    exec: 5,
+    weekdays: [],
+    times:[],
+    date:Timestamp.now(),
+    days:[],
+    months:[]
+};
+
+const exec_modes = [
+    {label:"hora-em-hora",value:5},
+    {label:"apenas uma vez",value:4},
+    {label:"todos os dias",value:0},
+    {label:"toda semana",value:1},
+    {label:"todo mês",value:2},
+    {label:"todo ano",value:3},
+]
+const weekdays = [
+    {label:"Dom",name:"Domingo",value:0},
+    {label:"Seg",name:"Segunda",value:1},
+    {label:"Ter",name:"Terça",value:2},
+    {label:"Qua",name:"Quarta",value:3},
+    {label:"Qui",name:"Quinta",value:4},
+    {label:"Sex",name:"Sexta",value:5},
+    {label:"Sáb",name:"Sábado",value:6}
+]
+const months = [
+    {label:"Jan", name:"Janeiro",value:0},
+    {label:"Fev", name:"Fevereiro",value:1},
+    {label:"Mar", name:"Março",value:2},
+    {label:"Abr", name:"Abril",value:3},
+    {label:"Mai", name:"Maio",value:4},
+    {label:"Jun", name:"Junho",value:5},
+    {label:"Jul", name:"Julho",value:6},
+    {label:"Ago", name:"Agosto",value:7},
+    {label:"Set", name:"Setembro",value:8},
+    {label:"Out", name:"Outubro",value:9},
+    {label:"Nov", name:"Novembro",value:10},
+    {label:"Dez", name:"Dezembro",value:11},
+]
 
 export default function CronActionsPage(props){
     const [actions_array, set_actions_array] = useState([])
@@ -20,49 +64,7 @@ export default function CronActionsPage(props){
     const [week_label, set_week_label] = useState("Selecione")
     const [can_save, set_can_save] = useState(false)
     
-    const new_action = {
-        name: "Sem Nome",
-        info: "",
-        script: "",
-        exec: 5,
-        weekdays: [],
-        times:[],
-        date:Timestamp.now(),
-        days:[],
-        months:[]
-    };
     
-    const exec_modes = [
-        {label:"hora-em-hora",value:5},
-        {label:"apenas uma vez",value:4},
-        {label:"todos os dias",value:0},
-        {label:"toda semana",value:1},
-        {label:"todo mês",value:2},
-        {label:"todo ano",value:3},
-    ]
-    const weekdays = [
-        {label:"Dom",name:"Domingo",value:0},
-        {label:"Seg",name:"Segunda",value:1},
-        {label:"Ter",name:"Terça",value:2},
-        {label:"Qua",name:"Quarta",value:3},
-        {label:"Qui",name:"Quinta",value:4},
-        {label:"Sex",name:"Sexta",value:5},
-        {label:"Sáb",name:"Sábado",value:6}
-    ]
-    const months = [
-        {label:"Jan", name:"Janeiro",value:0},
-        {label:"Fev", name:"Fevereiro",value:1},
-        {label:"Mar", name:"Março",value:2},
-        {label:"Abr", name:"Abril",value:3},
-        {label:"Mai", name:"Maio",value:4},
-        {label:"Jun", name:"Junho",value:5},
-        {label:"Jul", name:"Julho",value:6},
-        {label:"Ago", name:"Agosto",value:7},
-        {label:"Set", name:"Setembro",value:8},
-        {label:"Out", name:"Outubro",value:9},
-        {label:"Nov", name:"Novembro",value:10},
-        {label:"Dez", name:"Dezembro",value:11},
-    ]
 
     useEffect(()=>{
         get_all_data("cron").then((cron_data)=>{

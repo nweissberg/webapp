@@ -1,9 +1,8 @@
 import React from 'react';
 import { DataTable } from "primereact/datatable";
 import { Column } from 'primereact/column';
-import { FilterMatchMode, FilterOperator } from 'primereact/api';
-import { deepEqual, format_mask, isDeepEqual, print } from '../../utils/util';
-import { get_vendedor } from '../../api/firebase';
+import { FilterMatchMode } from 'primereact/api';
+import { format_mask, print } from '../../utils/util';
 import { Button } from 'primereact/button';
 import { ProgressBar } from 'primereact/progressbar';
 
@@ -42,38 +41,6 @@ export default class ClientSearchTable extends React.Component{
             this.setState({client_filters:filters})
         }
     }
-    loadClients(){
-        // this.setState({loadingClients:true})
-        // console.log("GET CLIENTS from", this.props.user.name)
-        // get_vendedor(this.props.user).then((vendedor)=>{
-        //     // console.log(vendedor,this.state.all_clients)
-        //     if(vendedor && this.props.clients){
-        //         console.log(vendedor.VENDEDOR)
-        //         var user_clients = this.props.clients.filter((client)=>client.vendedor_id == vendedor.id)//vendedor.id
-        //         console.log(user_clients)
-
-        //         this.build_filters()
-
-        //         if( this.props.check_rule(this.props.user,"VER_TODOS_CLIENTES") ){
-        //             this.setState({clients:this.props.clients, loadingClients:false})
-        //         }else{
-        //             // console.log("user_clients")
-        //             this.setState({clients:user_clients, loadingClients:false})
-        //         }
-                
-        //     }else{
-        //         if(this.props.check_rule(this.props.user,"VER_TODOS_CLIENTES")){
-        //             this.setState({clients:this.props.clients, loadingClients:false})
-        //         }else{
-        //             this.setState({clients:[], loadingClients:false})
-        //         }
-        //     }
-        // })
-    }
-    componentDidMount(){
-        // this.loadClients()
-    }
-
     searchClients(event) {
         setTimeout(() => {
             let filteredClients;

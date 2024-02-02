@@ -7,6 +7,7 @@ import { FilterMatchMode } from 'primereact/api';
 import { ConfirmPopup } from 'primereact/confirmpopup';
 import { ProgressBar } from "primereact/progressbar";
 import { withRouter } from "next/router";
+import ChannelIcons from "../../profile/components/channel_icons";
 
 export default withRouter(class ClientsDatatable extends React.Component{
     constructor(props){

@@ -728,13 +728,13 @@ export async function fetchWithTimeout(url, options, timeout = 5000) {
     const abortController = new AbortController();
     const timeoutId = setTimeout(() => {
         abortController.abort();
-        console.log("Request timed out");
+        console.warn("Request timed out");
     }, timeout);
 
     try {
         const response = await fetch(url, { ...options, signal: abortController.signal });
         if (!response.ok) {
-            console.log(`HTTP error! status: ${response.status}`);
+            console.error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
         clearTimeout(timeoutId);

@@ -74,7 +74,6 @@ export default class SaleInfo extends Component{
                         <InputText
                             value={this.state.sale.name}
                             onChange={(event)=>{
-                                console.log(event.target.value)
                                 var _sale = {...this.state.sale}
                                 _sale.name = event.target.value
                                 this.setState({sale:_sale})

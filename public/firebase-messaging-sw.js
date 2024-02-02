@@ -6,7 +6,6 @@ const messaging = firebase.messaging();
 
 
 messaging.onMessage(function(payload) {
-    console.log('Message received. ', payload);
     const notificationTitle = payload.data.title;
     const notificationOptions = {
         body: payload.data.message,
@@ -24,7 +23,6 @@ messaging.onMessage(function(payload) {
 });
 
 messaging.onBackgroundMessage(function(payload) {
-    console.log('Received background message ', payload);
     const notificationTitle = payload.data.title;
     const notificationOptions = {
         body: payload.data.message,
@@ -43,7 +41,6 @@ messaging.onBackgroundMessage(function(payload) {
 
 self.addEventListener('notificationclick', function(event) {
     event.notification.close();
-    console.log(event)
     const link = 'https://app.pilar.com.br/'+ event.notification.data.link;
     event.waitUntil(
         clients.openWindow(link)

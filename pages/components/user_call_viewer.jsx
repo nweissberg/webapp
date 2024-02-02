@@ -1,10 +1,8 @@
 import React from 'react';
 import { query_data } from '../api/firebase';
-import { shorten, time_ago, time_until } from '../utils/util';
+import { shorten, time_ago } from '../utils/util';
 import { Button } from 'primereact/button';
 import UserIcon from './user_icon';
-import Link from 'next/link'
-import ClientIcon from './client_icon';
 
 export default class UserCalls extends React.Component{
     constructor(props){
@@ -45,23 +43,25 @@ export default class UserCalls extends React.Component{
 			// this.setState({calls:_docs})
 			// Promise.all(promises).then(e=>{
 			// })
-			console.log(_docs)
+			// console.log(_docs)
 			this.setState({client_calls:_docs})
 		})
 	}
 
     render(){
 		if(!this.state.client_calls)return(<></>)
-        return(<div className='flex overflow-x-scroll overflow-y-hidden flex w-screen horizontal-scrollbar'>
-			<div className="align-items-start flex h-auto text-white gap-2 justify-content-start w-full mb-8">
+        return(<div className='flex overflow-hidden flex w-full p-2 h-full pb-2'>
+			<div className="align-items-start flex h-auto text-white gap-2 justify-content-start w-full">
 			{this.state.client_calls.map((call,i)=>{
+				if(i>2)return<></>
 				return(<div key={'call_'+i}
 					// style={{width:'100%', maxWidth:"33vw"}}
 					style={{minWidth:"max(min(100%, 400px), 33vw)"}}
 					className="flex flex-wrap p-3 borde r-2 border-blue-700 bg-glass-b border-round-md h-full">
 					<div className=" w-full h-full align-content-between">
 						
-						<ClientIcon client={call.client}/>
+						{/* <ClientIcon client={call.client}/> */}
+						<h4 className='w-full justify-content-center flex text-center'>{call.enviado.toLocaleDateString('pt-BR', { day: "2-digit", month: 'long', year: "numeric"})}</h4>
 						<UserIcon
 							currentUser={this.props.currentUser}
 							uid={call.user_uid}
@@ -84,7 +84,7 @@ export default class UserCalls extends React.Component{
 							}}
 						/>}
 						</label>
-						<div className="flex justify-content-between align-items-start col-12">
+						{/* <div className="flex justify-content-between align-items-start col-12">
 							<h5 className="font-bold">Retornar { time_until(call.call_return_date).toLowerCase() }</h5>
 							<span className="text-right">
 								{call.call_return_date - Date.now() < 0 && <h6 className="underline">Atrasado {time_ago(call.call_return_date).toLocaleLowerCase()}</h6>}
@@ -98,7 +98,7 @@ export default class UserCalls extends React.Component{
 									})}
 								</label>}
 							</span>
-						</div>
+						</div> */}
 						
 						{call.help_description && call.help_user?.uid != this.props.currentUser.uid &&
 							<label className="col-12 line-height-4 text-justify">Foi solicitada a ajuda de <span className="font-bold ">{call.help_user?.name}</span>: {call.expandir[1]?call.help_description:shorten(call.help_description, 30, false)}
@@ -122,7 +122,7 @@ export default class UserCalls extends React.Component{
 							// role
 						/>}
 					</div>
-					{(call.help_user?.uid == this.props.currentUser.uid || call.user_uid == this.props.currentUser.uid) && <div className='bottom-0'>
+					{/* {(call.help_user?.uid == this.props.currentUser.uid || call.user_uid == this.props.currentUser.uid) && <div className='bottom-0'>
 						<Button label='Retornar'
 							className={this.footer_button}
 							icon='pi pi-phone'
@@ -131,7 +131,7 @@ export default class UserCalls extends React.Component{
 								// this.setState({all_channels:!this.state.all_channels})
 							}}
 						/>
-					</div>}
+					</div>} */}
 				</div>)
 			})}
 		</div>

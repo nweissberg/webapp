@@ -147,7 +147,6 @@ const ClientSearch = (props) => {
                         props.set_filtered_clients([])
                     }else{
                         set_last_clients(filtered_clients)
-                        console.log(search_query,e,filtered_clients)
                     }
                 }}
                 onChange={(e) => {

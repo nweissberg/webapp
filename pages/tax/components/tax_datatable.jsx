@@ -207,7 +207,6 @@ export default class TaxDataTable extends React.Component{
         // console.log(this.state)
         if(!this.state.selected_date_start) return(null)
         var _empresas = {...this.state.empresas}
-        console.log(_empresas)
         
 
         this.state.faturamento?.map((item)=>{

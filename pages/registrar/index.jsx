@@ -25,7 +25,6 @@ export default function Signup() {
         try{
             setError("")
             setLoading(true)
-            console.log(emailRef.current.value, passwordRef.current.value)
             await signup(emailRef.current.value, passwordRef.current.value).then((res)=>{
                 
                 router.push('/login')

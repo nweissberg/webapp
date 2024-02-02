@@ -105,7 +105,6 @@ export default class SalesCartTable extends React.Component{
     }
     
     productQuantityEditor = (options) => {
-        console.log(options)
         return (
             <div className="flex-grow-1" style={{
                 maxWidth:"100px"
@@ -124,8 +123,6 @@ export default class SalesCartTable extends React.Component{
     }
 
     fullPriceEditor = (options) => {
-        console.log(options)
-
         return (
             <div className="flex-grow-1">
                 <InputNumber
@@ -136,8 +133,6 @@ export default class SalesCartTable extends React.Component{
         );
     }
     productPhotoEditor = (options) => {
-        console.log(options)
-
         return (<div style={{maxWidth:'0px'}}></div>);
     }
     
@@ -277,7 +272,6 @@ export default class SalesCartTable extends React.Component{
                                             comment:comment,
                                             user:this.props.user.uid
                                         })
-                                        console.log(_sale_cart)
                                         set_data("orders",this.props.sale_cart.uid,_sale_cart)
                                     }
                                 },

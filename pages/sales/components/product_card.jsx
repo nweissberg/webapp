@@ -16,12 +16,7 @@ class ProductCard extends React.Component {
             show_date:false
         }
     }
-
-    // componentDidCatch(){
-    //     console.log("DID catch")
-    //     // this.setState({item:null,photo:null})   
-    // }
-
+    
     render(){
 
         return(

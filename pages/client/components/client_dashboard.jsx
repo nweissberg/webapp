@@ -704,16 +704,14 @@ class ClientDashboard extends React.Component{
 	}
 	render(){
 		if(!this.state.client){
-			return(<div className="flex w-full h-screen align-items-center absolute top-0 bg-blur-1">
-				{/* <ProgressSpinner/> */}
-			</div>)
+			return(<div className="flex w-full h-screen align-items-center absolute top-0 bg-blur-1"></div>)
 		}
 
 		if(this.props?.fullScreen == true){
 			// console.log(this.props.isMobile)
 			return(<div className=" m-0 p-0">
 				{(!this.props.client && this.state.loading != false) && <ProgressBar mode='indeterminate' className="mt-0"/>}
-				{/* {this.header()} */}
+				{this.header()}
 				
 				{this.render_dashboard()}
 				

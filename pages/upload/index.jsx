@@ -234,14 +234,14 @@ export default function Uploader() {
         (snapshot) => {
             // Get task progress, including the number of bytes uploaded and the total number of bytes to be uploaded
             const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-            console.log('Upload is ' + progress + '% done');
+            // console.warn('Upload is ' + progress + '% done');
             setTotalSize(progress)
             switch (snapshot.state) {
             case 'paused':
-                console.log('Upload is paused');
+                // console.warn('Upload is paused');
                 break;
             case 'running':
-                console.log('Upload is running');
+                // console.warn('Upload is running');
                 break;
             }
         }, 
@@ -264,7 +264,7 @@ export default function Uploader() {
         () => {
             // Upload completed successfully, now we can get the download URL
             getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
-                console.log('File available at', downloadURL);
+                console.info('File available at', downloadURL);
                 file.remove()
                 // setTotalSize(totalSize - file.size);
                 if(event.files.length > 0){
@@ -282,7 +282,6 @@ export default function Uploader() {
     const cancelOptions = {icon: 'pi pi-fw pi-times', iconOnly: true, className: 'custom-cancel-btn p-button-danger p-button-rounded p-button-outlined'};
 
     const confirmDeleteFile = (file) => {
-        console.log(file)
         setSelectedFile(file);
         setDeleteFileDialog(true);
     }
@@ -292,13 +291,12 @@ export default function Uploader() {
     }
 
     const deleteFileFirebase = () => {
-        console.log("DELETE", selectedFile)
+        console.warn("DELETE", selectedFile)
         
         // Delete the file
         deleteObject(selectedFile.ref).then(() => {
             // File deleted successfully
             let _files = uploadedFiles.filter(val => val.Nome !== selectedFile.Nome);
-            console.log(_files)
             set_uploadedFiles(_files);
             setDeleteFileDialog(false);
             setSelectedFile(null);
@@ -309,9 +307,7 @@ export default function Uploader() {
     }
 
     const getLink = (file) => {
-        console.log(file)
         getDownloadURL(file.ref).then((downloadURL) => {
-            console.log(file.ref.name,"no link:", downloadURL)
             toast.current.show({ severity: 'info', summary: 'Ctrl+C', detail: "Link copiado para área de transferência!" });
             copyToClipBoard(downloadURL)
         })

@@ -1,14 +1,10 @@
-import React, { useRef, useState, useEffect } from "react"
+import React, { useState, useEffect } from "react"
 import ObjectComponent from "../components/object";
 import { useAuth } from "../api/auth";
 import SalesFooter from "./components/sales_footer";
 import SalesCart from "./components/sales_cart";
-import { api_get } from "../api/connect";
 import ProductSidebar from "./components/product_sidebar";
-import { ProgressBar } from 'primereact/progressbar';
 import localForage from "localforage";
-import { useRouter } from 'next/router'
-import { Button } from "primereact/button";
 import { useSales } from "../contexts/context_sales";
 import { useProducts } from "../../contexts/products_context";
 
@@ -16,24 +12,16 @@ const product_db = localForage.createInstance({
     name:"pilarpapeis_db",
     storeName:'produtos'
 });
-const pedidos_db = localForage.createInstance({
-    name:"pilarpapeis_db",
-    storeName:'pedidos'
-});
 
 export default function SalesPage(props){
-    var load_products = true
     const [ sale_cart, set_sale_cart] = useState({name:"", items:[]})
     const [ cart_obj, set_cart_obj] = useState(null)
     // const [ products, set_products] = useState(null)
     const { currentUser } = useAuth()
     const [ selected_item, set_selected_item] = useState(null)
     const [ select_item, set_select_item] = useState(null)
-    const router = useRouter()
     const [client, set_client] = useState(props?.client)
     const {test_context} = useSales()
-    
-    const [loaded_group, set_loaded_group] = useState([0,0,0,0,0])
     
     const {
         load_products_client,
@@ -47,32 +35,8 @@ export default function SalesPage(props){
     } = useProducts()
 
     useEffect(()=>{
-        console.log(props?.client)
         set_client(props?.client)
-        // window.addEventListener('resize', ()=>{})
     },[props.client])
-
-    // useEffect(()=>{
-    //     // console.log(currentUser)
-    //     if(currentUser === null){
-    //         router.push("/login")
-    //     }
-    //     pedidos_db.getItem(currentUser.uid).then((data)=>{
-    //         console.log(data)
-    //         // set_sale_cart(data)
-    //     })
-    // },[currentUser])
-
-    useEffect(()=>{
-        console.log(sale_cart)
-        // load_groups()
-    },[])
-
-    useEffect(()=>{
-        console.log(groups)
-    },[groups])
-
-    // if(currentUser == null) return(<ProgressBar mode="indeterminate" style={{ height: '6px', marginBottom:"-6px" }}/>)
 
     return(
         <ObjectComponent
@@ -253,7 +217,6 @@ export default function SalesPage(props){
                         })
                     }}
                     featureProducts={(_items)=>{
-                        console.log(_items)
                         // item_info
                         // this.props.select_item(_items[0])
                         set_select_item(_items[0])
@@ -265,14 +228,12 @@ export default function SalesPage(props){
                         })
                     }}
                     save_cart={async(_sale_cart)=>{
-                        console.log(_sale_cart)
                         var _items = _sale_cart.items.map(async(item)=>{
                             return product_db.getItem(item.id.toString()).then((item_data)=>{
                                 return(item_data)
                             })
                         })
                         await Promise.all(_items).then((data)=>{
-                            console.log(data)
                             _sale_cart.item = data
                             set_sale_cart(_sale_cart)
                         })

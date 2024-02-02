@@ -1,7 +1,6 @@
 import React, { useContext, useState, useEffect } from "react";
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, sendPasswordResetEmail } from "firebase/auth";
-import { auth, readUserData, get_fingerprint, writeRealtimeData } from "./firebase";
-// import { useVisitorData } from '@fingerprintjs/fingerprintjs-pro-react'
+import { auth, readUserData } from "./firebase";
 import localForage from "localforage";
 import { api_get } from "./connect";
 
@@ -47,7 +46,7 @@ export function AuthProvider({children}){
     }
     
     function updateUser(user){
-        console.log(user)
+        // console.log(user)
         profile_db.setItem(user.uid,user)
         setCurrentUser(user)
     }

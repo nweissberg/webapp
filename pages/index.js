@@ -66,7 +66,7 @@ export default function Home(props){
     },[props.groups])
 
     useEffect(()=>{
-
+        
         if(currentUser == null){
             router.push("/login")
         }else{
