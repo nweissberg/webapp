@@ -20,10 +20,11 @@ export default class Barcode extends React.Component{
             <div className='flex flex-wrap w-full justify-content-center'>
                 <div className='w-full mb-3'>
                     <img
+                    className={this.props?.className}
                     style={{borderRadius:"5px", width:"220px", ...this.props?.style}}
                     id={"barcode_"+this.props.data}/>
                 </div>
-                <h5>{this.props.data}</h5>
+                {this.props.show_code != false && <h5>{this.props.data}</h5>}
             </div>
         )
     }

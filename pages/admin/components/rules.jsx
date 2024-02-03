@@ -4,8 +4,7 @@ import * as Blockly from 'blockly/core';
 import 'blockly/blocks';
 import { javascriptGenerator } from 'blockly/javascript'; // Or the generator of your choice
 import * as Brasil from 'blockly/msg/pt-br';
-import { copyToClipBoard, time_ago, var_get, var_set } from '../../utils/util';
-import { api_get } from '../../api/connect';
+import { copyToClipBoard, var_get, var_set } from '../../utils/util';
 import Swal from 'sweetalert2';
 import { z } from "zod";
 import { add_data, del_data, get_data, get_all_data, get_public_data, set_data } from '../../api/firebase';
@@ -895,7 +894,7 @@ export default function Rules(props) {
 
     const updateCode = (event) => {
         const code = generate_code(workspace);
-        console.log(code)
+        // console.log(code)
         set_code(code)
     }
     

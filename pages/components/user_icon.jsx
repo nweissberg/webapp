@@ -4,6 +4,7 @@ import React from "react";
 import { readRealtimeData } from "../api/firebase";
 import localForage from "localforage";
 import Link from 'next/link'
+import { useWindowSize } from "../utils/util";
 
 var roles_db = localForage.createInstance({
     name:"pilarpapeis_db",
@@ -36,8 +37,7 @@ export default class UserIcon extends React.Component{
     }
     componentDidMount(){
         this.getUser().then(user=>{
-            console.log(user,document)
-         
+            // console.log(user,document)
         })
     }
     componentDidUpdate(){
@@ -75,11 +75,15 @@ export default class UserIcon extends React.Component{
                         tooltip={this.props.profiles[this.state.user.role]?.name}
                         tooltipOptions={{position:()=>{
                             const element = document.getElementById(this.props.key +'_cursor')
-                            console.log(element?.offsetLeft<= document?.width/2)
-                            return("bottom")
+                            if(element?.offsetLeft <= this.props.window_size?.width){
+                                return("right")
+                            }else{
+                                return("left")
+                            }
+                            
                         }}}
                         className="p-button-rounded"
-                        icon={"pi pi-"+this.props.profiles[this.state.user.role].icon}
+                        icon={"pi pi-"+this.props.profiles[this.state.user.role]?.icon}
                         style={{
                             background:"var(--glass-b)",
                             color:"var(--text)",

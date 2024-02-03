@@ -96,7 +96,9 @@ export default withRouter(
     onViewFilter() {
       if (!this.state.data_items) return;
       var _items_filtered = [...this.state.data_items];
-      if(!this.state.FINALIZADO){ _items_filtered = _items_filtered.filter(c=>c.FINALIZADO!=3)}
+      if (!this.state.FINALIZADO) {
+        _items_filtered = _items_filtered.filter((c) => c.FINALIZADO != 3);
+      }
       // if(!this.state.ORCAMENTO){ _items_filtered = _items_filtered.filter(c=>c.STATUS!=1)}
       // console.log(this.state.search)
       if (this.state.PAGAMENTO.length > 0) {
@@ -385,10 +387,11 @@ export default withRouter(
                               />
                             )}
                           </div>
+                          <div className="flex-wrap max-w-20rem text-gray-200">
+                            {rowData.OBSERVACAO}
+                          </div>
                         </div>
-                        <div className="flex-wrap max-w-20rem text-gray-200">
-                          {rowData.OBSERVACAO}
-                        </div>
+
                         <div className="justify-content-end text-right flex-grow-1">
                           {rowData.ID_DOCUMENTO && (
                             <div className="font-bold text-green-300">
@@ -397,10 +400,10 @@ export default withRouter(
                           )}
                           <div>{rowData.PAGAMENTO}</div>
                           <div>{rowData.LANCAMENTO}</div>
-						  <Button
+                          <Button
                             className="shadow-none text-cyan-300 hover:text-cyan-100 cursor-pointer align-items-center p-button-text"
                             tooltip="Filtrar Vendedor"
-							tooltipOptions={{position:"left"}}
+                            tooltipOptions={{ position: "left" }}
                             onClick={(e) => {
                               this.setState(
                                 { search: rowData.VENDEDOR },
@@ -408,8 +411,8 @@ export default withRouter(
                               );
                             }}
                           >
-                          	<div className="font-bold">{rowData.VENDEDOR}</div>
-						  </Button>
+                            <div className="font-bold">{rowData.VENDEDOR}</div>
+                          </Button>
                         </div>
                         {rowData.view_cart == "load" && (
                           <div
@@ -444,8 +447,11 @@ export default withRouter(
                                     Quantidade: {item.quantidade}
                                     <br />
                                     Valor: {moneyMask(item.valor_unitario)}{" "}
-									<br />
-                                    Total: {moneyMask(item.valor_unitario*item.quantidade)}{" "}
+                                    <br />
+                                    Total:{" "}
+                                    {moneyMask(
+                                      item.valor_unitario * item.quantidade
+                                    )}{" "}
                                   </h6>
                                 </div>
                               );

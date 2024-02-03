@@ -1,6 +1,7 @@
 import React from "react"
 import UndoableEditor from "../../../contexts/UndoableEditor"
 import CallDialog from "../../profile/components/call_dialog"
+import { add_data } from "../../api/firebase"
 
 
 export default class ClientCallDialog extends React.Component {

@@ -1554,3 +1554,8 @@ iframe {
   height: 22px !important;
   width: 100%;
 }
+
+.p-inplace-content-close{
+  width: 48px !important;
+  height: 40px !important;
+}

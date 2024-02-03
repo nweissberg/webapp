@@ -39,7 +39,6 @@ export default function ProductsProvider({children}){
     const [clients, set_clients] = useState([]);
     const [loading, setLoading] = useState(true);
     const [profiles, set_profiles] = useState([]);
-    const [user_drafts, set_user_drafts] = useState([]);
     const [products_map, set_products_map] = useState({});
     
 
@@ -240,12 +239,6 @@ export default function ProductsProvider({children}){
             set_groups(Object.values(_groups))
         })
     }
-    function moveToStart(data,index){
-        // let data = [0, 1, 2, 3, 4, 5];
-        // let index = 3;
-        data.unshift(data.splice(index, 1)[0]);
-        return(data)
-    }
 
     const get_photo = async (produto,callback) => {
         
@@ -436,8 +429,8 @@ export default function ProductsProvider({children}){
 
                             set_products(_top_items.concat(products_array))
                             set_photos(loaded_photos)
-                            console.log(loaded_photos.length+" product photos")
-                            console.log("Done loading group "+group_id+" CLOUD")
+                            // console.log(loaded_photos.length+" product photos")
+                            // console.log("Done loading group "+group_id+" CLOUD")
                             res(_top_items.concat(products_array))
                         })
                     })
@@ -450,7 +443,7 @@ export default function ProductsProvider({children}){
         // const unsubscribe = () => {
             // if(loading){
                 // load_product("10006")
-                // load_local_products()
+                load_local_products()
                 
                 load_groups()
                 

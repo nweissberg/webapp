@@ -16,6 +16,7 @@ import {
   scrollToTop,
   sqlDateToString,
   time_ago,
+  useWindowSize,
 } from "../utils/util";
 import { TabMenu } from "primereact/tabmenu";
 import { useProducts } from "../../contexts/products_context";
@@ -69,16 +70,13 @@ export default function AdminPage() {
   const [display_hierarchy, set_display_hierarchy] = useState(false);
   const [display_orders, set_display_orders] = useState(false);
   const [orders, set_orders] = useState([]);
-  const [loading_data, set_loading_data] = useState(false);
 
   const [globalFilterValue1, setGlobalFilterValue1] = useState("");
   const [filters1, setFilters1] = useState(null);
-
-  const [blockly_workspace, set_blockly_workspace] = useState(null);
   const [iframe_data, set_iframe_data] = useState(null);
 
   const { test_context, actions } = useSales();
-
+  const window_size = useWindowSize();
   const router = useRouter();
   const { asPath } = useRouter();
 
@@ -326,7 +324,8 @@ export default function AdminPage() {
       set_all_users(Object.values(data));
 
       // Hide current user from user list
-      if(currentUser.email !== process.env.NEXT_PUBLIC_MASTER) delete data[currentUser.uid];
+      if (currentUser.email !== process.env.NEXT_PUBLIC_MASTER)
+        delete data[currentUser.uid];
 
       for (const [key, value] of Object.entries(data)) {
         const user = data[key];
@@ -401,7 +400,6 @@ export default function AdminPage() {
                 onRowEditComplete={onUserEditComplete}
                 // size="small"
                 value={users}
-                responsiveLayout="stack"
                 breakpoint="600px"
                 // scrollable
                 scrollHeight="90vh"
@@ -429,11 +427,11 @@ export default function AdminPage() {
                         icon_only={true}
                         profiles={profiles}
                         router={router}
+                        window_size={window_size}
                       />
                     );
                   }}
                 />
-
                 <Column
                   width="8rem"
                   field="online"
@@ -446,9 +444,9 @@ export default function AdminPage() {
                     );
                   }}
                 />
-                <Column field="name" header="Nome" sortable></Column>
-                <Column field="email" header="E-Mail"></Column>
-                <Column field="rp_user.EMRPES_NOME" header="Empresa"></Column>
+                <Column field="name" header="Nome" sortable />
+                <Column field="email" header="E-Mail" />
+                <Column field="rp_user.EMRPES_NOME" header="Empresa" />
                 <Column
                   field="orders.length"
                   header="Orçamentos"
@@ -482,7 +480,7 @@ export default function AdminPage() {
                       );
                     }
                   }}
-                ></Column>
+                />
                 <Column
                   field="parent"
                   header="Responsáveis"
@@ -514,7 +512,7 @@ export default function AdminPage() {
                     );
                   }}
                   editor={(options) => userParentEditor(options)}
-                ></Column>
+                />
 
                 <Column
                   sortable
@@ -524,19 +522,20 @@ export default function AdminPage() {
                     return (
                       <div className="flex w-full relative top-0">
                         <div className="flex inline font-bold text-center align-items-center p-4 border-round w-full justify-content-center align-items-center">
-                          
                           <ProgressBar
                             className="absolute custom-progress-bar-discount w-5rem "
                             showValue={false}
                             value={row_data.discount}
                           />
-													<div className="flex z-10 relative ">{row_data.discount}%</div>
+                          <div className="flex z-10 relative ">
+                            {row_data.discount}%
+                          </div>
                         </div>
                       </div>
                     );
                   }}
                   editor={(options) => userDiscountEditor(options)}
-                ></Column>
+                />
                 <Column
                   field="role"
                   header="Perfil"
@@ -546,7 +545,7 @@ export default function AdminPage() {
                     if (!profiles) return <></>;
                     return profiles[row_data.role]?.[row_data.photo[0]];
                   }}
-                ></Column>
+                />
                 <Column
                   rowEditor
                   headerStyle={{
@@ -556,7 +555,7 @@ export default function AdminPage() {
                   bodyStyle={{
                     textAlign: "center",
                   }}
-                ></Column>
+                />
               </DataTable>
             )}
 
@@ -596,7 +595,23 @@ export default function AdminPage() {
                     {
                       icon: "pi pi-shopping-cart",
                       header: "Promoções",
-                      body: <ProductsTable products={all_products} />,
+                      body: (
+                        <ProductsTable
+                          columns={[
+                            "photo_uid",
+                            "PRECO",
+                            "PRODUTO_NOME",
+                            "PRODUTO_ID",
+                            "MARCA",
+                            "GRAMATURA",
+                            "LARGURA",
+                            "COMPRIMENTO",
+                            "TABELA_PRECO_NOME",
+                            "COD_BARRA",
+                          ]}
+                          products={all_products}
+                        />
+                      ),
                     },
                     {
                       icon: "pi pi-user-edit",
@@ -649,7 +664,7 @@ export default function AdminPage() {
                             );
                           }}
                         >
-                          {/* <Column selectionMode="multiple" headerStyle={{width: '3em'}}></Column> */}
+                          {/* <Column selectionMode="multiple" headerStyle={{width: '3em'}}/> */}
                           <Column
                             field="icon"
                             body={(row_data) => {
@@ -677,7 +692,7 @@ export default function AdminPage() {
                                 </div>
                               );
                             }}
-                          ></Column>
+                          />
                           <Column
                             field="dashboard"
                             header="Dashboard"
@@ -715,9 +730,9 @@ export default function AdminPage() {
                                 />
                               );
                             }}
-                          ></Column>
-                          {/* <Column field="f" header="Nome Feminino"></Column>
-                                    <Column field="m" header="Nome Masculino"></Column> */}
+                          />
+                          {/* <Column field="f" header="Nome Feminino"/>
+                                    <Column field="m" header="Nome Masculino"/> */}
                           <Column
                             field="sla"
                             header="Tempo SLA"
@@ -735,7 +750,7 @@ export default function AdminPage() {
                                 />
                               );
                             }}
-                          ></Column>
+                          />
                           <Column
                             field="discount"
                             header="Desconto"
@@ -761,7 +776,7 @@ export default function AdminPage() {
                                 </div>
                               );
                             }}
-                          ></Column>
+                          />
 
                           <Column
                             field="rules"
@@ -804,7 +819,7 @@ export default function AdminPage() {
                                 />
                               );
                             }}
-                          ></Column>
+                          />
                           <Column
                             field="pages"
                             header="Áreas do Site"
@@ -865,7 +880,7 @@ export default function AdminPage() {
                                 />
                               );
                             }}
-                          ></Column>
+                          />
                         </DataTable>
                       ),
                     },
@@ -1018,13 +1033,13 @@ export default function AdminPage() {
                   field="history[0].date"
                   header="Status"
                   body={(row_data) => {
-                    if (!status.date) return <></>;
                     const status = row_data.history.slice(-1)[0];
+                    if (!status.date) return <></>;
                     // console.log(row_data, status)
                     return (
                       status.action +
                       " " +
-                      time_ago(status.date).toLocaleLowerCase()
+                      time_ago(status.date)?.toLocaleLowerCase()
                     );
                   }}
                 />

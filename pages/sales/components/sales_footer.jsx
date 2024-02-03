@@ -2,9 +2,6 @@ import React from "react";
 import { Button } from "primereact/button";
 import {
   deepEqual,
-  fetchWithTimeout,
-  format_mask,
-  isDeepEqual,
   moneyMask,
   print,
   scrollToBottom,
@@ -17,11 +14,11 @@ import { Toast } from "primereact/toast";
 // import AnimatedNumbers from "react-animated-numbers";
 import { InputText } from "primereact/inputtext";
 import localForage from "localforage";
-import { api, api_cloud, api_get } from "../../api/connect";
+import { api_cloud, api_get } from "../../api/connect";
 import { Menu } from "primereact/menu";
 import { Dialog } from "primereact/dialog";
 
-import { add_data, readRealtimeData, writeNewOrder } from "../../api/firebase";
+import { add_data } from "../../api/firebase";
 import Swal from "sweetalert2";
 import { Badge } from "primereact/badge";
 import { OverlayPanel } from "primereact/overlaypanel";
@@ -32,11 +29,6 @@ import ClientIcon from "../../components/client_icon";
 const pedidos_db = localForage.createInstance({
   name: "pilarpapeis_db",
   storeName: "pedidos",
-});
-
-const vendedores_db = localForage.createInstance({
-  name: "pilarpapeis_db",
-  storeName: "vendedores",
 });
 
 const clientes_db = localForage.createInstance({

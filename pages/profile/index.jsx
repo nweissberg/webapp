@@ -96,7 +96,6 @@ export default function ProfilePage(){
     // 8270
     useEffect(()=>{
         if(currentUser == null) return
-        console.log(currentUser)
         if(selected_user == null) {
             if(!find_user) {
                 set_selected_user(currentUser);
