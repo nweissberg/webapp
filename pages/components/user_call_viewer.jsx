@@ -21,7 +21,11 @@ export default class UserCalls extends React.Component{
 		}
 		this.footer_button = "flex w-auto p-4 h-full pt-1 pb-1 m-0 pl-2 pr-2 shadow-none p-button-lg p-button-rounded "
     }
-	
+	componentDidUpdate(prevProps) {
+		if (prevProps.client != this.props.client) {
+		  this.get_calls();
+		}
+	  }
     componentDidMount(){
 		this.get_calls()
     }
@@ -56,7 +60,7 @@ export default class UserCalls extends React.Component{
 				if(i>2)return<></>
 				return(<div key={'call_'+i}
 					// style={{width:'100%', maxWidth:"33vw"}}
-					style={{minWidth:"max(min(100%, 400px), 33vw)"}}
+					style={{minWidth:"max(min(100%, 400px), 32.7vw)", maxWidth:`${Math.ceil(100/this.state.client_calls.length)}%`}}
 					className="flex flex-wrap p-3 borde r-2 border-blue-700 bg-glass-b border-round-md h-full">
 					<div className=" w-full h-full align-content-between">
 						

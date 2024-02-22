@@ -45,6 +45,7 @@ import CronActionsPage from "./components/cron_actions";
 import { InputTextarea } from "primereact/inputtextarea";
 import { FileUpload } from "primereact/fileupload";
 import IframeExternalURL from "./components/external_iframe";
+import ProductDatabase from "./components/product_document_database";
 
 var vendedores_db = localForage.createInstance({
   name: "pilarpapeis_db",
@@ -105,6 +106,7 @@ export default function AdminPage() {
     { hash: "users", label: "Usuários", icon: "pi pi-users" },
     { hash: "rules", label: "Regras", icon: "pi pi-bolt" },
     { hash: "settings", label: "Configurações", icon: "pi pi-wrench" },
+    { hash: "database", label: "Banco de Dados", icon: "pi pi-database" },
   ];
 
   const searchUsers = (event) => {
@@ -959,7 +961,19 @@ export default function AdminPage() {
                 />
               </div>
             )}
-
+            {items[activeIndex].label == "Banco de Dados" && (
+              <div>
+                <SettingsPage 
+                tabs={[
+                  {
+                    icon: "pi pi-box",
+                    header: "Produtos",
+                    body: (<ProductDatabase/>)
+                  }
+                ]}
+                />
+                </div>
+            )}
             <Dialog
               header={
                 selected_user

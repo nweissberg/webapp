@@ -18,6 +18,7 @@ import { InputText } from "primereact/inputtext";
 import DateRangeMenu from "../../components/dateRangeMenu";
 import localForage from "localforage";
 import ProductIcon from "./product_photo";
+import { Skeleton } from "primereact/skeleton";
 
 const vendedores_db = localForage.createInstance({
   name: "pilarpapeis_db",
@@ -38,24 +39,41 @@ export default withRouter(
         LANCAMENTO: [],
         DATE_RANGE: [],
         search: "",
+        loading_data: true,
       };
       this.state = { ...this.original };
+      this.loadData = this.loadData.bind(this);
+      this.loadCart = this.loadCart.bind(this);
     }
     header_button =
       "sm:icon-only p-button-glass-dark border-none shadow-none h-3rem ";
     componentDidMount() {
+      this.loadData();
+    }
+    componentDidUpdate(prevProps) {
+      if (prevProps.client != this.props.client) {
+        this.loadData();
+      }
+    }
+    loadData() {
+      this.setState({ ...this.original });
       get_vendedor(this.props.user.email).then((vendedor) => {
         if (vendedor) {
           get_data_api({
             query: "czNf3SZGTGt7sHgP3S4m",
             keys: [
               { key: "Filial", type: "STRING", value: vendedor.EMPRESA },
-              { key: "Cliente", type: "NULL", value: null },
+              {
+                key: "Cliente",
+                type: this.props.client ? "STRING" : "NULL",
+                value: this.props.client ? this.props.client : null,
+              },
               { key: "Vendedor", type: "NULL", value: null },
               { key: "Status", type: "NULL", value: null },
             ],
           }).then((items) => {
             if (!items) return;
+
             var _items = items.map((item, index) => {
               item.view_cart = false;
               item.cart = [];
@@ -63,17 +81,15 @@ export default withRouter(
               return item;
             });
             // console.log(_items)
-            this.setState({ data_items: _items, items_filtered: _items });
+            this.setState({
+              data_items: _items,
+              items_filtered: _items,
+              loading_data: false,
+            });
           });
         }
       });
-      // get_vendedor().then((vendedor)=>{
-      // 	if(vendedor){
-      // 		console.log(vendedor)
-      // 	}
-      // })
     }
-
     actionHeader(rowData) {
       return (
         <Button
@@ -223,6 +239,48 @@ export default withRouter(
       _items[index] = _item;
       this.setState({ data_items: _items }, callback);
     }
+    getCartTotal(cart) {
+      var total = 0;
+      cart.map((item) => {
+        total += item.valor_unitario * item.quantidade;
+      });
+      return total;
+    }
+    loadCart(rowData) {
+      if (rowData.view_cart == "load") return;
+      if (rowData.cart.length > 0) {
+        this.editItem(rowData, "view_cart", !rowData.view_cart);
+        // return
+      } else {
+        this.editItem(rowData, "view_cart", "load");
+        get_data_api({
+          query: "0tPRw4nOqYil3P9lm38T",
+          keys: [
+            {
+              key: "EMPRESA_ID",
+              value: rowData.ID_FILIAL,
+              type: "STRING",
+            },
+            {
+              key: "CLIENTE_ID",
+              value: rowData.ID_CLIENTE,
+              type: "STRING",
+            },
+            {
+              key: "NFE",
+              value: rowData.ID_DOCUMENTO,
+              type: "STRING",
+            },
+          ],
+        }).then((order_data) => {
+          var _rowData = { ...rowData };
+          _rowData.cart = order_data;
+          this.editItem(_rowData, "view_cart", true);
+          // return(order_data)
+        });
+      }
+    }
+
     orderListView() {
       if (this.state.items_filtered) {
         if (this.state.data_items?.length > 0) {
@@ -237,9 +295,15 @@ export default withRouter(
                       key={rowData.id + "_" + i}
                       className="flex-wrap hover:border-blue-600 border-2 border-indigo-700 flex w-screen text-white bg-glass-a p-3 hover:bg-black-alpha-50"
                     >
-                      <div className="gap-3 flex flex-wrap w-screen h-full align-items-center justify-content-between">
-                        <div className="flex h-full w-min flex-wrap justify-content-center gap-2">
+                      <div className="gap-3 flex flex-wrap w-screen flex-grow-1 w-full h-full align-items-center justify-content-between">
+                        <div className="flex h-full w-full md:w-min flex-wrap sm:justify-content-between md:justify-content-center align-items-center gap-2">
                           <Button
+                            tooltip={
+                              rowData.view_cart
+                                ? "Ocultar itens"
+                                : "Mostar itens"
+                            }
+                            tooltipOptions={{ position: "right" }}
                             className="shadow-none p-button-outlined p-button-rounded text-purple-200 border-2 bg-black-alpha-70"
                             disabled={!rowData.ID_DOCUMENTO}
                             icon={
@@ -251,53 +315,35 @@ export default withRouter(
                             }
                             label={rowData.ID_PEDIDO}
                             onClick={(e) => {
-                              if (rowData.view_cart == "load") return;
-                              if (rowData.cart.length > 0) {
-                                this.editItem(
-                                  rowData,
-                                  "view_cart",
-                                  !rowData.view_cart
-                                );
-                                // return
-                              } else {
-                                this.editItem(rowData, "view_cart", "load");
-                                get_data_api({
-                                  query: "0tPRw4nOqYil3P9lm38T",
-                                  keys: [
-                                    {
-                                      key: "EMPRESA_ID",
-                                      value: rowData.ID_FILIAL,
-                                      type: "STRING",
-                                    },
-                                    {
-                                      key: "CLIENTE_ID",
-                                      value: rowData.ID_CLIENTE,
-                                      type: "STRING",
-                                    },
-                                    {
-                                      key: "NFE",
-                                      value: rowData.ID_DOCUMENTO,
-                                      type: "STRING",
-                                    },
-                                  ],
-                                }).then((order_data) => {
-                                  var _rowData = { ...rowData };
-                                  _rowData.cart = order_data;
-                                  this.editItem(_rowData, "view_cart", true);
-                                  // return(order_data)
-                                });
-                              }
+                              this.loadCart(rowData);
                             }}
                           />
+                          
                           <div className="font-bold">
                             {sqlDateToString(rowData.EMISSAO)}
                           </div>
                           <div>{time_ago(rowData.EMISSAO)}</div>
+                          <Button
+                            tooltip="Clonar para novo orçamento"
+                            tooltipOptions={{ position: "right" }}
+                            className="shadow-none p-button-outlined p-button-rounded text-green-200 border-2 bg-black-alpha-70"
+                            disabled={!rowData.ID_DOCUMENTO}
+                            icon={
+                              rowData.view_cart == "clone"
+                                ? "pi pi-spin pi-spinner"
+                                : "pi pi-cart-plus"
+                            }
+                            label="Duplicar"
+                            onClick={(e) => {
+                              // this.loadCart(rowData);
+                              this.editItem(rowData, "view_cart", "clone");
+                            }}
+                          />
                         </div>
 
                         <div className="flex-grow-1 ">
                           <Button
-                            className="flex shadow-none gap-2 text-gray-200 cursor-pointer align-items-center p-button-text"
+                            className="flex flex-wrap shadow-none gap-2 text-gray-200 cursor-pointer align-items-center p-button-text"
                             tooltip="Filtrar Cliente"
                             onClick={(e) => {
                               this.setState(
@@ -393,13 +439,6 @@ export default withRouter(
                         </div>
 
                         <div className="justify-content-end text-right flex-grow-1">
-                          {rowData.ID_DOCUMENTO && (
-                            <div className="font-bold text-green-300">
-                              Documento: {rowData.ID_DOCUMENTO}
-                            </div>
-                          )}
-                          <div>{rowData.PAGAMENTO}</div>
-                          <div>{rowData.LANCAMENTO}</div>
                           <Button
                             className="shadow-none text-cyan-300 hover:text-cyan-100 cursor-pointer align-items-center p-button-text"
                             tooltip="Filtrar Vendedor"
@@ -413,6 +452,48 @@ export default withRouter(
                           >
                             <div className="font-bold">{rowData.VENDEDOR}</div>
                           </Button>
+                          {rowData.ID_DOCUMENTO && (
+                            <div className="font-bold text-green-300">
+                              Documento: {rowData.ID_DOCUMENTO}
+                            </div>
+                          )}
+                          <div>{rowData.PAGAMENTO}</div>
+                          <div>{rowData.LANCAMENTO}</div>
+                        </div>
+                        <div className="flex w-full justify-content-end text-right gap-2 h-full align-items-center">
+                          {rowData.cart.length > 0 ? (
+                            <div className="mr-4 flex h-auto p-1 align-items-center gap-2">
+                              <h6 className="text-gray-500 flex h-auto align-items-center">
+                                Valor Total:
+                              </h6>
+                              <h5>
+                                {moneyMask(this.getCartTotal(rowData.cart))}
+                              </h5>
+                            </div>
+                          ) : (
+                            <Button
+                              disabled={!rowData.ID_DOCUMENTO}
+                              className={
+                                "p-button-text m-0 p-2 text-gray-100 shadow-none " +
+                                (rowData.view_cart == "load"
+                                  ? "pointer-events-none"
+                                  : "")
+                              }
+                              label={
+                                <div className="flex gap-2">
+                                  Valor Total: R${" "}
+                                  {rowData.view_cart != "load" ? (
+                                    <div className="flex w-8rem h-auto bg-gray-800 hover:bg-gray-700 border-round-sm" />
+                                  ) : (
+                                    <Skeleton className="flex w-8rem h-auto" />
+                                  )}
+                                </div>
+                              }
+                              onClick={(e) => {
+                                this.loadCart(rowData);
+                              }}
+                            />
+                          )}
                         </div>
                         {rowData.view_cart == "load" && (
                           <div
@@ -428,7 +509,7 @@ export default withRouter(
                       </div>
 
                       {rowData.view_cart && rowData.cart.length > 0 && (
-                        <div className="flex flex-wrap w-screen">
+                        <div className="flex flex-wrap w-screen max-h-30rem overflow-y-scroll">
                           {rowData.cart.length &&
                             rowData.cart.map((item, index) => {
                               return (
@@ -436,23 +517,31 @@ export default withRouter(
                                   className="grid bg-black-alpha-70 flex flex-wrap w-full max-w-screen m-1 align-items-center justify-content-between"
                                   key={index + "_" + item.produto_id}
                                 >
-                                  <div className="flex  flex-wrap align-items-center gap-2 col-8">
+                                  <div className="flex align-items-center gap-2 col-10">
                                     <ProductIcon
-                                      size={4}
+                                      size={5}
                                       item={item.produto_id}
                                     />
-                                    <h5>{item.nome_produto}</h5>
+                                    <h6>{item.nome_produto}</h6>
                                   </div>
-                                  <h6 className="text-right col-4 flex-grow-1 text-right justify-content-end">
-                                    Quantidade: {item.quantidade}
-                                    <br />
-                                    Valor: {moneyMask(item.valor_unitario)}{" "}
-                                    <br />
-                                    Total:{" "}
-                                    {moneyMask(
-                                      item.valor_unitario * item.quantidade
-                                    )}{" "}
-                                  </h6>
+                                  <div className="align-items-center col-2 h-full pr-2">
+                                    <div className="flex gap-2 w-full text-right justify-content-end">
+                                      <h6 className="text-gray-500">Valor:</h6>{" "}
+                                      {moneyMask(item.valor_unitario)}
+                                    </div>
+                                    <div className="flex gap-2 w-full text-right justify-content-end">
+                                      <h6 className="text-gray-500">
+                                        Quantidade:
+                                      </h6>{" "}
+                                      {item.quantidade}
+                                    </div>
+                                    <div className="flex gap-2 w-full text-right justify-content-end">
+                                      <h6 className="text-gray-500">Total:</h6>{" "}
+                                      {moneyMask(
+                                        item.valor_unitario * item.quantidade
+                                      )}
+                                    </div>
+                                  </div>
                                 </div>
                               );
                             })}
@@ -484,255 +573,152 @@ export default withRouter(
         <div className="flex w-full gap-3 left-0">
           <ConfirmPopup className="max-w-1rem" />
           <div className="w-full">
-            <div className="gap-3 p-3 flex w-full h-auto mb-2 justify-content-center align-items-center">
-              <DateRangeMenu
-                setDate={async (date_range) => {
-                  this.setState({ DATE_RANGE: date_range }, this.onViewFilter);
-                }}
-              />
-              <span className="flex w-full h-full p-input-icon-left p-float-label search-field">
-                <i className="pi pi-search text-white pl-2" />
-                <InputText
-                  value={this.state.search}
-                  className={this.header_button + " w-full pl-6"}
-                  // placeholder='Buscar material por "Nome","ID" ou "Etiqueta"'
-                  id="search_bar"
-                  icon="pi pi-search"
-                  onChange={(event) => {
+            {this.state.loading_data === false &&
+            this.state.data_items?.length == 0 ? (
+              <div className="flex w-full h-auto justify-content-center align-items-center my-3">
+                <h4 className="text-center">
+                  <i
+                    style={{ fontSize: "2em" }}
+                    className="pi pi-exclamation-triangle mb-2"
+                  />
+                  <br />
+                  Nenhum pedido não encontrado
+                  <br />
+                  <br />
+                  <Button
+                    className="m-2 p-button-success p-button-lg p-button-outlined font-bold border-2"
+                    icon="pi pi-cart-plus"
+                    label="Novo orçamento"
+                  />
+                </h4>
+              </div>
+            ) : (
+              <div
+                className={
+                  "gap-3 p-3 flex w-full h-auto mb-2 justify-content-center align-items-center " +
+                  (this.state.loading_data
+                    ? "opacity-50 pointer-events-none"
+                    : "")
+                }
+              >
+                <DateRangeMenu
+                  setDate={async (date_range) => {
                     this.setState(
-                      { search: event.target.value },
+                      { DATE_RANGE: date_range },
                       this.onViewFilter
                     );
                   }}
-                  onKeyDown={(event) => {
-                    if (event.keyCode == 13) {
-                      // console.log("ENTER")
-                      event.target.setSelectionRange(
-                        0,
-                        event.target.value.length
-                      );
-                      // this.props.addItemToCart()
-                    }
-                    // this.get_search()
-                  }}
-                  onFocus={(event) => {
-                    // console.log(event)
-                    // this.props.search_focus(event)
-                  }}
-                  onBlur={(event) => {
-                    // this.props.search_blur(event)
-                  }}
                 />
-                <label
-                  className="hidden md:flex w-auto h-auto pl-2 ml-3 justify-content-center white-space-nowrap overflow-hidden text-overflow-clip"
-                  htmlFor="search_bar"
-                >
-                  Buscar CLIENTE por <span className="mx-1">Nome</span>,
-                  <span className="mx-1">CNPJ</span> ou{" "}
-                  <span className="mx-1">Telefone</span>
-                </label>
-
-                {/* <label className="block md:hidden flex w-auto h-auto pl-2 ml-3 justify-content-center white-space-nowrap overflow-hidden text-overflow-clip" htmlFor="search_bar">
-						Buscar...
-					</label> */}
-              </span>
-              <MultiSelect
-                className="p-column-filter text-white h-full flex p-1 rounded"
-                maxSelectedLabels={3}
-                value={this.state.PAGAMENTO}
-                options={
-                  this.state.data_items?.reduce(
-                    (acc, item) => {
-                      if (!acc.codes.has(item.ID_PAGAMENTO)) {
-                        acc.codes.add(item.ID_PAGAMENTO);
-                        acc.result.push({
-                          name: item.PAGAMENTO,
-                          code: item.ID_PAGAMENTO,
-                        });
+                <span className="flex w-full h-full p-input-icon-left p-float-label search-field">
+                  <i className="pi pi-search text-white pl-2" />
+                  <InputText
+                    value={this.state.search}
+                    className={this.header_button + " w-full pl-6"}
+                    // placeholder='Buscar material por "Nome","ID" ou "Etiqueta"'
+                    id="search_bar"
+                    icon="pi pi-search"
+                    onChange={(event) => {
+                      this.setState(
+                        { search: event.target.value },
+                        this.onViewFilter
+                      );
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.keyCode == 13) {
+                        // console.log("ENTER")
+                        event.target.setSelectionRange(
+                          0,
+                          event.target.value.length
+                        );
+                        // this.props.addItemToCart()
                       }
-                      return acc;
-                    },
-                    { codes: new Set(), result: [] }
-                  ).result
-                }
-                // itemTemplate={this.representativesItemTemplate}
-                onChange={(e) => {
-                  console.log(e.value);
-                  // options.filterCallback(e.value)
-                  // this.setState({PAGAMENTO:e.value})
-                  // if(e.value.length!=0)
-                  this.setState({ PAGAMENTO: e.value }, this.onViewFilter);
-                }}
-                optionLabel="name"
-                placeholder="Formas de Pagamento"
-              />
+                      // this.get_search()
+                    }}
+                    onFocus={(event) => {
+                      // console.log(event)
+                      // this.props.search_focus(event)
+                    }}
+                    onBlur={(event) => {
+                      // this.props.search_blur(event)
+                    }}
+                  />
+                  <label
+                    className="hidden md:flex w-auto h-auto pl-2 ml-3 justify-content-center white-space-nowrap overflow-hidden text-overflow-clip"
+                    htmlFor="search_bar"
+                  >
+                    Buscar CLIENTE por <span className="mx-1">Nome</span>,
+                    <span className="mx-1">CNPJ</span> ou{" "}
+                    <span className="mx-1">Telefone</span>
+                  </label>
+                </span>
+                <MultiSelect
+                  className="p-column-filter text-white h-full flex p-1 rounded"
+                  maxSelectedLabels={3}
+                  value={this.state.PAGAMENTO}
+                  options={
+                    this.state.data_items?.reduce(
+                      (acc, item) => {
+                        if (!acc.codes.has(item.ID_PAGAMENTO)) {
+                          acc.codes.add(item.ID_PAGAMENTO);
+                          acc.result.push({
+                            name: item.PAGAMENTO,
+                            code: item.ID_PAGAMENTO,
+                          });
+                        }
+                        return acc;
+                      },
+                      { codes: new Set(), result: [] }
+                    ).result
+                  }
+                  // itemTemplate={this.representativesItemTemplate}
+                  onChange={(e) => {
+                    console.log(e.value);
+                    // options.filterCallback(e.value)
+                    // this.setState({PAGAMENTO:e.value})
+                    // if(e.value.length!=0)
+                    this.setState({ PAGAMENTO: e.value }, this.onViewFilter);
+                  }}
+                  optionLabel="name"
+                  placeholder="Formas de Pagamento"
+                />
 
-              <MultiSelect
-                className="p-column-filter text-white h-full flex p-1 rounded"
-                maxSelectedLabels={3}
-                value={this.state.LANCAMENTO}
-                options={
-                  this.state.data_items?.reduce(
-                    (acc, item) => {
-                      if (!acc.codes.has(item.STATUS)) {
-                        acc.codes.add(item.STATUS);
-                        acc.result.push({
-                          name: item.LANCAMENTO,
-                          code: item.STATUS,
-                        });
-                      }
-                      return acc;
-                    },
-                    { codes: new Set(), result: [] }
-                  ).result
-                }
-                // itemTemplate={this.representativesItemTemplate}
-                onChange={(e) => {
-                  console.log(e.value);
-                  // options.filterCallback(e.value)
-                  // this.setState({LANCAMENTO:e.value})
-                  // if(e.value.length!=0)
-                  this.setState({ LANCAMENTO: e.value }, this.onViewFilter);
-                }}
-                optionLabel="name"
-                placeholder="Status do pedido"
-              />
-              {/* <ToggleButton
-					// value={}
-					className={"shadow-none border-none p-button-lg rounded "+(this.state.FINALIZADO?"bg":"bg-secondary")}
-					checked={this.state.FINALIZADO}
-					offLabel="Esconder Finalizados"
-					onLabel="Mostrar Finalizados"
-					onIcon="pi pi-eye"
-					offIcon="pi pi-eye-slash"
-					onChange={(e)=>{
-						this.setState({FINALIZADO:!this.state.FINALIZADO},this.onViewFilter)
-					}}
-				/>
-				<ToggleButton
-					// value={}
-					className={"shadow-none border-none p-button-lg rounded text-white "+(this.state.ORCAMENTO?"bg":"bg-secondary")}
-					checked={this.state.ORCAMENTO}
-					offLabel="Esconder Orçamentos"
-					onLabel="Mostrar Orçamentos"
-					onIcon="pi pi-eye"
-					offIcon="pi pi-eye-slash"
-					onChange={(e)=>{
-						this.setState({ORCAMENTO:!this.state.ORCAMENTO},this.onViewFilter)
-					}}
-				/> */}
-            </div>
-
-            {this.state.data_items?.length == 0 && (
+                <MultiSelect
+                  className="p-column-filter text-white h-full flex p-1 rounded"
+                  maxSelectedLabels={3}
+                  value={this.state.LANCAMENTO}
+                  options={
+                    this.state.data_items?.reduce(
+                      (acc, item) => {
+                        if (!acc.codes.has(item.STATUS)) {
+                          acc.codes.add(item.STATUS);
+                          acc.result.push({
+                            name: item.LANCAMENTO,
+                            code: item.STATUS,
+                          });
+                        }
+                        return acc;
+                      },
+                      { codes: new Set(), result: [] }
+                    ).result
+                  }
+                  // itemTemplate={this.representativesItemTemplate}
+                  onChange={(e) => {
+                    console.log(e.value);
+                    // options.filterCallback(e.value)
+                    // this.setState({LANCAMENTO:e.value})
+                    // if(e.value.length!=0)
+                    this.setState({ LANCAMENTO: e.value }, this.onViewFilter);
+                  }}
+                  optionLabel="name"
+                  placeholder="Status do pedido"
+                />
+              </div>
+            )}
+            {this.state.loading_data === true && (
               <ProgressBar mode="indeterminate" />
             )}
+
             {this.orderListView()}
-            {/* <DataTable
-					className="w-max"
-					style={{width:"100%"}}
-					// scrollHeight="70vh"
-					scrollable
-					paginator
-					emptyMessage={this.state.data_items?.length > 0?
-					<div className="flex w-full h-6rem justify-content-center align-items-center">
-						<h4 className="text-center" ><i style={{'fontSize': '2em'}} className="pi pi-exclamation-triangle mb-2"/><br />Pedido não encontrado</h4>
-					</div>
-					:
-					<div className=" w-full h-full">
-						<ProgressBar mode="indeterminate" />
-					</div>}
-					paginatorTemplate="CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown"
-					currentPageReportTemplate="Exibindo {first} a {last} de {totalRecords}" rows={5} rowsPerPageOptions={[10,20,50]}
-					filterDisplay={this.state.display_filters?"row":""}
-					filters={{
-						'ID_PEDIDO': { value: '', matchMode: FilterMatchMode.STARTS_WITH },
-						'CLIENTE': { value: '', matchMode: FilterMatchMode.CONTAINS },
-						'EMISSAO': { value: '', matchMode: FilterMatchMode.STARTS_WITH },
-						'ID_PAGAMENTO': { value: null, matchMode: FilterMatchMode.IN },
-					}}
-					onValueChange={ (data) => {this.testOnChange(data)} }
-					
-					// onFilter={(e)=>{
-					//     var _data_items = [...this.state.data_items]
-					//     // _data_items[e.sortField] = 
-					//     console.log(e,_data_items)
-					// }}
-					stateStorage="local"
-					stateKey="dt-state-order-status-agenda"
-					// filterDelay={200}
-					value={this.state.items_filtered}>
-						<Column
-							// ref={overlay_panel}
-							key="id"
-							// header={(rowData)=>{return(this.actionHeader(rowData))}}
-							exportable={false}
-							style={{ maxWidth: '5em' }}
-							field="ID_PEDIDO"
-							body={(rowData)=>{
-								return(rowData.ID_PEDIDO);
-								
-							}}
-							filter filterPlaceholder="ID" showFilterMenu={false}
-						/>
-						<Column key="emissao" field="EMISSAO" header="Emissão" filter filterPlaceholder="Buscar por data..." showFilterMenu={false} sortable body={(rowData)=>{
-							return(time_ago(rowData.EMISSAO) +" "+ sqlDateToString(rowData.EMISSAO))
-						}}></Column>
-						
-
-						<Column filterField="ID_PAGAMENTO" filterElement={this.pagamentoFilterTemplate} key="code" field="ID_PAGAMENTO" header="Pagamento" filter showFilterMenu={false} sortable body={(rowData)=>{
-							return(rowData.PAGAMENTO)
-						}}></Column>
-
-						<Column key="OBSERVACAO" field="OBSERVACAO" header="Observação"></Column>
-						<Column key="LANCAMENTO" field="LANCAMENTO" header="Status"></Column>
-						<Column key="ID_VENDEDOR" field="ID_VENDEDOR" header="Vendedor" body={(rowData)=>{
-							return(rowData.VENDEDOR +" ("+ rowData.ID_VENDEDOR+")")
-						}}></Column>
-						<Column style={{ maxWidth: '30em' }} key="name" field="CLIENTE" header="Cliente" filter filterPlaceholder="Buscar por nome..." showFilterMenu={false} sortable></Column>
-						
-						
-						<Column style={{ minWidth: '12em' }} key="DOC_CLIENTE" field="DOC_CLIENTE" body={(rowData)=>{
-							if(rowData.DOC_CLIENTE.length == 14){
-								return(format_mask(rowData.DOC_CLIENTE,"##.###.###/####-##"))
-							}else if(rowData.DOC_CLIENTE.length == 11){
-								return(format_mask(rowData.DOC_CLIENTE,"###.###.###-##"))
-							}else{
-								return(rowData.DOC_CLIENTE)
-							}
-						}} header="Documento" filter filterPlaceholder="Buscar por documento..." showFilterMenu={false}></Column>
-						<Column key="EMAIL_CLIENTE" field="EMAIL_CLIENTE" className="lowercase" header="Email" body={(rowData)=>{
-							if(rowData.EMAIL_CLIENTE){
-								return(rowData.EMAIL_CLIENTE.split('.,').join(' '))
-							}else{
-								return('') 
-							}
-						}}></Column>
-						<Column style={{ minWidth: '11em' }} key="TELEFONE_CLIENTE" field="TELEFONE_CLIENTE" body={(rowData)=>{
-							if(!rowData?.TELEFONE_CLIENTE){
-								return("")
-							}else if(rowData.TELEFONE_CLIENTE.length == 10){
-								return(format_mask(rowData.TELEFONE_CLIENTE,"(##) ####-####"))
-							}else if(rowData.TELEFONE_CLIENTE.length == 11){
-								return(format_mask(rowData.TELEFONE_CLIENTE,"(##) #####-####"))
-							}else{
-								return(rowData.TELEFONE_CLIENTE)
-							}
-						}} header="Telefone" filter filterPlaceholder="Buscar por telefone..." showFilterMenu={false}></Column>
-
-						<Column style={{ minWidth: '11em' }} key="WHATSAPP_CLIENTE" field="WHATSAPP_CLIENTE" body={(rowData)=>{
-							if(!rowData?.WHATSAPP_CLIENTE){
-								return("")
-							}else if(rowData.WHATSAPP_CLIENTE.length == 10){
-								return(format_mask(rowData.WHATSAPP_CLIENTE,"(##) ####-####"))
-							}else if(rowData.WHATSAPP_CLIENTE.length == 11){
-								return(format_mask(rowData.WHATSAPP_CLIENTE,"(##) #####-####"))
-							}else{
-								return(rowData.WHATSAPP_CLIENTE)
-							}
-						}} header="Whatsapp" filter filterPlaceholder="Buscar por whatsapp..." showFilterMenu={false}></Column>
-
-					
-				</DataTable> */}
           </div>
         </div>
       );

@@ -1,5 +1,5 @@
 import { initializeApp, getApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
+import { getFirestore, limit, orderBy, startAfter, startAt } from "firebase/firestore";
 import { getMessaging, getToken, onMessage } from "firebase/messaging";
 // import { getAnalytics } from "firebase/analytics";
 import { getAuth, onAuthStateChanged, signOut } from "firebase/auth";
@@ -16,13 +16,11 @@ import {
     doc,
     and,
     or,
-    setDoc,
     updateDoc,
     deleteDoc,
-    serverTimestamp,
-    Timestamp
+    serverTimestamp
 } from "firebase/firestore";
-import { api_get, get_data_api } from "./connect";
+import { get_data_api } from "./connect";
 import { print } from "../utils/util";
 
 var roles_db = localForage.createInstance({
@@ -77,7 +75,7 @@ export function get_token(user) {
         } catch (error) {
             messaging = false
         }
-        // print("messaging",messaging)
+        console.log("messaging",messaging)
 
         if (messaging == false) return (false);
 
@@ -91,17 +89,17 @@ export function get_token(user) {
                 if (currentToken) {
                     // Send the token to your server and update the UI if necessary
                     // ...
-                    print("Sending the token to server", currentToken)
-                    writeRealtimeData("fcmTokens/" + user.rp_user.id, currentToken)
+                    console.log("Sending the token to server", currentToken)
+                    writeRealtimeData("fcmTokens/" + uid, currentToken)
                     return (currentToken);
                 } else {
                     // Show permission request UI
-                    print('No registration token available. Request permission to generate one.');
+                    console.log('No registration token available. Request permission to generate one.');
                     // ...
                     return (null);
                 }
             }).catch((err) => {
-                print(('An error occurred while retrieving token. ', err), 'error');
+                console.log(('An error occurred while retrieving token. ', err), 'error');
                 return (err);
                 // ...
             }
@@ -160,6 +158,11 @@ export function get_data(table, user_uid = uid) {
 export function get_all_data(table) {
     const collectionRef = collection(fb_db, table);
     return getDocs(query(collectionRef));
+}
+
+export function get_paginated_data(table,key,start,length=25) {
+    const collectionRef = collection(fb_db, table);
+    return getDocs(query(collectionRef, orderBy(key),startAt(start), limit(length)));
 }
 
 export function get_public_data(table) {

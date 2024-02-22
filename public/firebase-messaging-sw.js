@@ -18,7 +18,7 @@ messaging.onMessage(function(payload) {
             }
         ]
     };
-
+    console.log(payload.data)
     return self.registration.showNotification(notificationTitle, notificationOptions);
 });
 
@@ -35,7 +35,7 @@ messaging.onBackgroundMessage(function(payload) {
             }
         ]
     };
-
+    console.log(payload.data)
     return self.registration.showNotification(notificationTitle, notificationOptions);
 });
 

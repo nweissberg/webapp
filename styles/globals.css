@@ -1559,3 +1559,7 @@ iframe {
   width: 48px !important;
   height: 40px !important;
 }
+.p-submenu-list{
+  max-height: 300px !important;
+  overflow-y: scroll;
+}

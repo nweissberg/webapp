@@ -93,7 +93,7 @@ export default withRouter(
           label: "Perfil",
           icon: "pi pi-fw pi-user",
           command: () => {
-            this.change_room("/profile#" + this.props.user.uid);
+            this.change_room("/");
           },
         },
         {
@@ -239,39 +239,39 @@ export default withRouter(
         document.addEventListener("scroll", this.onScroll);
         document.addEventListener("touchmove", this.onTouch); // { passive: false }
 
-        this.setState({
-          interval: setInterval(() => {
-            readRealtimeData("rooms" + this.props.router.asPath).then(
-              (room_data) => {
-                if (room_data != null) {
-                  // room_data.forEach((user)=>{
-                  // 	console.log(user)
-                  // })
-                  // console.log(room_data)
-                  this.setState({ room: room_data });
-                }
-              }
-            );
+        // this.setState({
+        //   interval: setInterval(() => {
+        //     readRealtimeData("rooms" + this.props.router.asPath).then(
+        //       (room_data) => {
+        //         if (room_data != null) {
+        //           // room_data.forEach((user)=>{
+        //           // 	console.log(user)
+        //           // })
+        //           // console.log(room_data)
+        //           this.setState({ room: room_data });
+        //         }
+        //       }
+        //     );
 
-            if (
-              this.state.currentUser &&
-              this.state.cursor &&
-              isDeepEqual(this.state.last_save, this.state.cursor) == false
-            ) {
-              // console.log(this.state.cursor)
-              writeRealtimeData(
-                "rooms" +
-                  this.props.router.asPath +
-                  "/" +
-                  this.state.currentUser.uid +
-                  "/position",
-                this.state.cursor
-              );
+        //     if (
+        //       this.state.currentUser &&
+        //       this.state.cursor &&
+        //       isDeepEqual(this.state.last_save, this.state.cursor) == false
+        //     ) {
+        //       // console.log(this.state.cursor)
+        //       writeRealtimeData(
+        //         "rooms" +
+        //           this.props.router.asPath +
+        //           "/" +
+        //           this.state.currentUser.uid +
+        //           "/position",
+        //         this.state.cursor
+        //       );
 
-              this.setState({ last_save: this.state.cursor });
-            }
-          }, 1000),
-        });
+        //       this.setState({ last_save: this.state.cursor });
+        //     }
+        //   }, 1000),
+        // });
       }
     }
     componentWillUnmount() {
@@ -643,7 +643,7 @@ export default withRouter(
                         onContextMenu={(event) => {
                           event.stopPropagation();
                           event.preventDefault();
-                          this.change_room("/profile#" + this.props.user.uid);
+                          this.change_room("/");
                         }}
                       />
                     )}

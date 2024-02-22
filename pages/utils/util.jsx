@@ -1,4 +1,4 @@
-export function print(e,n="log"){"development"===process.env.NODE_ENV&&console[n]((new Error).stack.split("\n")[2].split("/").slice(-2).join("/").slice(0,-1),e)};
+export function print(e,n="log"){"development"===process.env.NODE_ENV&&console[n]?.((new Error).stack.split("\n")[2].split("/").slice(-2).join("/").slice(0,-1),e)};
 import { useEffect, useState } from "react"
 // function that prints the data to the console if enviroment is development
 

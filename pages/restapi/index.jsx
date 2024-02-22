@@ -16,7 +16,7 @@ import { useAuth } from "../api/auth"
 import { Dropdown } from 'primereact/dropdown';
 import { useRouter } from 'next/router'
 import { add_data, get_data, set_data, del_data, get_all_data} from '../api/firebase';
-import { uid, copyToClipBoard, createId, scrollToTop } from '../utils/util';
+import { uid, copyToClipBoard, createId, scrollToTop, alphabetically } from '../utils/util';
 import { Tree } from 'primereact/tree';
 import { ToggleButton } from 'primereact/togglebutton';
 import { Editor } from 'primereact/editor';
@@ -239,6 +239,8 @@ export default function Home() {
         }
         // console.log(`${doc.id} => ${JSON.stringify(doc.data())}`); 
       });
+      _userStorage[0].children = _userStorage[0].children.sort((a,b)=>alphabetically(a,b,'label'))
+      _menuOptions[0].items = _userStorage[0].children.sort((a,b)=>alphabetically(a,b,'label'))
       if(Object.keys(_databases).length == 1) setSelectedDB(_databases[Object.keys(_databases)[0]])
       setMenuOptions(_menuOptions)
       setDatabases(_databases)
@@ -567,6 +569,7 @@ export default function Home() {
             <div className='mb-0 sticky top-0 z-3'>
               <Menubar
                 model={menuOptions}
+                
                 end={
                   <Button
                     iconPos='right'

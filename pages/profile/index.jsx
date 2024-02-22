@@ -18,7 +18,7 @@ import { useSales } from "../contexts/context_sales";
 import UserSearch from "./components/user_search";
 import { Inplace, InplaceDisplay, InplaceContent } from 'primereact/inplace';
 import UserCalls from "../components/user_call_viewer";
-import OrderSatusDatatable from "./components/order_satus_datatable";
+import OrderStatusDatatable from "./components/order_satus_datatable";
 import IframeExternalURL from "../admin/components/external_iframe";
 import SettingsPage from "../admin/components/settings";
 import Clients_datatable from "../client/components/clients_datatable";
@@ -961,7 +961,7 @@ export default function ProfilePage(){
                         }}
                     />}
                     {tab_index == 2.3 &&
-                        <OrderSatusDatatable user={selected_user}/>
+                        <OrderStatusDatatable user={selected_user}/>
                     }
                 </div>
 
